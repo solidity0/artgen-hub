@@ -868,18 +868,41 @@ function accessoryMarkup(rng, accId, eyeCtx) {
     const isCyclops = eyeCtx && eyeCtx.eyeShape === 'cyclops';
     const side = rng() < 0.5 ? -1 : 1;
     const tx = isCyclops ? 300 : 300 + side * 51;
-    // cyclops sits higher (cy-10 with a mouth present) and is drawn 1.3x
-    // larger than a standard eye, so its bottom edge lands lower on the face
-    // than a flat ty=230 accounts for — recompute from its actual geometry
-    // instead of reusing the two-eye constant, or the tear starts partway
-    // inside the eye itself on larger cyclops pieces.
-    let ty = 230;
-    if (isCyclops && eyeCtx) {
-      const cy = eyeCtx.noMouth ? 215 : 200;
-      const eyeCy = eyeCtx.noMouth ? cy : cy - 10;
-      const bigR = Math.round((eyeCtx.eyeR || 32) * 1.3);
-      ty = eyeCy + bigR + 6;
+
+    // Was ALSO a flat ty=230 for every non-cyclops case, which assumed one
+    // specific eye shape's bottom edge and one specific cy — wrong on two
+    // counts: (1) noMouth shifts cy from 200 to 215 (15px) and this never
+    // accounted for it, and (2) every eyeShape has a different actual
+    // vertical extent below cy — hollow_socket's outer ellipse alone reaches
+    // eyeR+10, taller than the flat 230 constant assumed, so the tear started
+    // partway INSIDE the socket instead of below it (confirmed: at
+    // size=medium with a mouth present, eye bottom = 200+42 = 242, twelve
+    // pixels below where the tear used to start). round_glow's faint outer
+    // glow ring reaches even further (glowR[1], which is exactly eyeR+14 at
+    // every defined size — verified against the actual size trait
+    // definitions rather than assumed). Computing the real bottom edge per
+    // shape, the same way cyclops already got fixed, instead of one guess
+    // reused for every shape.
+    const cy = (eyeCtx && eyeCtx.noMouth) ? 215 : 200;
+    const eyeR = (eyeCtx && eyeCtx.eyeR) || 32;
+    let bottomOffset;
+    if (isCyclops) {
+      const eyeCy = (eyeCtx && eyeCtx.noMouth) ? cy : cy - 10;
+      bottomOffset = Math.round(eyeR * 1.3) + (eyeCy - cy); // fold cyclops's own cy shift into the offset from the shared cy below
+    } else if (!eyeCtx || !eyeCtx.eyeShape || eyeCtx.eyeShape === 'round_glow') {
+      bottomOffset = eyeR + 14; // outer glow ring radius (glowR[1]), verified == eyeR+14 at every defined size
+    } else if (eyeCtx.eyeShape === 'hollow_socket') {
+      bottomOffset = eyeR + 10; // outer socket ellipse's ry
+    } else if (eyeCtx.eyeShape === 'glitch') {
+      const barH = Math.max(5, Math.round(eyeR * 0.32));
+      bottomOffset = Math.round(1.5 * barH); // 4 stacked bars, half-span below center
+    } else if (eyeCtx.eyeShape === 'x_dead') {
+      bottomOffset = Math.round(eyeR * 0.8); // X shape's own half-width, which also sets its vertical reach
+    } else {
+      bottomOffset = eyeR + 14; // unrecognized shape (future-proofing) — fall back to the tallest known case rather than the shortest, so a new shape added later overshoots safely instead of overlapping
     }
+    const ty = cy + bottomOffset + 6;
+
     return `<path d="M ${tx} ${ty} Q ${tx - 6} ${ty + 18} ${tx} ${ty + 26} Q ${tx + 6} ${ty + 18} ${tx} ${ty} Z" fill="#bcd9ff" opacity="0.8"/>`;
   }
   return '';
