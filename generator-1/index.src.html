@@ -9,7 +9,7 @@
 <style>
 :root {
   --bg:#080808; --panel:#141414; --border:#222; --dim:#555; --mid:#888;
-  --white:#f0f0f0; --acid:#c8ff00; --acid-hover:#d4ff1a; --orange:#ff6b1a; --rare:#c8ff00;
+  --white:#f0f0f0; --acid:#f7931a; --acid-hover:#ffa733; --orange:#ff6b1a;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:var(--bg); color:var(--white); font-family:'Space Grotesk',sans-serif; }
@@ -155,7 +155,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
       <button class="chip active" data-tier="any">any</button>
       <button class="chip" data-tier="common"><span class="dot" style="background:var(--dim)"></span>common</button>
       <button class="chip" data-tier="uncommon"><span class="dot" style="background:var(--orange)"></span>uncommon</button>
-      <button class="chip" data-tier="rare"><span class="dot" style="background:var(--rare)"></span>rare</button>
+      <button class="chip" data-tier="rare"><span class="dot" style="background:var(--acid)"></span>rare</button>
     </div>
     <div style="font-size:11px;color:var(--dim);">Biases every unlocked trait toward that rarity tier. Trait selections below still win. Click Generate to apply.</div>
   </div>
@@ -343,7 +343,7 @@ const CATEGORY_META = [
 ];
 
 function rarityColor(r) {
-  return r === 'rare' ? 'var(--rare)' : r === 'uncommon' ? 'var(--orange)' : 'var(--dim)';
+  return r === 'rare' ? 'var(--acid)' : r === 'uncommon' ? 'var(--orange)' : 'var(--dim)';
 }
 function buildControls() {
   const root = document.getElementById('controls');
