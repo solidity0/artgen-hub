@@ -1225,8 +1225,9 @@ function generateOne(index, seed) {
   const eyeShape = pickTrait(rng, 'eyeShape');
   const eyeColor = pickTrait(rng, 'eyeColor');
   let mouth = pickTrait(rng, 'mouth');
-  mouth = rerollMouthIfClashing(rng, { headShape: headShape.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id }, mouth, TRAITS.mouth, currentTier);
-  const accessory = pickTrait(rng, 'accessory');
+  mouth = rerollTraitIfClashing(rng, { headShape: headShape.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id }, 'mouth', mouth, TRAITS.mouth, currentTier);
+  let accessory = pickTrait(rng, 'accessory');
+  accessory = rerollTraitIfClashing(rng, { headShape: headShape.id, size: size.id, eyeShape: eyeShape.id, mouth: mouth.id }, 'accessory', accessory, TRAITS.accessory, currentTier);
 
   // Build every non-eye layer exactly ONCE. These all consume rng internally
   // (cracked-head jitter, dot scatter, background texture) — calling them a
@@ -1237,8 +1238,8 @@ function generateOne(index, seed) {
   const bodyPart = bodyMarkup(body.id, bodyColor.hex, background.fill);
   const headPart = headMarkup(headShape.id, headColor.hex, rng, background.fill);
   const mouthPart = mouthMarkup(mouth.id);
-  const accessoryPart = accessoryMarkup(rng, accessory.id);
   const noMouth = mouth.id === 'none';
+  const accessoryPart = accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth });
   const eyesStatic = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, { noMouth });
 
   // Animation timing draws from a SEPARATE seeded stream so toggling animation
