@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#080808; --panel:#141414; --border:#222; --dim:#555; --mid:#888;
+  --white:#f0f0f0; --acid:#c8ff00; --acid-hover:#d4ff1a; --orange:#ff6b1a; --rare:#c8ff00;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--white); font-family:'Space Grotesk',sans-serif; }
+
+header { padding:28px 24px 20px; border-bottom:1px solid var(--border); position:relative; }
+.hub-back {
+  position:absolute; top:16px; right:24px; font-family:'Space Mono',monospace; font-size:11px;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--mid); text-decoration:none;
+  padding:6px 12px; border:1px solid var(--border); transition:all .15s;
+}
+.hub-back:hover { color:var(--acid); border-color:var(--acid); }
+.brand { font-family:'Space Mono',monospace; font-size:16px; font-weight:700; }
+.brand span { color:var(--acid); }
+.eyebrow { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--orange); margin-top:14px; }
+.h1 { font-family:'Space Mono',monospace; font-size:clamp(28px,5vw,48px); font-weight:700; margin-top:8px; }
+.sub { font-size:13px; color:var(--mid); margin-top:8px; max-width:560px; line-height:1.6; }
+
+main { padding:24px; max-width:1280px; margin:0 auto; }
+
+.panel-section { margin-bottom:28px; }
+.panel-title { font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--acid); margin-bottom:14px; }
+
+.controls-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+.trait-group { background:var(--panel); border:1px solid var(--border); padding:12px; }
+.trait-label { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--mid); margin-bottom:8px; }
+.chip-row { display:flex; flex-wrap:wrap; gap:5px; }
+.chip {
+  font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.03em;
+  padding:6px 10px; border:1px solid var(--border); background:var(--bg); color:var(--mid);
+  cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:5px;
+  -webkit-tap-highlight-color:transparent;
+}
+.chip:hover { border-color:var(--acid); color:var(--white); }
+.chip.active { background:var(--acid); color:#000; border-color:var(--acid); font-weight:700; }
+.chip .dot { width:9px; height:9px; border-radius:50%; border:1px solid rgba(255,255,255,.3); flex-shrink:0; }
+
+.run-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:16px; background:var(--panel); border:1px solid var(--border); margin-top:6px; }
+.field { display:flex; align-items:center; gap:8px; }
+.field label { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--mid); }
+.field input {
+  width:70px; background:var(--bg); border:1px solid var(--border); color:var(--white);
+  font-family:'Space Mono',monospace; font-size:12px; padding:8px; outline:none;
+}
+.field input:focus { border-color:var(--acid); }
+
+.trait-group input[type="text"], .trait-group textarea {
+  width:100%; background:var(--bg); border:1px solid var(--border); color:var(--white);
+  font-family:'Space Mono',monospace; font-size:13px; padding:8px; outline:none;
+}
+.trait-group textarea { font-family:'Space Grotesk',sans-serif; resize:vertical; }
+.trait-group input[type="text"]:focus, .trait-group textarea:focus { border-color:var(--acid); }
+.trait-group input[type="text"]::placeholder, .trait-group textarea::placeholder { color:var(--dim); }
+
+.btn {
+  font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  font-weight:700; padding:10px 18px; cursor:pointer; border:none;
+  -webkit-tap-highlight-color:transparent; transition:transform .1s;
+}
+.btn:active { transform:scale(0.97); }
+.btn-acid { background:var(--acid); color:#000; }
+.btn-acid:hover { background:var(--acid-hover); }
+.btn-ghost { background:transparent; color:var(--mid); border:1px solid var(--border); }
+.btn-ghost:hover { color:var(--white); border-color:var(--white); }
+
+.status-row { display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px; flex-wrap:wrap; gap:8px; }
+.status-label { font-family:'Space Mono',monospace; font-size:11px; color:var(--mid); }
+
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:6px; }
+.tile { background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; }
+.tile:hover { border-color:var(--acid); }
+.tile svg { display:block; width:100%; }
+.tile-label { padding:5px 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--mid); }
+
+.lightbox { display:none; position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.88); align-items:center; justify-content:center; padding:20px; }
+.lightbox.open { display:flex; }
+.lb-inner { background:var(--panel); border:1px solid var(--border); max-width:680px; width:100%; display:grid; grid-template-columns:1fr 1fr; align-items:start; max-height:88vh; overflow:auto; position:relative; }
+.lb-preview { background:#000; }
+.lb-preview svg { display:block; width:100%; }
+.lb-meta { padding:20px; display:flex; flex-direction:column; gap:12px; }
+.lb-title { font-family:'Space Mono',monospace; font-size:14px; color:var(--acid); letter-spacing:.05em; }
+.lb-traits { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.lb-trait { background:var(--bg); border:1px solid var(--border); padding:8px 10px; }
+.lb-trait-k { font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin-bottom:2px; }
+.lb-trait-v { font-size:12px; font-weight:600; }
+.lb-close { position:absolute; top:8px; right:8px; background:var(--border); border:none; color:var(--white); width:26px; height:26px; cursor:pointer; }
+.lb-actions { display:flex; gap:8px; margin-top:auto; flex-wrap:wrap; }
+
+.toast {
+  position:fixed; bottom:20px; right:20px; z-index:400;
+  background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--acid);
+  padding:10px 16px; font-family:'Space Mono',monospace; font-size:11px;
+  transform:translateY(60px); opacity:0; transition:all .3s; max-width:260px;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+@media(max-width:600px) {
+  .lb-inner { grid-template-columns:1fr; }
+  header { padding:22px 16px 16px; }
+  main { padding:16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../index.html" class="hub-back">&larr; Hub</a>
+  <div class="brand">Generator</div>
+  <div class="eyebrow">Generative Trait Engine</div>
+  <div class="h1" id="h1-text">Build your collection</div>
+  <div class="sub">Pick a character type, select as many specific traits as you want per category (or leave on random), set the supply size — it's not capped. Nothing regenerates until you hit Generate. Click a piece to download the SVG or copy its markup.</div>
+</header>
+
+<main>
+
+  <div class="panel-section">
+    <div class="panel-title">Collection</div>
+    <div class="controls-grid">
+      <div class="trait-group">
+        <div class="trait-label">Name</div>
+        <input type="text" id="collection-name-input" placeholder="Name your collection">
+      </div>
+      <div class="trait-group">
+        <div class="trait-label">Symbol (optional)</div>
+        <input type="text" id="collection-symbol-input" placeholder="e.g. ARTX" maxlength="8" style="text-transform:uppercase;">
+      </div>
+      <div class="trait-group">
+        <div class="trait-label">Chain</div>
+        <div class="chip-row" id="chain-controls">
+          <button class="chip active" data-chain="bitcoin">bitcoin</button>
+          <button class="chip" data-chain="ethereum">ethereum</button>
+        </div>
+      </div>
+      <div class="trait-group" style="grid-column:1/-1;">
+        <div class="trait-label">Description (optional, used in metadata)</div>
+        <textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-section">
+    <div class="panel-title">Character type</div>
+    <div class="chip-row" id="tier-controls" style="margin-bottom:6px;">
+      <button class="chip active" data-tier="any">any</button>
+      <button class="chip" data-tier="common"><span class="dot" style="background:var(--dim)"></span>common</button>
+      <button class="chip" data-tier="uncommon"><span class="dot" style="background:var(--orange)"></span>uncommon</button>
+      <button class="chip" data-tier="rare"><span class="dot" style="background:var(--rare)"></span>rare</button>
+    </div>
+    <div style="font-size:11px;color:var(--dim);">Biases every unlocked trait toward that rarity tier. Trait selections below still win. Click Generate to apply.</div>
+  </div>
+
+  <div class="panel-section">
+    <div class="panel-title">Traits</div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:10px;">Click as many specific values per category as you want — they'll be picked from at random. Leave on "random" for no restriction.</div>
+    <div class="controls-grid" id="controls"></div>
+  </div>
+
+  <div class="run-row">
+    <div class="field"><label>Seed</label><input type="number" id="seed-input" value="7"></div>
+    <div class="field"><label>Supply</label><input type="number" id="count-input" value="24" min="1"></div>
+    <button class="chip" id="animate-toggle" title="Adds seeded SMIL motion to the eyes. PNG thumbnails stay static; SVG exports animate.">animate eyes: off</button>
+    <button class="btn btn-acid" id="generate-btn">Generate</button>
+    <button class="btn btn-ghost" id="reroll-btn">Reroll seed</button>
+    <button class="btn btn-ghost" id="reset-btn">Reset traits</button>
+    <button class="btn btn-acid" id="download-batch-btn">Download batch (.zip)</button>
+    <button class="btn btn-ghost" id="csv-btn">Export trait sheet</button>
+  </div>
+
+  <div class="status-row">
+    <span class="status-label" id="status-label"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+</main>
+
+<div class="lightbox" id="lightbox">
+  <div class="lb-inner">
+    <button class="lb-close" id="lb-close-btn">✕</button>
+    <div class="lb-preview" id="lb-preview"></div>
+    <div class="lb-meta">
+      <div class="lb-title" id="lb-title"></div>
+      <div class="lb-traits" id="lb-traits"></div>
+      <div class="lb-actions">
+        <button class="btn btn-acid" id="lb-download-png">Download PNG</button>
+        <button class="btn btn-ghost" id="lb-download">Download SVG</button>
+        <button class="btn btn-ghost" id="lb-copy">Copy markup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- ENGINE:START -->
+<!-- ENGINE:END -->
+<script>
+// All generation primitives (TRAITS, weightedPick, mulberry32, shade, *Markup, …)
+// are globals defined by the inlined engine above (generator.js / window.ArtGen).
+
+const locks = {};
+Object.keys(TRAITS).forEach(k => locks[k] = []);
+let currentPieces = [];
+let currentTier = 'any';
+let currentChain = 'bitcoin';
+let currentAnimate = false;
+
+function getDisplayName() {
+  const v = document.getElementById('collection-name-input').value.trim();
+  return v || 'Untitled Collection';
+}
+function getFileSafeName() {
+  const v = document.getElementById('collection-name-input').value.trim();
+  const slug = v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return slug || 'collection';
+}
+function getSymbol() {
+  return document.getElementById('collection-symbol-input').value.trim().toUpperCase();
+}
+function getDescription() {
+  return document.getElementById('collection-description-input').value.trim();
+}
+// TIER_FALLBACK is provided as a global by the inlined engine.
+
+function pickTrait(rng, key) {
+  const selected = locks[key];
+  const pool = TRAITS[key];
+  if (selected && selected.length) {
+    const subset = pool.filter(p => selected.includes(p.id));
+    if (subset.length) return weightedPick(rng, subset);
+  }
+  if (currentTier !== 'any') {
+    const order = TIER_FALLBACK[currentTier] || ['common', 'uncommon', 'rare'];
+    for (const tier of order) {
+      const subset = pool.filter(p => p.rarity === tier);
+      if (subset.length) return weightedPick(rng, subset);
+    }
+  }
+  return weightedPick(rng, pool);
+}
+
+function generateOne(index, seed) {
+  const rng = mulberry32((seed | 0) * 100003 + index);
+  const background = pickTrait(rng, 'background');
+  const body = pickTrait(rng, 'body');
+  const bodyColor = pickTrait(rng, 'bodyColor');
+  const size = pickTrait(rng, 'size');
+  const headShape = pickTrait(rng, 'headShape');
+  const headColor = pickTrait(rng, 'headColor');
+  const eyeShape = pickTrait(rng, 'eyeShape');
+  const eyeColor = pickTrait(rng, 'eyeColor');
+  let mouth = pickTrait(rng, 'mouth');
+  mouth = rerollMouthIfClashing(rng, { headShape: headShape.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id }, mouth, TRAITS.mouth, currentTier);
+  const accessory = pickTrait(rng, 'accessory');
+
+  // Build every non-eye layer exactly ONCE. These all consume rng internally
+  // (cracked-head jitter, dot scatter, background texture) — calling them a
+  // second time would draw different random numbers and the "static" and
+  // "animated" versions would silently diverge (different crack line, different
+  // dot positions). Composing once and reusing the strings keeps them identical.
+  const bgOverlay = backgroundOverlay(rng, background.pattern);
+  const bodyPart = bodyMarkup(body.id, bodyColor.hex, background.fill);
+  const headPart = headMarkup(headShape.id, headColor.hex, rng, background.fill);
+  const mouthPart = mouthMarkup(mouth.id);
+  const accessoryPart = accessoryMarkup(rng, accessory.id);
+  const noMouth = mouth.id === 'none';
+  const eyesStatic = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, { noMouth });
+
+  // Animation timing draws from a SEPARATE seeded stream so toggling animation
+  // never shifts trait selection — the art is identical, motion is layered on.
+  let eyesAnimated = eyesStatic;
+  if (currentAnimate) {
+    const animRng = mulberry32((seed | 0) * 70001 + index * 9973 + 1);
+    eyesAnimated = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR,
+      { animate: true, rng: animRng, headColor: headColor.hex, noMouth });
+  }
+
+  const wrap = eyesPart => `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+<rect width="600" height="600" fill="${background.fill}"/>
+${bgOverlay}
+${bodyPart}
+${headPart}
+${eyesPart}
+${mouthPart}
+${accessoryPart}
+</svg>`;
+
+  // svgStatic: ALWAYS motion-free — used for grid thumbnails. Running hundreds
+  // of live SMIL animations in a scrolling grid at once is what was causing
+  // tiles to render blank/unpainted; thumbnails stay calm and fast regardless
+  // of the animate toggle.
+  // svg: honors the toggle — used for the lightbox (one piece on screen at a
+  // time, safe to animate) and for SVG/ZIP export (what actually gets shipped
+  // or inscribed). When the toggle is off, eyesAnimated === eyesStatic, so
+  // wrap() would build the exact same string twice — reuse svgStatic instead.
+  // At large supplies (tens of thousands of pieces, each holding two full SVG
+  // strings) this roughly halves both generation time and retained memory in
+  // the by-far-most-common case of generating with animation off.
+  const svgStatic = wrap(eyesStatic);
+  const svg = currentAnimate ? wrap(eyesAnimated) : svgStatic;
+
+  return {
+    index, svg, svgStatic,
+    traits: {
+      background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id,
+      headShape: headShape.id, headColor: headColor.id,
+      eyeShape: eyeShape.id, eyeColor: eyeColor.id,
+      mouth: mouth.id, accessory: accessory.id
+    },
+    rarity: {
+      background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity,
+      headShape: headShape.rarity, headColor: headColor.rarity,
+      eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity,
+      mouth: mouth.rarity, accessory: accessory.rarity
+    },
+    tier: currentTier
+  };
+}
+
+const CATEGORY_META = [
+  { key: 'background', label: 'Background', swatch: 'fill' },
+  { key: 'body', label: 'Body' },
+  { key: 'bodyColor', label: 'Body color', swatch: 'hex' },
+  { key: 'size', label: 'Size' },
+  { key: 'headShape', label: 'Head shape' },
+  { key: 'headColor', label: 'Head color', swatch: 'hex' },
+  { key: 'eyeShape', label: 'Eye shape' },
+  { key: 'eyeColor', label: 'Eye color', swatch: 'hex' },
+  { key: 'mouth', label: 'Mouth' },
+  { key: 'accessory', label: 'Accessory' }
+];
+
+function rarityColor(r) {
+  return r === 'rare' ? 'var(--rare)' : r === 'uncommon' ? 'var(--orange)' : 'var(--dim)';
+}
+function buildControls() {
+  const root = document.getElementById('controls');
+  root.innerHTML = CATEGORY_META.map(m => {
+    const pool = TRAITS[m.key];
+    const chips = pool.map(t => {
+      const dot = m.swatch ? `<span class="dot" style="background:${t[m.swatch]}"></span>` : '';
+      const rdot = `<span class="dot" style="background:${rarityColor(t.rarity)}" title="${t.rarity}"></span>`;
+      return `<button class="chip" data-key="${m.key}" data-id="${t.id}">${dot}${rdot}${t.id.replace(/_/g, ' ')}</button>`;
+    }).join('');
+    return `<div class="trait-group">
+      <div class="trait-label">${m.label}</div>
+      <div class="chip-row">
+        <button class="chip active" data-key="${m.key}" data-id="">random</button>
+        ${chips}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let _renderGen = 0;
+let _isRendering = false;
+function render() {
+  const myGen = ++_renderGen;
+  const seed = parseInt(document.getElementById('seed-input').value, 10) || 0;
+  let count = parseInt(document.getElementById('count-input').value, 10);
+  if (!count || count < 1) count = 1;
+  document.getElementById('count-input').value = count;
+  if (count > 2000) showToast('Rendering ' + count + ' pieces — this may take a moment');
+
+  // Pieces are generated AND inserted into the grid together, in chunks
+  // spread across animation frames — not built all up front. At very large
+  // supplies, even the pure JS work of building every piece's SVG strings
+  // (before any DOM touch) can itself run long enough to make the tab look
+  // unresponsive; merging generation into the same per-frame chunk keeps
+  // every individual frame's work bounded no matter the total count, instead
+  // of just keeping the DOM-insertion frame bounded.
+  const pieces = new Array(count);
+  currentPieces = pieces;
+  _isRendering = true;
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const baseLabel = count + ' generated · seed ' + seed + (currentTier !== 'any' ? ' · ' + currentTier : '');
+  document.getElementById('status-label').textContent = baseLabel;
+
+  const CHUNK = 500;
+  let idx = 0;
+  function processChunk() {
+    if (myGen !== _renderGen) return; // superseded by a newer render() call
+    let html = '';
+    const end = Math.min(idx + CHUNK, count);
+    for (; idx < end; idx++) {
+      const p = generateOne(idx + 1, seed);
+      pieces[idx] = p;
+      html += `<div class="tile" data-idx="${idx}">${p.svgStatic}<div class="tile-label">#${p.index}</div></div>`;
+    }
+    grid.insertAdjacentHTML('beforeend', html);
+    if (idx < count) {
+      if (count > 2000) document.getElementById('status-label').textContent = baseLabel + ' — rendering ' + idx + '/' + count;
+      requestAnimationFrame(processChunk);
+    } else {
+      _isRendering = false;
+      if (count > 2000) document.getElementById('status-label').textContent = baseLabel;
+    }
+  }
+  requestAnimationFrame(processChunk);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function downloadSVG(p) {
+  const blob = new Blob([p.svg], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = getFileSafeName() + '-' + p.index + '.svg';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  showToast('SVG downloaded');
+}
+async function downloadPNG(p) {
+  try {
+    const blob = await svgToPngBlob(p.svg, 1024);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = getFileSafeName() + '-' + p.index + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast('PNG downloaded — this one will show up in your gallery');
+  } catch (e) {
+    showToast('PNG render failed — try the SVG instead');
+  }
+}
+function copySVG(p) {
+  navigator.clipboard.writeText(p.svg)
+    .then(() => showToast('SVG markup copied'))
+    .catch(() => showToast('Copy failed — select manually'));
+}
+function exportCSV() {
+  if (!currentPieces.length) return;
+  if (_isRendering) { showToast('Still generating — try again in a moment'); return; }
+  const keys = Object.keys(currentPieces[0].traits);
+  const header = ['index', ...keys, ...keys.map(k => k + '_rarity'), 'requestedTier'].join(',');
+  const rows = currentPieces.map(p => [
+    p.index,
+    ...keys.map(k => p.traits[k]),
+    ...keys.map(k => p.rarity[k]),
+    p.tier
+  ].join(','));
+  const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = getFileSafeName() + '-traits.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Trait sheet exported');
+}
+
+function traitTypeLabel(key) {
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+}
+function svgToPngBlob(svgString, size) {
+  return new Promise((resolve, reject) => {
+    try {
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('toBlob failed')), 'image/png');
+      };
+      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+      img.src = url;
+    } catch (e) { reject(e); }
+  });
+}
+
+async function downloadBatchZip() {
+  if (!currentPieces.length) return;
+  if (_isRendering) { showToast('Still generating — try again in a moment'); return; }
+  if (typeof JSZip === 'undefined') { showToast('JSZip failed to load — check your connection'); return; }
+  showToast('Rendering ' + currentPieces.length + ' PNGs…');
+  const zip = new JSZip();
+  const images = zip.folder('images');
+  const vectors = zip.folder('vectors');
+  const metadata = zip.folder('metadata');
+
+  // PNGs were generated one at a time, fully sequential — each await blocked
+  // until that single conversion finished before the next one even started.
+  // Processing in concurrent batches overlaps the async decode step across
+  // several pieces instead of paying for it serially every time, which is
+  // most of what was making large batches slow. PNGs also skip ZIP
+  // compression: they're already a compressed format, so re-deflating them
+  // costs real time for effectively no size benefit.
+  const BATCH = 12;
+  for (let start = 0; start < currentPieces.length; start += BATCH) {
+    const end = Math.min(start + BATCH, currentPieces.length);
+    const batch = currentPieces.slice(start, end);
+    const results = await Promise.all(batch.map(p =>
+      svgToPngBlob(p.svg, 1024).then(blob => ({ p, blob })).catch(() => ({ p, blob: null }))
+    ));
+    for (const { p, blob } of results) {
+      if (blob) images.file(p.index + '.png', blob, { compression: 'STORE' });
+      else showToast('PNG render failed on #' + p.index + ' — skipping its image');
+      vectors.file(p.index + '.svg', p.svg);
+
+      const attributes = Object.keys(p.traits).map(k => ({
+        trait_type: traitTypeLabel(k),
+        value: p.traits[k],
+        rarity: p.rarity[k]
+      }));
+      const symbol = getSymbol();
+      const desc = getDescription();
+      const meta = {
+        name: getDisplayName() + ' #' + p.index,
+        description: desc || ('Generative piece from ' + getDisplayName() + '.'),
+        image: 'images/' + p.index + '.png',
+        vector: 'vectors/' + p.index + '.svg',
+        chain: currentChain,
+        attributes: attributes
+      };
+      if (symbol) meta.symbol = symbol;
+      if (currentChain === 'ethereum') meta.external_url = '';
+      metadata.file(p.index + '.json', JSON.stringify(meta, null, 2));
+    }
+    if (currentPieces.length > 40) showToast('Rendered ' + end + ' / ' + currentPieces.length + '…');
+  }
+
+  zip.file('collection.json', JSON.stringify({
+    name: getDisplayName(),
+    symbol: getSymbol() || undefined,
+    description: getDescription() || undefined,
+    chain: currentChain,
+    supply: currentPieces.length,
+    seed: parseInt(document.getElementById('seed-input').value, 10) || 0,
+    characterType: currentTier,
+    generatedAt: new Date().toISOString()
+  }, null, 2));
+
+  try {
+    showToast('Zipping…');
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = getFileSafeName() + '-batch.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Batch downloaded — PNGs (for your gallery) + SVGs + metadata');
+  } catch (e) {
+    showToast('Zip failed — try a smaller batch');
+  }
+}
+
+function openLightbox(idx) {
+  const p = currentPieces[idx];
+  document.getElementById('lb-preview').innerHTML = p.svg;
+  document.getElementById('lb-title').textContent = getDisplayName() + ' #' + p.index;
+  document.getElementById('lb-traits').innerHTML = Object.entries(p.traits).map(([k, v]) =>
+    `<div class="lb-trait"><div class="lb-trait-k">${k}</div><div class="lb-trait-v">${String(v).replace(/_/g, ' ')} <span style="font-size:9px;color:${rarityColor(p.rarity[k])};text-transform:uppercase;">${p.rarity[k]}</span></div></div>`
+  ).join('');
+  document.getElementById('lb-download-png').onclick = () => downloadPNG(p);
+  document.getElementById('lb-download').onclick = () => downloadSVG(p);
+  document.getElementById('lb-copy').onclick = () => copySVG(p);
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lb-preview').innerHTML = '';
+}
+
+const CHAIN_THEMES = {
+  bitcoin:  '#f7931a',
+  ethereum: '#627eea'
+};
+function applyChainTheme(chain) {
+  const color = CHAIN_THEMES[chain] || CHAIN_THEMES.bitcoin;
+  document.documentElement.style.setProperty('--acid', color);
+  document.documentElement.style.setProperty('--acid-hover', shade(color, 18));
+}
+document.getElementById('chain-controls').addEventListener('click', e => {
+  const btn = e.target.closest('.chip');
+  if (!btn) return;
+  currentChain = btn.dataset.chain;
+  document.querySelectorAll('#chain-controls .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  applyChainTheme(currentChain);
+});
+document.getElementById('collection-name-input').addEventListener('input', () => {
+  const v = document.getElementById('collection-name-input').value.trim();
+  document.getElementById('h1-text').textContent = v ? 'Build ' + v : 'Build your collection';
+  document.title = (v || 'Generator') + ' — Generator';
+});
+document.getElementById('tier-controls').addEventListener('click', e => {
+  const btn = e.target.closest('.chip');
+  if (!btn) return;
+  currentTier = btn.dataset.tier;
+  document.querySelectorAll('#tier-controls .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+});
+document.getElementById('controls').addEventListener('click', e => {
+  const btn = e.target.closest('.chip');
+  if (!btn) return;
+  const key = btn.dataset.key, id = btn.dataset.id;
+  const row = btn.parentElement;
+  if (id === '') {
+    locks[key] = [];
+    row.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    return;
+  }
+  const i = locks[key].indexOf(id);
+  if (i === -1) { locks[key].push(id); btn.classList.add('active'); }
+  else { locks[key].splice(i, 1); btn.classList.remove('active'); }
+  const randomChip = row.querySelector('.chip[data-id=""]');
+  if (locks[key].length === 0) { if (randomChip) randomChip.classList.add('active'); }
+  else { if (randomChip) randomChip.classList.remove('active'); }
+});
+document.getElementById('grid').addEventListener('click', e => {
+  const tile = e.target.closest('.tile');
+  if (!tile) return;
+  openLightbox(parseInt(tile.dataset.idx, 10));
+});
+document.getElementById('generate-btn').addEventListener('click', render);
+document.getElementById('animate-toggle').addEventListener('click', () => {
+  currentAnimate = !currentAnimate;
+  const btn = document.getElementById('animate-toggle');
+  btn.classList.toggle('active', currentAnimate);
+  btn.textContent = 'animate eyes: ' + (currentAnimate ? 'on' : 'off');
+  render();
+});
+document.getElementById('reroll-btn').addEventListener('click', () => {
+  document.getElementById('seed-input').value = Math.floor(Math.random() * 100000);
+  render();
+});
+document.getElementById('reset-btn').addEventListener('click', () => {
+  Object.keys(locks).forEach(k => locks[k] = []);
+  currentTier = 'any';
+  document.querySelectorAll('#tier-controls .chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('#tier-controls .chip[data-tier="any"]').classList.add('active');
+  document.querySelectorAll('#controls .chip-row').forEach(row => {
+    row.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    const def = row.querySelector('.chip[data-id=""]');
+    if (def) def.classList.add('active');
+  });
+  render();
+});
+document.getElementById('csv-btn').addEventListener('click', exportCSV);
+document.getElementById('download-batch-btn').addEventListener('click', downloadBatchZip);
+document.getElementById('lb-close-btn').addEventListener('click', closeLightbox);
+document.getElementById('lightbox').addEventListener('click', e => { if (e.target.id === 'lightbox') closeLightbox(); });
+
+applyChainTheme(currentChain);
+buildControls();
+render();
+</script>
+</body>
+</html>
