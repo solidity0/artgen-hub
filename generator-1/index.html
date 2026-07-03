@@ -167,8 +167,8 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   </div>
 
   <div class="run-row">
-    <div class="field"><label>Seed</label><input type="number" id="seed-input" value="7"></div>
-    <div class="field"><label>Supply</label><input type="number" id="count-input" value="24" min="1"></div>
+    <div class="field"><label>Seed</label><input type="text" inputmode="numeric" id="seed-input" value="7"></div>
+    <div class="field"><label>Supply</label><input type="text" inputmode="numeric" id="count-input" value="24"></div>
     <button class="chip" id="animate-toggle" title="Adds seeded SMIL motion to the eyes. PNG thumbnails stay static; SVG exports animate.">animate eyes: off</button>
     <button class="btn btn-acid" id="generate-btn">Generate</button>
     <button class="btn btn-ghost" id="reroll-btn">Reroll seed</button>
@@ -1077,18 +1077,41 @@ function accessoryMarkup(rng, accId, eyeCtx) {
     const isCyclops = eyeCtx && eyeCtx.eyeShape === 'cyclops';
     const side = rng() < 0.5 ? -1 : 1;
     const tx = isCyclops ? 300 : 300 + side * 51;
-    // cyclops sits higher (cy-10 with a mouth present) and is drawn 1.3x
-    // larger than a standard eye, so its bottom edge lands lower on the face
-    // than a flat ty=230 accounts for — recompute from its actual geometry
-    // instead of reusing the two-eye constant, or the tear starts partway
-    // inside the eye itself on larger cyclops pieces.
-    let ty = 230;
-    if (isCyclops && eyeCtx) {
-      const cy = eyeCtx.noMouth ? 215 : 200;
-      const eyeCy = eyeCtx.noMouth ? cy : cy - 10;
-      const bigR = Math.round((eyeCtx.eyeR || 32) * 1.3);
-      ty = eyeCy + bigR + 6;
+
+    // Was ALSO a flat ty=230 for every non-cyclops case, which assumed one
+    // specific eye shape's bottom edge and one specific cy — wrong on two
+    // counts: (1) noMouth shifts cy from 200 to 215 (15px) and this never
+    // accounted for it, and (2) every eyeShape has a different actual
+    // vertical extent below cy — hollow_socket's outer ellipse alone reaches
+    // eyeR+10, taller than the flat 230 constant assumed, so the tear started
+    // partway INSIDE the socket instead of below it (confirmed: at
+    // size=medium with a mouth present, eye bottom = 200+42 = 242, twelve
+    // pixels below where the tear used to start). round_glow's faint outer
+    // glow ring reaches even further (glowR[1], which is exactly eyeR+14 at
+    // every defined size — verified against the actual size trait
+    // definitions rather than assumed). Computing the real bottom edge per
+    // shape, the same way cyclops already got fixed, instead of one guess
+    // reused for every shape.
+    const cy = (eyeCtx && eyeCtx.noMouth) ? 215 : 200;
+    const eyeR = (eyeCtx && eyeCtx.eyeR) || 32;
+    let bottomOffset;
+    if (isCyclops) {
+      const eyeCy = (eyeCtx && eyeCtx.noMouth) ? cy : cy - 10;
+      bottomOffset = Math.round(eyeR * 1.3) + (eyeCy - cy); // fold cyclops's own cy shift into the offset from the shared cy below
+    } else if (!eyeCtx || !eyeCtx.eyeShape || eyeCtx.eyeShape === 'round_glow') {
+      bottomOffset = eyeR + 14; // outer glow ring radius (glowR[1]), verified == eyeR+14 at every defined size
+    } else if (eyeCtx.eyeShape === 'hollow_socket') {
+      bottomOffset = eyeR + 10; // outer socket ellipse's ry
+    } else if (eyeCtx.eyeShape === 'glitch') {
+      const barH = Math.max(5, Math.round(eyeR * 0.32));
+      bottomOffset = Math.round(1.5 * barH); // 4 stacked bars, half-span below center
+    } else if (eyeCtx.eyeShape === 'x_dead') {
+      bottomOffset = Math.round(eyeR * 0.8); // X shape's own half-width, which also sets its vertical reach
+    } else {
+      bottomOffset = eyeR + 14; // unrecognized shape (future-proofing) — fall back to the tallest known case rather than the shortest, so a new shape added later overshoots safely instead of overlapping
     }
+    const ty = cy + bottomOffset + 6;
+
     return `<path d="M ${tx} ${ty} Q ${tx - 6} ${ty + 18} ${tx} ${ty + 26} Q ${tx + 6} ${ty + 18} ${tx} ${ty} Z" fill="#bcd9ff" opacity="0.8"/>`;
   }
   return '';
@@ -1306,6 +1329,43 @@ const CATEGORY_META = [
   { key: 'accessory', label: 'Accessory' }
 ];
 
+// Seed/supply are large numbers (supply especially — no cap), and a plain
+// "9999" is genuinely harder to scan at a glance than "9,999". type=number
+// can't display commas at all (browsers reject non-numeric characters in
+// a number input's value), so these are text inputs instead, formatted and
+// parsed by hand.
+function formatWithCommas(n) {
+  const num = Number(n);
+  return Number.isFinite(num) ? num.toLocaleString('en-US') : '';
+}
+function parseFormattedInt(str) {
+  return parseInt(String(str).replace(/,/g, ''), 10);
+}
+// Reformats as the user types rather than only on blur, so the field never
+// shows an unformatted number mid-edit. Comma insertion shifts character
+// positions, so the naive approach (reformat, leave cursor where it was)
+// drifts the cursor away from where the user is actually typing after the
+// first comma appears. Tracked by DIGIT count instead: count digits to the
+// left of the cursor in the raw input, reformat, then walk the formatted
+// string until that many digits have been passed — lands the cursor after
+// the same digit regardless of how many commas moved around it.
+function attachLiveCommaFormatting(input) {
+  input.addEventListener('input', () => {
+    const raw = input.value;
+    const cursorPos = input.selectionStart == null ? raw.length : input.selectionStart;
+    const digitsBeforeCursor = raw.slice(0, cursorPos).replace(/[^\d]/g, '').length;
+    const digitsOnly = raw.replace(/[^\d]/g, '');
+    const formatted = digitsOnly === '' ? '' : formatWithCommas(digitsOnly);
+    input.value = formatted;
+    let seen = 0, pos = formatted.length;
+    for (let i = 0; i < formatted.length; i++) {
+      if (/\d/.test(formatted[i])) seen++;
+      if (seen >= digitsBeforeCursor) { pos = i + 1; break; }
+    }
+    input.setSelectionRange(pos, pos);
+  });
+}
+
 function rarityColor(r) {
   return r === 'rare' ? 'var(--acid)' : r === 'uncommon' ? 'var(--orange)' : 'var(--dim)';
 }
@@ -1332,10 +1392,10 @@ let _renderGen = 0;
 let _isRendering = false;
 function render() {
   const myGen = ++_renderGen;
-  const seed = parseInt(document.getElementById('seed-input').value, 10) || 0;
-  let count = parseInt(document.getElementById('count-input').value, 10);
+  const seed = parseFormattedInt(document.getElementById('seed-input').value) || 0;
+  let count = parseFormattedInt(document.getElementById('count-input').value);
   if (!count || count < 1) count = 1;
-  document.getElementById('count-input').value = count;
+  document.getElementById('count-input').value = formatWithCommas(count);
   if (count > 2000) showToast('Rendering ' + count + ' pieces — this may take a moment');
 
   // Pieces are generated AND inserted into the grid together, in chunks
@@ -1512,7 +1572,7 @@ async function downloadBatchZip() {
     description: getDescription() || undefined,
     chain: currentChain,
     supply: currentPieces.length,
-    seed: parseInt(document.getElementById('seed-input').value, 10) || 0,
+    seed: parseFormattedInt(document.getElementById('seed-input').value) || 0,
     characterType: currentTier,
     generatedAt: new Date().toISOString()
   }, null, 2));
@@ -1609,7 +1669,7 @@ document.getElementById('animate-toggle').addEventListener('click', () => {
   render();
 });
 document.getElementById('reroll-btn').addEventListener('click', () => {
-  document.getElementById('seed-input').value = Math.floor(Math.random() * 100000);
+  document.getElementById('seed-input').value = formatWithCommas(Math.floor(Math.random() * 100000));
   render();
 });
 document.getElementById('reset-btn').addEventListener('click', () => {
@@ -1628,6 +1688,8 @@ document.getElementById('csv-btn').addEventListener('click', exportCSV);
 document.getElementById('download-batch-btn').addEventListener('click', downloadBatchZip);
 document.getElementById('lb-close-btn').addEventListener('click', closeLightbox);
 document.getElementById('lightbox').addEventListener('click', e => { if (e.target.id === 'lightbox') closeLightbox(); });
+attachLiveCommaFormatting(document.getElementById('seed-input'));
+attachLiveCommaFormatting(document.getElementById('count-input'));
 
 applyChainTheme(currentChain);
 buildControls();
