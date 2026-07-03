@@ -190,10 +190,13 @@ function pickByRarity(rng, pool, tier) {
 
 // Some multi-trait combinations clash visually for reasons that don't fit a
 // single category pairing — each entry lists every trait that must match for
-// the combo to be disallowed (besides 'mouth', which is what gets re-rolled,
-// excluding the clashing option, when the rest line up). Originally just an
+// the combo to be disallowed, plus exactly one key naming the trait that
+// actually gets re-rolled when the rest line up. Originally just an
 // eyeShape+mouth check (cyclops' single centered eye reads oddly under
-// 'shout'); generalized to also cover combos involving headShape/eyeColor.
+// 'shout'); generalized to also cover combos involving headShape/eyeColor,
+// and now accessory too — same shape of problem (a trait that reads fine on
+// its own clashes with a specific other trait), no reason to keep it
+// mouth-only.
 const DISALLOWED_COMBOS = [
   { eyeShape: 'cyclops', mouth: 'shout' },
   // 'split' head's center gap sits exactly where a centered eye/mouth would
@@ -208,25 +211,37 @@ const DISALLOWED_COMBOS = [
   // trait, reading as visually cramped against these two shapes specifically
   // in a way the other mouths don't. Simpler to just not pair them.
   { headShape: 'monitor', mouth: 'shout' },
-  { headShape: 'vented', mouth: 'shout' }
+  { headShape: 'vented', mouth: 'shout' },
+  // 'tears' is sized for the standard two-eye layout at small/medium scale —
+  // at 'large' the eyes (and the head itself) are big enough that the tear
+  // reads as too small/oddly placed relative to everything else on the face,
+  // regardless of eyeShape. Simpler to not pair them than to make tears
+  // itself size-aware for one specific trait.
+  { accessory: 'tears', size: 'large' },
+  // 'split' head's center gap sits right where a two-eye tear's inner edge
+  // would normally read against solid head color — against the gap's
+  // exposed background instead, it looks disconnected from the face rather
+  // than like it's dripping from an eye.
+  { accessory: 'tears', headShape: 'split' }
 ];
-function rerollMouthIfClashing(rng, traitsSoFar, mouth, pool, tier) {
+function rerollTraitIfClashing(rng, traitsSoFar, targetKey, currentTrait, pool, tier) {
   // A single pass isn't enough: fixing one combo's re-roll can land on a
-  // mouth that matches a DIFFERENT combo (confirmed — a split+violet+fangs
+  // value that matches a DIFFERENT combo (confirmed — a split+violet+fangs
   // re-roll landed on 'shout', which is itself disallowed with cyclops, and
   // returning immediately after the first fix never re-checked it). Loop
-  // until no combo matches the current mouth, or give up after a few tries
+  // until no combo matches the current value, or give up after a few tries
   // (the rule list is short, so this converges in 1-2 passes in practice).
   for (let attempt = 0; attempt < 5; attempt++) {
     const matched = DISALLOWED_COMBOS.find(combo =>
-      Object.entries(combo).every(([key, val]) => key === 'mouth' ? mouth.id === val : traitsSoFar[key] === val)
+      Object.prototype.hasOwnProperty.call(combo, targetKey) &&
+      Object.entries(combo).every(([key, val]) => key === targetKey ? currentTrait.id === val : traitsSoFar[key] === val)
     );
     if (!matched) break;
-    const alt = pool.filter(m => m.id !== matched.mouth);
+    const alt = pool.filter(t => t.id !== matched[targetKey]);
     if (!alt.length) break;
-    mouth = pickByRarity(rng, alt, tier);
+    currentTrait = pickByRarity(rng, alt, tier);
   }
-  return mouth;
+  return currentTrait;
 }
 
 // ---------- color helper ----------
@@ -827,7 +842,7 @@ function backgroundOverlay(rng, pattern) {
 }
 
 // ---------- accessories ----------
-function accessoryMarkup(rng, accId) {
+function accessoryMarkup(rng, accId, eyeCtx) {
   if (accId === 'scatter_dots') {
     let out = '';
     const n = 5 + Math.floor(rng() * 4);
@@ -845,9 +860,26 @@ function accessoryMarkup(rng, accId) {
     return `<defs><pattern id="${pid}" width="600" height="8" patternUnits="userSpaceOnUse"><rect x="0" y="4" width="600" height="2" fill="#000000" opacity="0.12"/></pattern></defs><rect x="0" y="0" width="600" height="600" fill="url(#${pid})"/>`;
   }
   if (accId === 'tears') {
+    // Was hardcoded to ±51px either side of center (300), which is exactly
+    // right for the standard two-eye layout (eyes at 249/351) but puts the
+    // tear well off to the side of 'cyclops' — a single eye centered at
+    // x=300 — instead of underneath it. Center-align for cyclops instead of
+    // reusing the two-eye offset.
+    const isCyclops = eyeCtx && eyeCtx.eyeShape === 'cyclops';
     const side = rng() < 0.5 ? -1 : 1;
-    const tx = 300 + side * 51;
-    const ty = 230;
+    const tx = isCyclops ? 300 : 300 + side * 51;
+    // cyclops sits higher (cy-10 with a mouth present) and is drawn 1.3x
+    // larger than a standard eye, so its bottom edge lands lower on the face
+    // than a flat ty=230 accounts for — recompute from its actual geometry
+    // instead of reusing the two-eye constant, or the tear starts partway
+    // inside the eye itself on larger cyclops pieces.
+    let ty = 230;
+    if (isCyclops && eyeCtx) {
+      const cy = eyeCtx.noMouth ? 215 : 200;
+      const eyeCy = eyeCtx.noMouth ? cy : cy - 10;
+      const bigR = Math.round((eyeCtx.eyeR || 32) * 1.3);
+      ty = eyeCy + bigR + 6;
+    }
     return `<path d="M ${tx} ${ty} Q ${tx - 6} ${ty + 18} ${tx} ${ty + 26} Q ${tx + 6} ${ty + 18} ${tx} ${ty} Z" fill="#bcd9ff" opacity="0.8"/>`;
   }
   return '';
@@ -871,8 +903,9 @@ function generatePiece(index, seed, tier, opts) {
   const eyeShape   = pickByRarity(rng, TRAITS.eyeShape, t);
   const eyeColor   = pickByRarity(rng, TRAITS.eyeColor, t);
   let mouth        = pickByRarity(rng, TRAITS.mouth, t);
-  mouth = rerollMouthIfClashing(rng, { headShape: headShape.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id }, mouth, TRAITS.mouth, t);
-  const accessory  = pickByRarity(rng, TRAITS.accessory, t);
+  mouth = rerollTraitIfClashing(rng, { headShape: headShape.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id }, 'mouth', mouth, TRAITS.mouth, t);
+  let accessory    = pickByRarity(rng, TRAITS.accessory, t);
+  accessory = rerollTraitIfClashing(rng, { headShape: headShape.id, size: size.id, eyeShape: eyeShape.id, mouth: mouth.id }, 'accessory', accessory, TRAITS.accessory, t);
 
   // independent timing stream (different multiplier) — keeps trait selection stable
   const animRng = animate ? mulberry32((seed ?? 0) * 70001 + index * 9973 + 1) : null;
@@ -886,7 +919,7 @@ ${bodyMarkup(body.id, bodyColor.hex, background.fill)}
 ${headMarkup(headShape.id, headColor.hex, rng, background.fill)}
 ${eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, eyeOpts)}
 ${mouthMarkup(mouth.id, headShape.id)}
-${accessoryMarkup(rng, accessory.id)}
+${accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth: eyeOpts.noMouth })}
 </svg>`;
 
   return {
