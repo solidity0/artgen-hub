@@ -1693,6 +1693,16 @@ attachLiveCommaFormatting(document.getElementById('count-input'));
 
 applyChainTheme(currentChain);
 buildControls();
+// Landing on the same hardcoded seed every time meant every visitor — on
+// every single page load — saw the literal identical 24 pieces, since
+// render() reads whatever's already in the seed field and that field's
+// static HTML default never changed. Randomizing it right before the
+// first render (same random-seed logic as the Reroll button, so it's not
+// a separate code path to keep in sync) makes each fresh visit land on a
+// different preview by default, while typing an exact seed and hitting
+// Generate is still fully deterministic — reproducibility per-seed is
+// untouched, only what greets a first-time visitor changes.
+document.getElementById('seed-input').value = formatWithCommas(Math.floor(Math.random() * 100000));
 render();
 </script>
 </body>
