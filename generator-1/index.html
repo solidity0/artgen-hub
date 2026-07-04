@@ -78,10 +78,16 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .status-label { font-family:'Space Mono',monospace; font-size:11px; color:var(--mid); }
 
 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:6px; }
-.tile { background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; }
+.tile { background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; position:relative; }
 .tile:hover { border-color:var(--acid); }
 .tile svg { display:block; width:100%; }
-.tile-label { padding:5px 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--mid); }
+.tile-label { padding:5px 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
+.tile-label.is-1of1 { color:var(--acid); font-weight:700; }
+.tile-1of1 {
+  position:absolute; top:6px; left:6px; z-index:2; background:var(--acid); color:#000;
+  font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.05em;
+  padding:2px 6px; border-radius:3px;
+}
 
 .lightbox { display:none; position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.88); align-items:center; justify-content:center; padding:20px; }
 .lightbox.open { display:flex; }
@@ -89,7 +95,8 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .lb-preview { background:#000; }
 .lb-preview svg { display:block; width:100%; }
 .lb-meta { padding:20px; display:flex; flex-direction:column; gap:12px; }
-.lb-title { font-family:'Space Mono',monospace; font-size:14px; color:var(--acid); letter-spacing:.05em; }
+.lb-title { font-family:'Space Mono',monospace; font-size:14px; color:var(--white); letter-spacing:.05em; }
+.lb-title.is-1of1 { color:var(--acid); }
 .lb-traits { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
 .lb-trait { background:var(--bg); border:1px solid var(--border); padding:8px 10px; }
 .lb-trait-k { font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin-bottom:2px; }
@@ -169,6 +176,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   <div class="run-row">
     <div class="field"><label>Seed</label><input type="text" inputmode="numeric" id="seed-input" value="7"></div>
     <div class="field"><label>Supply</label><input type="text" inputmode="numeric" id="count-input" value="24"></div>
+    <div class="field"><label>1/1</label><input type="text" inputmode="numeric" id="oneofone-input" value="0"></div>
     <button class="chip" id="animate-toggle" title="Adds seeded SMIL motion to the eyes. PNG thumbnails stay static; SVG exports animate.">animate eyes: off</button>
     <button class="btn btn-acid" id="generate-btn">Generate</button>
     <button class="btn btn-ghost" id="reroll-btn">Reroll seed</button>
@@ -1220,37 +1228,70 @@ function getDescription() {
 }
 // TIER_FALLBACK is provided as a global by the inlined engine.
 
-function pickTrait(rng, key) {
+// How many distinct trait combinations actually exist once every category is
+// forced to its rarest tier (with the same fallback pickTrait already uses —
+// some categories, like size, have zero 'rare' options at all, so they fall
+// back to 'uncommon' or the full pool rather than becoming impossible).
+// Computed from the live TRAITS object rather than hardcoded, so it can't
+// silently go stale if trait pools change later. This is the hard ceiling on
+// how many genuinely-unique 1/1s can ever exist in one batch — asking for
+// more than this is asking for something that cannot mathematically happen.
+function oneOfOneComboSpaceSize() {
+  let total = 1;
+  for (const pool of Object.values(TRAITS)) {
+    let effective = pool.filter(t => t.rarity === 'rare');
+    if (!effective.length) effective = pool.filter(t => t.rarity === 'uncommon');
+    if (!effective.length) effective = pool;
+    total *= effective.length;
+  }
+  return total;
+}
+
+function pickTrait(rng, key, tierOverride) {
   const selected = locks[key];
   const pool = TRAITS[key];
   if (selected && selected.length) {
     const subset = pool.filter(p => selected.includes(p.id));
     if (subset.length) return weightedPick(rng, subset);
   }
-  if (currentTier !== 'any') {
-    const order = TIER_FALLBACK[currentTier] || ['common', 'uncommon', 'rare'];
-    for (const tier of order) {
-      const subset = pool.filter(p => p.rarity === tier);
+  const tier = tierOverride || currentTier;
+  if (tier !== 'any') {
+    const order = TIER_FALLBACK[tier] || ['common', 'uncommon', 'rare'];
+    for (const t of order) {
+      const subset = pool.filter(p => p.rarity === t);
       if (subset.length) return weightedPick(rng, subset);
     }
   }
   return weightedPick(rng, pool);
 }
 
-function generateOne(index, seed) {
+function generateOne(index, seed, opts) {
+  const tierOverride = opts && opts.tierOverride;
+  const isOneOfOne = !!(opts && opts.isOneOfOne);
   const rng = mulberry32((seed | 0) * 100003 + index);
-  const background = pickTrait(rng, 'background');
-  const body = pickTrait(rng, 'body');
-  const bodyColor = pickTrait(rng, 'bodyColor');
-  const size = pickTrait(rng, 'size');
-  const headShape = pickTrait(rng, 'headShape');
-  const headColor = pickTrait(rng, 'headColor');
-  const eyeShape = pickTrait(rng, 'eyeShape');
-  const eyeColor = pickTrait(rng, 'eyeColor');
-  let mouth = pickTrait(rng, 'mouth');
-  mouth = rerollTraitIfClashing(rng, { headShape: headShape.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id }, 'mouth', mouth, TRAITS.mouth, currentTier);
-  let accessory = pickTrait(rng, 'accessory');
-  accessory = rerollTraitIfClashing(rng, { headShape: headShape.id, size: size.id, eyeShape: eyeShape.id, mouth: mouth.id }, 'accessory', accessory, TRAITS.accessory, currentTier);
+  const background = pickTrait(rng, 'background', tierOverride);
+  const body = pickTrait(rng, 'body', tierOverride);
+  const bodyColor = pickTrait(rng, 'bodyColor', tierOverride);
+  // 'size' has no 'rare'-tagged option at all (small/medium=common,
+  // large=uncommon) — the normal tier-fallback for tier='rare' lands on
+  // 'large' every time, since it's the only non-common choice, not because
+  // large IS the rare one. For 1/1s specifically that meant every single
+  // piece was unconditionally the same size (zero variety across the
+  // rarest, most-visible tier), AND permanently excluded 'tears' (the one
+  // rare accessory) since tears+large is disallowed — not a rare accessory
+  // showing up rarely, an accessory that could never appear at all. Locks
+  // still take priority if the user explicitly locked a size.
+  const size = (isOneOfOne && !(locks.size && locks.size.length))
+    ? weightedPick(rng, TRAITS.size)
+    : pickTrait(rng, 'size', tierOverride);
+  const headShape = pickTrait(rng, 'headShape', tierOverride);
+  const headColor = pickTrait(rng, 'headColor', tierOverride);
+  const eyeShape = pickTrait(rng, 'eyeShape', tierOverride);
+  const eyeColor = pickTrait(rng, 'eyeColor', tierOverride);
+  let mouth = pickTrait(rng, 'mouth', tierOverride);
+  mouth = rerollTraitIfClashing(rng, { headShape: headShape.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id }, 'mouth', mouth, TRAITS.mouth, tierOverride || currentTier);
+  let accessory = pickTrait(rng, 'accessory', tierOverride);
+  accessory = rerollTraitIfClashing(rng, { headShape: headShape.id, size: size.id, eyeShape: eyeShape.id, mouth: mouth.id }, 'accessory', accessory, TRAITS.accessory, tierOverride || currentTier);
 
   // Build every non-eye layer exactly ONCE. These all consume rng internally
   // (cracked-head jitter, dot scatter, background texture) — calling them a
@@ -1299,7 +1340,7 @@ ${accessoryPart}
   const svg = currentAnimate ? wrap(eyesAnimated) : svgStatic;
 
   return {
-    index, svg, svgStatic,
+    index, svg, svgStatic, isOneOfOne,
     traits: {
       background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id,
       headShape: headShape.id, headColor: headColor.id,
@@ -1312,7 +1353,7 @@ ${accessoryPart}
       eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity,
       mouth: mouth.rarity, accessory: accessory.rarity
     },
-    tier: currentTier
+    tier: tierOverride || currentTier
   };
 }
 
@@ -1398,6 +1439,23 @@ function render() {
   document.getElementById('count-input').value = formatWithCommas(count);
   if (count > 2000) showToast('Rendering ' + count + ' pieces — this may take a moment');
 
+  // 1/1 count: how many of this batch's pieces get every trait forced to the
+  // rarest tier (not just a weighted bias toward it) AND a guaranteed-unique
+  // trait combination within that subset. Clamped twice: can't exceed the
+  // batch's own supply, and can't exceed the actual number of distinct
+  // combinations that exist once every category is at its rarest tier —
+  // asking for more than that is asking for uniqueness that doesn't exist to
+  // give out, not just an inconvenient amount of re-rolling.
+  let oneOfOneCount = parseFormattedInt(document.getElementById('oneofone-input').value);
+  if (!oneOfOneCount || oneOfOneCount < 0) oneOfOneCount = 0;
+  const comboCeiling = oneOfOneComboSpaceSize();
+  if (oneOfOneCount > count) oneOfOneCount = count;
+  if (oneOfOneCount > comboCeiling) {
+    showToast('Only ' + comboCeiling.toLocaleString() + ' unique 1/1 combinations exist — capped there');
+    oneOfOneCount = comboCeiling;
+  }
+  document.getElementById('oneofone-input').value = formatWithCommas(oneOfOneCount);
+
   // Pieces are generated AND inserted into the grid together, in chunks
   // spread across animation frames — not built all up front. At very large
   // supplies, even the pure JS work of building every piece's SVG strings
@@ -1411,8 +1469,32 @@ function render() {
 
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-  const baseLabel = count + ' generated · seed ' + seed + (currentTier !== 'any' ? ' · ' + currentTier : '');
+  const baseLabel = count + ' generated · seed ' + seed
+    + (currentTier !== 'any' ? ' · ' + currentTier : '')
+    + (oneOfOneCount > 0 ? ' · ' + oneOfOneCount + ' 1/1' : '');
   document.getElementById('status-label').textContent = baseLabel;
+
+  // Scoped to this render() call specifically (not a module-level constant) —
+  // a fresh Generate click should be able to reuse combinations from a
+  // PREVIOUS batch; "unique" means unique within this batch, not across every
+  // batch ever generated in the session.
+  const usedOneOfOneCombos = new Set();
+  const MAX_REROLL_ATTEMPTS = 100;
+  function generateOneOfOne(pieceIndex, seed) {
+    let piece = generateOne(pieceIndex, seed, { tierOverride: 'rare', isOneOfOne: true });
+    let attempt = 0;
+    while (usedOneOfOneCombos.has(JSON.stringify(piece.traits)) && attempt < MAX_REROLL_ATTEMPTS) {
+      attempt++;
+      // Large offset keeps this attempt's rng stream well clear of any real
+      // piece index in the batch (supply is capped in practice, nowhere near
+      // this range), so re-rolling never accidentally reproduces another
+      // piece's exact draw.
+      piece = generateOne(pieceIndex + attempt * 10000000, seed, { tierOverride: 'rare', isOneOfOne: true });
+    }
+    usedOneOfOneCombos.add(JSON.stringify(piece.traits));
+    piece.index = pieceIndex; // the re-roll offset must never leak into the displayed piece number
+    return piece;
+  }
 
   const CHUNK = 500;
   let idx = 0;
@@ -1421,9 +1503,11 @@ function render() {
     let html = '';
     const end = Math.min(idx + CHUNK, count);
     for (; idx < end; idx++) {
-      const p = generateOne(idx + 1, seed);
+      const p = idx < oneOfOneCount ? generateOneOfOne(idx + 1, seed) : generateOne(idx + 1, seed);
       pieces[idx] = p;
-      html += `<div class="tile" data-idx="${idx}">${p.svgStatic}<div class="tile-label">#${p.index}</div></div>`;
+      const oneOfOneBadge = p.isOneOfOne ? '<div class="tile-1of1">1/1</div>' : '';
+      const labelClass = p.isOneOfOne ? 'tile-label is-1of1' : 'tile-label';
+      html += `<div class="tile" data-idx="${idx}">${oneOfOneBadge}${p.svgStatic}<div class="${labelClass}">#${p.index}</div></div>`;
     }
     grid.insertAdjacentHTML('beforeend', html);
     if (idx < count) {
@@ -1476,12 +1560,13 @@ function exportCSV() {
   if (!currentPieces.length) return;
   if (_isRendering) { showToast('Still generating — try again in a moment'); return; }
   const keys = Object.keys(currentPieces[0].traits);
-  const header = ['index', ...keys, ...keys.map(k => k + '_rarity'), 'requestedTier'].join(',');
+  const header = ['index', ...keys, ...keys.map(k => k + '_rarity'), 'requestedTier', 'isOneOfOne'].join(',');
   const rows = currentPieces.map(p => [
     p.index,
     ...keys.map(k => p.traits[k]),
     ...keys.map(k => p.rarity[k]),
-    p.tier
+    p.tier,
+    p.isOneOfOne ? 'true' : 'false'
   ].join(','));
   const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -1549,6 +1634,7 @@ async function downloadBatchZip() {
         value: p.traits[k],
         rarity: p.rarity[k]
       }));
+      if (p.isOneOfOne) attributes.push({ trait_type: 'Tier', value: '1/1' });
       const symbol = getSymbol();
       const desc = getDescription();
       const meta = {
@@ -1557,6 +1643,7 @@ async function downloadBatchZip() {
         image: 'images/' + p.index + '.png',
         vector: 'vectors/' + p.index + '.svg',
         chain: currentChain,
+        isOneOfOne: !!p.isOneOfOne,
         attributes: attributes
       };
       if (symbol) meta.symbol = symbol;
@@ -1572,6 +1659,7 @@ async function downloadBatchZip() {
     description: getDescription() || undefined,
     chain: currentChain,
     supply: currentPieces.length,
+    oneOfOneCount: currentPieces.filter(p => p.isOneOfOne).length,
     seed: parseFormattedInt(document.getElementById('seed-input').value) || 0,
     characterType: currentTier,
     generatedAt: new Date().toISOString()
@@ -1594,7 +1682,10 @@ async function downloadBatchZip() {
 function openLightbox(idx) {
   const p = currentPieces[idx];
   document.getElementById('lb-preview').innerHTML = p.svg;
-  document.getElementById('lb-title').textContent = getDisplayName() + ' #' + p.index;
+  const oneOfOneTag = p.isOneOfOne ? ' <span style="background:var(--acid);color:#000;font-size:11px;padding:2px 7px;border-radius:3px;vertical-align:middle;">1/1</span>' : '';
+  const lbTitleEl = document.getElementById('lb-title');
+  lbTitleEl.innerHTML = getDisplayName() + ' #' + p.index + oneOfOneTag;
+  lbTitleEl.classList.toggle('is-1of1', !!p.isOneOfOne);
   document.getElementById('lb-traits').innerHTML = Object.entries(p.traits).map(([k, v]) =>
     `<div class="lb-trait"><div class="lb-trait-k">${k}</div><div class="lb-trait-v">${String(v).replace(/_/g, ' ')} <span style="font-size:9px;color:${rarityColor(p.rarity[k])};text-transform:uppercase;">${p.rarity[k]}</span></div></div>`
   ).join('');
@@ -1690,6 +1781,7 @@ document.getElementById('lb-close-btn').addEventListener('click', closeLightbox)
 document.getElementById('lightbox').addEventListener('click', e => { if (e.target.id === 'lightbox') closeLightbox(); });
 attachLiveCommaFormatting(document.getElementById('seed-input'));
 attachLiveCommaFormatting(document.getElementById('count-input'));
+attachLiveCommaFormatting(document.getElementById('oneofone-input'));
 
 applyChainTheme(currentChain);
 buildControls();
