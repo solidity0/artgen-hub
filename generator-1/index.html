@@ -277,7 +277,6 @@ function weightedPick(rng, pool) {
 const TRAITS = {
   background: [
     { id: 'red',             weight: 18, fill: '#7a1f1f', pattern: 'none',           rarity: 'common' },
-    { id: 'grey_dots',       weight: 18, fill: '#8a8a8a', pattern: 'dots',           rarity: 'common' },
     { id: 'teal_cloud',      weight: 16, fill: '#3a9b8f', pattern: 'cloud',          rarity: 'uncommon' },
     { id: 'blue_cloud',      weight: 16, fill: '#5ba3d0', pattern: 'cloud',          rarity: 'uncommon' },
     { id: 'cream',           weight: 16, fill: '#e8e3d3', pattern: 'none',           rarity: 'common' },
@@ -295,7 +294,6 @@ const TRAITS = {
     { id: 'cave',            weight: 10, fill: '#1c140f', pattern: 'cave',           rarity: 'rare' },
     { id: 'desert',          weight: 14, fill: '#e8b870', pattern: 'desert',         rarity: 'uncommon' },
     { id: 'forest',          weight: 14, fill: '#2e4034', pattern: 'forest',         rarity: 'uncommon' },
-    { id: 'fog',             weight: 10, fill: '#8a9094', pattern: 'fog',            rarity: 'rare' },
     { id: 'swamp',           weight: 10, fill: '#33402a', pattern: 'swamp',          rarity: 'rare' },
     { id: 'static',          weight: 10, fill: '#4a4a4a', pattern: 'static',         rarity: 'rare' },
     { id: 'eclipse',         weight: 8,  fill: '#0c0c14', pattern: 'eclipse',        rarity: 'rare' },
@@ -318,7 +316,6 @@ const TRAITS = {
     { id: 'tattered',   weight: 14, rarity: 'rare' },
     { id: 'armored',    weight: 16, rarity: 'rare' },
     { id: 'vest',       weight: 18, rarity: 'uncommon' },
-    { id: 'engine',     weight: 14, rarity: 'rare' },
     { id: 'exosuit',    weight: 14, rarity: 'rare' }
   ],
   bodyColor: [
@@ -348,8 +345,7 @@ const TRAITS = {
     { id: 'cracked', weight: 16, rarity: 'rare' },
     { id: 'vented',  weight: 18, rarity: 'uncommon' },
     { id: 'antenna', weight: 14, rarity: 'rare' },
-    { id: 'oval',      weight: 24, rarity: 'common' },
-    { id: 'ghost_head', weight: 20, rarity: 'common' },
+    { id: 'flame_head', weight: 20, rarity: 'common' },
     { id: 'visor',     weight: 16, rarity: 'uncommon' },
     { id: 'shattered', weight: 12, rarity: 'rare' }
   ],
@@ -368,7 +364,6 @@ const TRAITS = {
   ],
   eyeShape: [
     { id: 'round_glow',    weight: 30, rarity: 'common' },
-    { id: 'hollow_socket', weight: 25, rarity: 'common' },
     { id: 'glitch',         weight: 25, rarity: 'uncommon' },
     { id: 'x_dead',        weight: 20, rarity: 'rare' },
     { id: 'cyclops',       weight: 14, rarity: 'rare' },
@@ -602,19 +597,18 @@ function bodyMarkup(bodyId, colorHex, bgFill) {
       const topPlate = `<path d="M 270 365 L 330 365 L 368 405 L 232 405 Z" fill="${highlight}" opacity="0.25"/>`;
       return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${baseHex}"${strokeAttr}/>${seams}${rivets}${topPlate}`;
     }
-    case 'vest':
-      // Same proven silhouette curve as suit, with an open-front center
-      // stripe and two strap marks layered on top — safe geometry, distinct
-      // detailing.
-      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${shade(baseHex, -20)}"${strokeAttr}/><path d="M 292 355 L 300 580 L 308 355 Z" fill="${shade(baseHex, 25)}"/><rect x="268" y="378" width="16" height="7" fill="${shade(baseHex, -35)}"/><rect x="316" y="378" width="16" height="7" fill="${shade(baseHex, -35)}"/>`;
-    case 'engine': {
-      // Straight-edged, boxy torso (not a variation on the curved
-      // suit/robe silhouette) with a visible mechanical core and pipe
-      // details — a machinery-themed body distinct from armored's plated
-      // suit and exosuit's jointed-limb look.
-      const coreColor = shade(baseHex, 30);
-      const darkColor = shade(baseHex, -30);
-      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 270 335 L 330 335 L 340 360 L 400 580 L 200 580 L 260 360 Z" fill="${baseHex}"${strokeAttr}/><circle cx="300" cy="430" r="38" fill="${darkColor}"/><circle cx="300" cy="430" r="28" fill="${coreColor}" opacity="0.6"/><rect x="260" y="500" width="14" height="50" fill="${darkColor}"/><rect x="326" y="500" width="14" height="50" fill="${darkColor}"/>`;
+    case 'vest': {
+      // Genuine open-front vest: two angled side panels over a lighter
+      // "shirt" base, with buttons down the left panel's inner edge — the
+      // previous version was just a thin center highlight stripe on the
+      // suit silhouette, too subtle to actually read as a vest rather than
+      // a suit with a stray line down it.
+      const shirtColor = shade(baseHex, 40);
+      const panelColor = shade(baseHex, -15);
+      const buttonColor = shade(baseHex, -50);
+      let buttons = '';
+      for (let i = 0; i < 3; i++) buttons += `<circle cx="292" cy="${400 + i * 45}" r="3.5" fill="${buttonColor}"/>`;
+      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${shirtColor}"/><path d="M 282 335 L 282 360 Q 220 365 210 420 L 285 580 L 195 580 Q 200 365 282 335 Z" fill="${panelColor}"${strokeAttr}/><path d="M 318 335 L 318 360 Q 380 365 390 420 L 315 580 L 405 580 Q 400 365 318 335 Z" fill="${panelColor}"${strokeAttr}/>${buttons}`;
     }
     case 'exosuit': {
       // Thicker, more mechanical-reading bands than armored's thin seam
@@ -708,25 +702,26 @@ function headMarkup(shapeId, colorHex, rng, bgFill) {
       }
       return `<rect x="${cx - halfW}" y="${cy - halfH}" width="${halfW * 2}" height="${halfH * 2}" rx="${rxCorner}" fill="${baseHex}"${strokeAttr}/>${vents}`;
     }
-    case 'oval':
-      // Same ry as round (bottom edge stays at cy+ry, no mouthMarkup change
-      // needed) but a narrower rx — reads as a distinctly taller/thinner
-      // head shape from a simple parameter change, no new geometry needed.
-      return `<ellipse cx="${cx}" cy="${cy}" rx="95" ry="${ry}" fill="${baseHex}"${strokeAttr}/>`;
-    case 'ghost_head': {
-      // Same solid ellipse silhouette as round (identical bottom edge,
-      // cy+ry — no mouthMarkup change needed), with a scalloped "sheet"
-      // fringe bitten into the very bottom using background-colored
-      // circles — the same proven gap-through-background technique
-      // 'split' already uses, not new/unverified path math.
-      const scallops = 4;
-      const scallopR = rx / scallops * 0.75;
-      let bites = '';
-      for (let i = 0; i < scallops; i++) {
-        const bx = cx - rx + (i + 0.5) * (rx * 2 / scallops);
-        bites += `<circle cx="${bx.toFixed(1)}" cy="${cy + ry}" r="${scallopR.toFixed(1)}" fill="${bgFill}"/>`;
-      }
-      return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${baseHex}"${strokeAttr}/>${bites}`;
+    case 'flame_head': {
+      // Ghost_head's scalloped bottom bit into the neck/collar zone,
+      // since the bites sat right at cy+ry — exactly where the body
+      // connects — painting flat background over the seam. Flame-shaped
+      // top instead: only the TOP of the head is replaced (flickering
+      // points instead of a smooth curve), and the BOTTOM half is drawn
+      // with the exact same elliptical arc as round — same bottom edge,
+      // same neck connection, zero risk of ever touching that boundary.
+      const tip1 = [cx - rx * 0.5, cy - ry - 30];
+      const tip2 = [cx - rx * 0.15, cy - ry - 55];
+      const tip3 = [cx + rx * 0.2, cy - ry - 40];
+      const tip4 = [cx + rx * 0.55, cy - ry - 60];
+      let d = `M ${cx - rx} ${cy}`;
+      d += ` Q ${cx - rx} ${cy - ry * 0.6} ${tip1[0].toFixed(1)} ${tip1[1].toFixed(1)}`;
+      d += ` Q ${cx - rx * 0.3} ${(cy - ry - 20).toFixed(1)} ${tip2[0].toFixed(1)} ${tip2[1].toFixed(1)}`;
+      d += ` Q ${cx} ${(cy - ry - 10).toFixed(1)} ${tip3[0].toFixed(1)} ${tip3[1].toFixed(1)}`;
+      d += ` Q ${cx + rx * 0.35} ${(cy - ry - 30).toFixed(1)} ${tip4[0].toFixed(1)} ${tip4[1].toFixed(1)}`;
+      d += ` Q ${cx + rx} ${cy - ry * 0.6} ${cx + rx} ${cy}`;
+      d += ` A ${rx} ${ry} 0 0 1 ${cx - rx} ${cy} Z`;
+      return `<path d="${d}" fill="${baseHex}"${strokeAttr}/>`;
     }
     case 'visor': {
       // Standard round base (same bottom edge) with a dark visor band across
@@ -804,21 +799,6 @@ function eyesMarkup(shapeId, colorHex, eyeR, glowR, opts) {
       return `<circle cx="${cx}" cy="${cy}" r="${glowR[1]}" fill="${colorHex}" opacity="0.15">${outerAnim}</circle>`
            + `<circle cx="${cx}" cy="${cy}" r="${glowR[0]}" fill="${colorHex}" opacity="0.25">${innerAnim}</circle>`
            + eyeball;
-    }).join('');
-  }
-  else if (shapeId === 'hollow_socket') {
-    body = [cxL, cxR].map(cx => {
-      let spark = '';
-      if (animate) {
-        // the lone highlight flickers like a spark in the void; irregular-feeling
-        // via keyTimes that hold then stutter.
-        const dur = f2(rnd(1.8, 3.2));
-        const phase = f2(rnd(0, 2));
-        spark = `<animate attributeName="opacity" values="0.4;0.4;0.12;0.5;0.4" keyTimes="0;0.45;0.55;0.7;1" dur="${dur}s" begin="-${phase}s" repeatCount="indefinite"/>`;
-      }
-      return `<ellipse cx="${cx}" cy="${cy + 2}" rx="${eyeR + 2}" ry="${eyeR + 10}" fill="#000"/>`
-           + `<ellipse cx="${cx}" cy="${cy}" rx="${eyeR - 2}" ry="${eyeR + 6}" fill="#1f1f1f"/>`
-           + `<ellipse cx="${cx - eyeR * 0.2}" cy="${cy - eyeR * 0.4}" rx="${Math.round(eyeR * 0.3)}" ry="${Math.round(eyeR * 0.4)}" fill="${colorHex}" opacity="0.4">${spark}</ellipse>`;
     }).join('');
   }
   else if (shapeId === 'glitch') {
@@ -1049,10 +1029,7 @@ function mouthMarkup(mouthId, headShapeId) {
 // ---------- background texture overlays ----------
 function backgroundOverlay(rng, pattern) {
   let out = '';
-  if (pattern === 'dots') {
-    for (let i = 0; i < 28; i++) out += `<circle cx="${Math.round(rng() * 600)}" cy="${Math.round(rng() * 600)}" r="0.8" fill="#000" opacity="0.12"/>`;
-  }
-  else if (pattern === 'cloud') {
+  if (pattern === 'cloud') {
     for (let i = 0; i < 5; i++) { const rx = 35 + Math.round(rng() * 32); out += `<ellipse cx="${Math.round(rng() * 600)}" cy="${Math.round(rng() * 160)}" rx="${rx}" ry="${Math.round(rx * 0.5)}" fill="#ffffff" opacity="0.35"/>`; }
   }
   else if (pattern === 'stars') {
@@ -1181,12 +1158,6 @@ function backgroundOverlay(rng, pattern) {
       if (w < 12) break;
       out += `<rect x="${(x + w * 0.4).toFixed(1)}" y="${(baseY - h * 0.15).toFixed(1)}" width="${(w * 0.2).toFixed(1)}" height="${(h * 0.15).toFixed(1)}" fill="#1a140d" opacity="0.8"/><path d="M ${x.toFixed(1)} ${(baseY - h * 0.15).toFixed(1)} L ${(x + w / 2).toFixed(1)} ${(baseY - h).toFixed(1)} L ${(x + w).toFixed(1)} ${(baseY - h * 0.15).toFixed(1)} Z" fill="#16241a" opacity="0.85"/>`;
       x += w * 1.0 + rng() * 18;
-    }
-  }
-  else if (pattern === 'fog') {
-    for (let i = 0; i < 6; i++) {
-      const y = 80 + i * 80 + rng() * 30, h = 30 + rng() * 20;
-      out += `<rect x="0" y="${y.toFixed(1)}" width="600" height="${h.toFixed(1)}" fill="#ffffff" opacity="${(0.08 + rng() * 0.1).toFixed(2)}"/>`;
     }
   }
   else if (pattern === 'swamp') {
@@ -1337,8 +1308,6 @@ function accessoryMarkup(rng, accId, eyeCtx) {
       bottomOffset = Math.round(eyeR * 1.3) + (eyeCy - cy); // fold cyclops's own cy shift into the offset from the shared cy below
     } else if (!eyeCtx || !eyeCtx.eyeShape || eyeCtx.eyeShape === 'round_glow') {
       bottomOffset = eyeR + 14; // outer glow ring radius (glowR[1]), verified == eyeR+14 at every defined size
-    } else if (eyeCtx.eyeShape === 'hollow_socket') {
-      bottomOffset = eyeR + 10; // outer socket ellipse's ry
     } else if (eyeCtx.eyeShape === 'glitch') {
       const barH = Math.max(5, Math.round(eyeR * 0.32));
       bottomOffset = Math.round(1.5 * barH); // 4 stacked bars, half-span below center
