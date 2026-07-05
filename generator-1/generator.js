@@ -64,6 +64,11 @@ const TRAITS = {
     { id: 'blue_cloud',      weight: 16, fill: '#5ba3d0', pattern: 'cloud',          rarity: 'uncommon' },
     { id: 'cream',           weight: 16, fill: '#e8e3d3', pattern: 'none',           rarity: 'common' },
     { id: 'starfield',       weight: 16, fill: '#0a0a0a', pattern: 'stars',          rarity: 'rare' },
+    // starfield already exists (small scattered dots, confined to the top
+    // 250px) — this is a genuinely different construction, not a recolor:
+    // proper 4-point sparkle/star shapes spread across the FULL canvas, on
+    // a flatter/darker matte black base than starfield's #0a0a0a.
+    { id: 'matte_black_stars', weight: 12, fill: '#050505', pattern: 'matte_stars',  rarity: 'rare' },
     { id: 'rain',            weight: 14, fill: '#41506b', pattern: 'rain',           rarity: 'uncommon' },
     { id: 'lightning',       weight: 10, fill: '#241f33', pattern: 'lightning',      rarity: 'rare' },
     { id: 'houses_dusk',     weight: 8,  fill: '#cf7a4a', pattern: 'houses',         rarity: 'uncommon' },
@@ -98,7 +103,6 @@ const TRAITS = {
     { id: 'hoodie',     weight: 20, rarity: 'uncommon' },
     { id: 'tattered',   weight: 14, rarity: 'rare' },
     { id: 'armored',    weight: 16, rarity: 'rare' },
-    { id: 'vest',       weight: 18, rarity: 'uncommon' },
     { id: 'exosuit',    weight: 14, rarity: 'rare' }
   ],
   bodyColor: [
@@ -113,7 +117,15 @@ const TRAITS = {
     { id: 'blood_red', hex: '#8a1f1f', weight: 12, rarity: 'rare' },
     { id: 'mustard',   hex: '#b8893a', weight: 10, rarity: 'rare' },
     { id: 'teal',      hex: '#2f6b66', weight: 12, rarity: 'uncommon' },
-    { id: 'copper',    hex: '#a8632f', weight: 10, rarity: 'rare' }
+    { id: 'copper',    hex: '#a8632f', weight: 10, rarity: 'rare' },
+    { id: 'black',     hex: '#0a0a0a', weight: 20, rarity: 'common' },
+    // 1/1 pieces force every category to its rarest tier — 'black' being
+    // common meant 1/1s could never actually land on it, since bodyColor
+    // already has rare options (wine, blood_red, mustard, copper) and the
+    // tier-fallback never reaches down to common when rare options exist.
+    // A dedicated rare-tier black closes that gap without changing black's
+    // own common availability for everyone else.
+    { id: 'ninja_black', hex: '#0a0a0a', weight: 12, rarity: 'rare' }
   ],
   size: [
     { id: 'small',  weight: 34, eyeR: 24, glowR: [31, 38], rarity: 'common' },
@@ -127,13 +139,9 @@ const TRAITS = {
     { id: 'split',   weight: 16, rarity: 'rare' },
     { id: 'cracked', weight: 16, rarity: 'rare' },
     { id: 'vented',  weight: 18, rarity: 'uncommon' },
-    { id: 'antenna', weight: 14, rarity: 'rare' },
-    { id: 'flame_head', weight: 20, rarity: 'common' },
-    { id: 'visor',     weight: 16, rarity: 'uncommon' },
-    { id: 'shattered', weight: 12, rarity: 'rare' }
+    { id: 'antenna', weight: 14, rarity: 'rare' }
   ],
   headColor: [
-    { id: 'charcoal',  hex: '#2b2b2e', weight: 20, rarity: 'common' },
     { id: 'maroon',    hex: '#3a1518', weight: 18, rarity: 'uncommon' },
     { id: 'forest',    hex: '#142e1c', weight: 18, rarity: 'uncommon' },
     { id: 'midnight',  hex: '#11182e', weight: 18, rarity: 'rare' },
@@ -143,10 +151,17 @@ const TRAITS = {
     { id: 'deep_teal', hex: '#0f2a28', weight: 12, rarity: 'rare' },
     { id: 'crimson',   hex: '#3a0a12', weight: 10, rarity: 'rare' },
     { id: 'umber',     hex: '#4a2c10', weight: 12, rarity: 'uncommon' },
-    { id: 'amethyst',  hex: '#2e1a42', weight: 10, rarity: 'rare' }
+    { id: 'amethyst',  hex: '#2e1a42', weight: 10, rarity: 'rare' },
+    { id: 'deep_black', hex: '#0a0a0a', weight: 22, rarity: 'common' }
   ],
   eyeShape: [
     { id: 'round_glow',    weight: 30, rarity: 'common' },
+    // round_glow being common-only meant 1/1s could never actually land on
+    // it — eyeShape already has rare options, so the tier-fallback never
+    // reaches down to common. Same fix as ninja_black: a rare-tier twin
+    // sharing the identical rendering, so the look itself stays reachable
+    // for 1/1 pieces without changing round_glow's own common availability.
+    { id: 'radiant_glow',  weight: 10, rarity: 'rare' },
     { id: 'glitch',         weight: 25, rarity: 'uncommon' },
     { id: 'x_dead',        weight: 20, rarity: 'rare' },
     { id: 'cyclops',       weight: 14, rarity: 'rare' },
@@ -158,9 +173,9 @@ const TRAITS = {
     { id: 'void_stare',    weight: 12, rarity: 'rare' },
     { id: 'jagged_slit',   weight: 10, rarity: 'rare' },
     { id: 'dot_eyes',      weight: 24, rarity: 'common' },
-    { id: 'ghost_eyes',    weight: 20, rarity: 'common' },
     { id: 'spiral',        weight: 16, rarity: 'uncommon' },
-    { id: 'scan_line',     weight: 16, rarity: 'uncommon' }
+    { id: 'scan_line',     weight: 16, rarity: 'uncommon' },
+    { id: 'bar_eyes',      weight: 16, rarity: 'uncommon' }
   ],
   eyeColor: [
     { id: 'green',   hex: '#e0ffe0', weight: 25, rarity: 'common' },
@@ -183,7 +198,9 @@ const TRAITS = {
     { id: 'stitched', weight: 25, rarity: 'rare' },
     { id: 'none',     weight: 12, rarity: 'rare' },
     { id: 'fangs',    weight: 16, rarity: 'rare' },
-    { id: 'zipper',   weight: 12, rarity: 'rare' }
+    { id: 'zipper',   weight: 12, rarity: 'rare' },
+    { id: 'dot_row',       weight: 20, rarity: 'common' },
+    { id: 'circuit_grid',  weight: 16, rarity: 'uncommon' }
   ],
   accessory: [
     { id: 'none',         weight: 60, rarity: 'common' },
@@ -244,7 +261,31 @@ const DISALLOWED_COMBOS = [
   // would normally read against solid head color — against the gap's
   // exposed background instead, it looks disconnected from the face rather
   // than like it's dripping from an eye.
-  { accessory: 'tears', headShape: 'split' }
+  { accessory: 'tears', headShape: 'split' },
+  // 'deep_black' (#0a0a0a) is an exact or near-exact match for these 9
+  // backgrounds specifically (computed actual luminance — there's a clear
+  // gap in the data between these 9, all under luminance 40, and everything
+  // else, which starts at 57+) — the same class of invisible-head problem
+  // that got 'onyx' removed entirely last time. Rerolling to a different
+  // headColor instead of removing deep_black again keeps a true-black
+  // option available for every OTHER background, where it's fine.
+  { headColor: 'deep_black', background: 'starfield' },
+  { headColor: 'deep_black', background: 'matte_black_stars' },
+  { headColor: 'deep_black', background: 'cemetery_black' },
+  { headColor: 'deep_black', background: 'blood_moon' },
+  { headColor: 'deep_black', background: 'eclipse' },
+  { headColor: 'deep_black', background: 'deep_ocean' },
+  { headColor: 'deep_black', background: 'toxic_haze' },
+  { headColor: 'deep_black', background: 'cave' },
+  { headColor: 'deep_black', background: 'lightning' },
+  { headColor: 'deep_black', background: 'houses_night' },
+  // 'dot_eyes' (small solid dots) reads as too insignificant/glitch-looking
+  // at small or medium head size — restricted to 'large' only, where the
+  // proportions actually work. Both non-large sizes disallowed rather than
+  // trying to scale the dot with size, since the whole point is that it
+  // only looks deliberate at the larger scale.
+  { eyeShape: 'dot_eyes', size: 'small' },
+  { eyeShape: 'dot_eyes', size: 'medium' }
 ];
 function rerollTraitIfClashing(rng, traitsSoFar, targetKey, currentTrait, pool, tier) {
   // A single pass isn't enough: fixing one combo's re-roll can land on a
@@ -299,6 +340,21 @@ function luma(hex) {
 // the shape's own fill is genuinely too close to call. Pieces with normal
 // contrast are completely unaffected — this is NOT a universal outline.
 
+// Real silhouette edge at a given y, solved from the suit/armored/exosuit
+// shared quadratic bezier (P0=(282,360), control=(200,365), P1=(195,580);
+// mirrored for the right side). Shared here rather than redefined per body
+// shape — it was originally scoped inline just inside 'armored', which is
+// exactly why 'exosuit' never got the same fix and repeated the identical
+// bug (its bands used flat guessed x-coordinates that landed up to 17px
+// outside the real edge, a visible line poking past the silhouette at the
+// widest offender). One shared function means any body shape that needs
+// this can't independently forget to use it correctly.
+function bodyEdgeX(y) {
+  const a = 210, b = 10, c = 360 - y;
+  const t = (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
+  return (1 - t) * (1 - t) * 282 + 2 * (1 - t) * t * 200 + t * t * 195;
+}
+
 // ---------- body shape paths (skin/garment) ----------
 function bodyMarkup(bodyId, colorHex, bgFill) {
   // Outline only when bodyColor is genuinely too close to the chosen
@@ -324,7 +380,7 @@ function bodyMarkup(bodyId, colorHex, bgFill) {
     case 'tank_top':
       return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 205 365 200 580 L 400 580 Q 395 365 318 360 L 318 335 Z" fill="${shade(baseHex, 35)}"${strokeAttr}/><path d="M 285 335 L 285 370 Q 222 375 218 580 L 382 580 Q 378 375 315 370 L 315 335 Z" fill="${shade(baseHex, -15)}"/>`;
     case 'robe':
-      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 278 335 L 278 360 Q 185 390 182 580 L 418 580 Q 415 390 322 360 L 322 335 Z" fill="${baseHex}"${strokeAttr} opacity="0.92"/>`;
+      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 278 335 L 278 360 Q 185 390 182 580 L 418 580 Q 415 390 322 360 L 322 335 Z" fill="${baseHex}"${strokeAttr}/>`;
     case 'hoodie':
       // Collar height matters because head shapes have different bottom
       // edges (round/boxed/etc end at y=343; monitor/vented end at y=333,
@@ -335,31 +391,20 @@ function bodyMarkup(bodyId, colorHex, bgFill) {
       // minor regardless of which head shape it pairs with.
       return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 280 327 L 280 360 Q 208 365 205 580 L 395 580 Q 392 365 320 360 L 320 327 Z" fill="${baseHex}"${strokeAttr}/><path d="M 258 328 Q 300 346 342 328 L 342 340 Q 300 358 258 340 Z" fill="${shade(baseHex, -25)}"/>`;
     case 'tattered':
-      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 215 565 L 235 580 L 255 562 L 275 580 L 300 560 L 325 580 L 345 562 L 365 580 L 385 565 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${baseHex}"${strokeAttr} opacity="0.95"/>`;
+      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 215 565 L 235 580 L 255 562 L 275 580 L 300 560 L 325 580 L 345 562 L 365 580 L 385 565 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${baseHex}"${strokeAttr}/>`;
     case 'armored': {
       // Same suit-style silhouette, divided into panels by seam lines with
-      // rivets at the corners and a subtle highlight on the top plate — all
-      // derived from baseHex so the severe-contrast fix (when active) still
-      // carries through consistently into the panel/rivet tones.
+      // rivets at the corners — all derived from baseHex so the
+      // severe-contrast fix (when active) still carries through
+      // consistently into the panel/rivet tones.
       const panelLine = shade(baseHex, -30);
       const rivetColor = shade(baseHex, -45);
-      const highlight = shade(baseHex, 20);
 
-      // Real silhouette edge at a given y, solved from the same quadratic
-      // bezier that draws the body outline (P0=(282,360), control=(200,365),
-      // P1=(195,580); mirrored for the right side). The seam lines below
+      // Real silhouette edge computed via the shared bodyEdgeX() helper —
       // used to guess this with a flat "200 + (y-360)*0.05" linear taper,
       // which is far shallower than how fast the real curve narrows right
       // below the neck — at y=410 that put the seam's start ~20px outside
       // the actual body edge, a visible line poking past the silhouette.
-      // Solving the real curve (same technique already used for topPlate's
-      // corners below) fixes that at every y, not just the ones the old
-      // linear guess happened to land close to.
-      function bodyEdgeX(y) {
-        const a = 210, b = 10, c = 360 - y;
-        const t = (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
-        return (1 - t) * (1 - t) * 282 + 2 * (1 - t) * t * 200 + t * t * 195;
-      }
       const seamInset = 12; // safety margin inside the real edge, same spirit as topPlate's 8px inset
       const seams = [410, 470, 530].map(py => {
         const left = bodyEdgeX(py) + seamInset;
@@ -370,35 +415,42 @@ function bodyMarkup(bodyId, colorHex, bgFill) {
       const rivets = [[230, 410], [370, 410], [215, 470], [385, 470], [205, 530], [395, 530]].map(([rx, ry]) =>
         `<circle cx="${rx}" cy="${ry}" r="3" fill="${rivetColor}" opacity="0.7"/>`
       ).join('');
-      // Corners were hand-picked assuming the body was already near full
-      // width just below the neck (220-380 at y=365) — the real silhouette
-      // there is the curve's actual position, not that. Computed precisely:
-      // at y=365 the body's left/right edges are at x≈262/338, not 220/380 —
-      // the highlight's top corners stuck out ~40px beyond the real edge
-      // into the background, visible as a transparent wedge. Now inset a
-      // further 8px inside the real curve as a safety margin.
-      const topPlate = `<path d="M 270 365 L 330 365 L 368 405 L 232 405 Z" fill="${highlight}" opacity="0.25"/>`;
-      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${baseHex}"${strokeAttr}/>${seams}${rivets}${topPlate}`;
-    }
-    case 'vest': {
-      // Genuine open-front vest: two angled side panels over a lighter
-      // "shirt" base, with buttons down the left panel's inner edge — the
-      // previous version was just a thin center highlight stripe on the
-      // suit silhouette, too subtle to actually read as a vest rather than
-      // a suit with a stray line down it.
-      const shirtColor = shade(baseHex, 40);
-      const panelColor = shade(baseHex, -15);
-      const buttonColor = shade(baseHex, -50);
-      let buttons = '';
-      for (let i = 0; i < 3; i++) buttons += `<circle cx="292" cy="${400 + i * 45}" r="3.5" fill="${buttonColor}"/>`;
-      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${shirtColor}"/><path d="M 282 335 L 282 360 Q 220 365 210 420 L 285 580 L 195 580 Q 200 365 282 335 Z" fill="${panelColor}"${strokeAttr}/><path d="M 318 335 L 318 360 Q 380 365 390 420 L 315 580 L 405 580 Q 400 365 318 335 Z" fill="${panelColor}"${strokeAttr}/>${buttons}`;
+      // Was followed by a semi-transparent trapezoid "topPlate" highlight
+      // right at the collar (flaring from 60px to 136px wide between
+      // y=365-405) — even at 25% opacity, its own distinct shape and
+      // lighter tone read as a separate extra element sitting on top of
+      // the body rather than a natural part of it. The seams + rivets
+      // alone already read clearly as plated armor; removed rather than
+      // trying to blend it in further.
+      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${baseHex}"${strokeAttr}/>${seams}${rivets}`;
     }
     case 'exosuit': {
       // Thicker, more mechanical-reading bands than armored's thin seam
       // lines, plus visible joint studs — a heavier, more overtly robotic
-      // silhouette rather than armored's plated-suit look.
+      // silhouette rather than armored's plated-suit look. Bands/studs now
+      // computed against the real curve (same bodyEdgeX() helper armored
+      // uses) instead of fixed guessed coordinates — the guesses put the
+      // top band's start ~17px outside the actual silhouette, a visible
+      // stray line poking past the body's left edge.
       const jointColor = shade(baseHex, -35);
-      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${baseHex}"${strokeAttr}/><rect x="205" y="410" width="190" height="9" fill="${jointColor}"/><rect x="200" y="470" width="200" height="9" fill="${jointColor}"/><rect x="197" y="530" width="206" height="9" fill="${jointColor}"/><circle cx="230" cy="414" r="6" fill="${jointColor}"/><circle cx="370" cy="414" r="6" fill="${jointColor}"/><circle cx="222" cy="474" r="6" fill="${jointColor}"/><circle cx="378" cy="474" r="6" fill="${jointColor}"/>`;
+      const bandInset = 12, bandHalfHeight = 4.5;
+      const bands = [410, 470, 530].map(py => {
+        // The real curve edge shifts slightly across the band's own 9px
+        // height (narrowest at the top, since the silhouette narrows
+        // toward the neck as y decreases) — computing at the band's
+        // vertical center underestimated the required inset by up to 2px
+        // at the top-left corner. Using the top (py-bandHalfHeight, the
+        // most restrictive point in the band's span) instead.
+        const left = bodyEdgeX(py - bandHalfHeight) + bandInset;
+        const right = 600 - left;
+        return `<rect x="${left.toFixed(1)}" y="${py - bandHalfHeight}" width="${(right - left).toFixed(1)}" height="9" fill="${jointColor}"/>`;
+      }).join('');
+      const studs = [410, 474].map(py => {
+        const left = bodyEdgeX(py - bandHalfHeight) + bandInset + 25;
+        const right = 600 - left;
+        return `<circle cx="${left.toFixed(1)}" cy="${py + 4}" r="6" fill="${jointColor}"/><circle cx="${right.toFixed(1)}" cy="${py + 4}" r="6" fill="${jointColor}"/>`;
+      }).join('');
+      return `<rect x="284" y="315" width="32" height="35" fill="#0a0a0a"/><path d="M 282 335 L 282 360 Q 200 365 195 580 L 405 580 Q 400 365 318 360 L 318 335 Z" fill="${baseHex}"${strokeAttr}/>${bands}${studs}`;
     }
     default:
       return '';
@@ -485,51 +537,6 @@ function headMarkup(shapeId, colorHex, rng, bgFill) {
       }
       return `<rect x="${cx - halfW}" y="${cy - halfH}" width="${halfW * 2}" height="${halfH * 2}" rx="${rxCorner}" fill="${baseHex}"${strokeAttr}/>${vents}`;
     }
-    case 'flame_head': {
-      // Ghost_head's scalloped bottom bit into the neck/collar zone,
-      // since the bites sat right at cy+ry — exactly where the body
-      // connects — painting flat background over the seam. Flame-shaped
-      // top instead: only the TOP of the head is replaced (flickering
-      // points instead of a smooth curve), and the BOTTOM half is drawn
-      // with the exact same elliptical arc as round — same bottom edge,
-      // same neck connection, zero risk of ever touching that boundary.
-      const tip1 = [cx - rx * 0.5, cy - ry - 30];
-      const tip2 = [cx - rx * 0.15, cy - ry - 55];
-      const tip3 = [cx + rx * 0.2, cy - ry - 40];
-      const tip4 = [cx + rx * 0.55, cy - ry - 60];
-      let d = `M ${cx - rx} ${cy}`;
-      d += ` Q ${cx - rx} ${cy - ry * 0.6} ${tip1[0].toFixed(1)} ${tip1[1].toFixed(1)}`;
-      d += ` Q ${cx - rx * 0.3} ${(cy - ry - 20).toFixed(1)} ${tip2[0].toFixed(1)} ${tip2[1].toFixed(1)}`;
-      d += ` Q ${cx} ${(cy - ry - 10).toFixed(1)} ${tip3[0].toFixed(1)} ${tip3[1].toFixed(1)}`;
-      d += ` Q ${cx + rx * 0.35} ${(cy - ry - 30).toFixed(1)} ${tip4[0].toFixed(1)} ${tip4[1].toFixed(1)}`;
-      d += ` Q ${cx + rx} ${cy - ry * 0.6} ${cx + rx} ${cy}`;
-      d += ` A ${rx} ${ry} 0 0 1 ${cx - rx} ${cy} Z`;
-      return `<path d="${d}" fill="${baseHex}"${strokeAttr}/>`;
-    }
-    case 'visor': {
-      // Standard round base (same bottom edge) with a dark visor band across
-      // the eye line — eyesMarkup draws after this, so eyes render inside
-      // the visor slot rather than being covered by it.
-      const visorHighlight = shade(baseHex, 40);
-      return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${baseHex}"${strokeAttr}/><rect x="${cx - rx * 0.75}" y="${cy - 35}" width="${rx * 1.5}" height="46" rx="20" fill="#0a0a0a" opacity="0.85"/><rect x="${cx - rx * 0.7}" y="${cy - 28}" width="${rx * 1.4}" height="6" fill="${visorHighlight}" opacity="0.5"/>`;
-    }
-    case 'shattered': {
-      // Two fracture lines plus extra debris chips, on the same safe
-      // ellipse footprint as 'cracked' — reads as more extreme/total
-      // fragmentation than cracked's single line, without introducing a
-      // new gap-through-background construction to get wrong.
-      const topY = cy - ry, stopY = cy - 55;
-      const d1 = `M ${cx - 30} ${topY} L ${cx - 10} ${topY + 40} L ${cx - 45} ${stopY}`;
-      const d2 = `M ${cx + 25} ${topY} L ${cx + 5} ${topY + 35} L ${cx + 50} ${stopY + 10}`;
-      const dChin = `M ${cx - 15} ${cy + ry - 10} L ${cx} ${cy + ry} L ${cx + 15} ${cy + ry - 10}`;
-      let chips = '';
-      for (let i = 0; i < 5; i++) {
-        const side = rng() < 0.5 ? -1 : 1;
-        const px = cx + side * (30 + Math.round(rng() * 60)), py = topY + Math.round(rng() * (stopY - topY));
-        chips += `<circle cx="${px}" cy="${py}" r="3" fill="#ffffff" opacity="0.4"/>`;
-      }
-      return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${baseHex}"${strokeAttr}/><path d="${d1}" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/><path d="${d2}" fill="none" stroke="#ffffff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="0.75"/><path d="${dChin}" fill="none" stroke="#ffffff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>${chips}`;
-    }
     case 'round':
     default:
       return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${baseHex}"${strokeAttr}/>`;
@@ -558,7 +565,7 @@ function eyesMarkup(shapeId, colorHex, eyeR, glowR, opts) {
 
   let body;
 
-  if (shapeId === 'round_glow') {
+  if (shapeId === 'round_glow' || shapeId === 'radiant_glow') {
     body = [cxL, cxR].map(cx => {
       let glowAnim = '', blink = '';
       if (animate) {
@@ -707,22 +714,6 @@ function eyesMarkup(shapeId, colorHex, eyeR, glowR, opts) {
         : `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${colorHex}"/>`;
     }).join('');
   }
-  else if (shapeId === 'ghost_eyes') {
-    // Blank, pupil-less ovals with a soft outer haze — every other shape in
-    // the set has some kind of pupil, socket, or internal detail; these are
-    // deliberately empty, reading as a genuinely vacant/ghostly stare rather
-    // than just another eye variant.
-    body = [cxL, cxR].map(cx => {
-      let drift = '';
-      if (animate) {
-        const dur = f2(rnd(3.5, 5.5));
-        const phase = f2(rnd(0, 2));
-        drift = `<animate attributeName="opacity" values="0.7;1;0.7" dur="${dur}s" begin="-${phase}s" repeatCount="indefinite"/>`;
-      }
-      return `<ellipse cx="${cx}" cy="${cy}" rx="${Math.round(eyeR * 1.2)}" ry="${Math.round(eyeR * 0.75)}" fill="${colorHex}" opacity="0.25"/>`
-           + `<ellipse cx="${cx}" cy="${cy}" rx="${Math.round(eyeR * 0.9)}" ry="${Math.round(eyeR * 0.55)}" fill="${colorHex}" opacity="0.9">${drift}</ellipse>`;
-    }).join('');
-  }
   else if (shapeId === 'spiral') {
     // hypnotic swirl, traced as a spiral path rather than filled — the only
     // shape in the set built from a mathematically generated curve instead
@@ -742,8 +733,8 @@ function eyesMarkup(shapeId, colorHex, eyeR, glowR, opts) {
       return `<g>${spin}<path d="${path}" fill="none" stroke="${colorHex}" stroke-width="2.5" stroke-linecap="round"/></g>`;
     }).join('');
   }
-  else {
-    // scan_line: a thin horizontal glowing bar per eye — simplest possible
+  else if (shapeId === 'scan_line') {
+    // a thin horizontal glowing bar per eye — simplest possible
     // "eye" reduced to a single scan indicator, distinct from glitch's
     // multi-bar stack.
     body = [cxL, cxR].map(cx => {
@@ -753,6 +744,24 @@ function eyesMarkup(shapeId, colorHex, eyeR, glowR, opts) {
         sweep = `<animate attributeName="opacity" values="0.6;1;0.6" dur="${dur}s" repeatCount="indefinite"/>`;
       }
       return `<rect x="${cx - eyeR}" y="${cy - 3}" width="${eyeR * 2}" height="6" rx="3" fill="${colorHex}">${sweep}</rect>`;
+    }).join('');
+  }
+  else {
+    // bar_eyes: two short vertical bars per eye position (an "II" look) —
+    // the only shape built from paired parallel bars rather than a single
+    // unified form per eye.
+    const barW = Math.round(eyeR * 0.22), barH = Math.round(eyeR * 0.9), gap = Math.round(eyeR * 0.35);
+    body = [cxL, cxR].map(cx => {
+      let flicker = '';
+      if (animate) {
+        const dur = f2(rnd(3, 5));
+        const phase = f2(rnd(0, 2));
+        flicker = `<animate attributeName="opacity" values="1;1;0.2;1" keyTimes="0;0.85;0.9;1" dur="${dur}s" begin="-${phase}s" repeatCount="indefinite"/>`;
+      }
+      return `<g opacity="1">${flicker}`
+           + `<rect x="${(cx - gap / 2 - barW).toFixed(1)}" y="${(cy - barH / 2).toFixed(1)}" width="${barW}" height="${barH}" rx="${Math.round(barW / 2)}" fill="${colorHex}"/>`
+           + `<rect x="${(cx + gap / 2).toFixed(1)}" y="${(cy - barH / 2).toFixed(1)}" width="${barW}" height="${barH}" rx="${Math.round(barW / 2)}" fill="${colorHex}"/>`
+           + `</g>`;
     }).join('');
   }
 
@@ -803,10 +812,38 @@ function mouthMarkup(mouthId, headShapeId) {
     out += `<rect x="${cx - 5}" y="${cy + 18}" width="10" height="8" rx="2" fill="#9a9a9a"/>`;
     return out;
   }
-  // stitched
-  let out = `<line x1="${cx - 48}" y1="${cy}" x2="${cx + 48}" y2="${cy}" stroke="#fff" stroke-width="4" opacity="0.9"/>`;
-  [-34, -12, 10, 32].forEach(i => out += `<line x1="${cx + i}" y1="${cy - 11}" x2="${cx + i - 4}" y2="${cy + 11}" stroke="#fff" stroke-width="3" opacity="0.9"/>`);
-  return out;
+  if (mouthId === 'stitched') {
+    let out = `<line x1="${cx - 48}" y1="${cy}" x2="${cx + 48}" y2="${cy}" stroke="#fff" stroke-width="4" opacity="0.9"/>`;
+    [-34, -12, 10, 32].forEach(i => out += `<line x1="${cx + i}" y1="${cy - 11}" x2="${cx + i - 4}" y2="${cy + 11}" stroke="#fff" stroke-width="3" opacity="0.9"/>`);
+    return out;
+  }
+  if (mouthId === 'circuit_grid') {
+    // A fixed 2x5 grid of small squares — a QR/LED-matrix fragment look,
+    // distinct from zipper's single vertical seam and stitched's crossing
+    // lines. Compact enough to sit well within every headShape/eyeShape's
+    // existing clearance without needing its own offset math anywhere.
+    const cols = 5, rows = 2, cellSize = 8, gapSize = 3;
+    const totalW = cols * cellSize + (cols - 1) * gapSize;
+    const totalH = rows * cellSize + (rows - 1) * gapSize;
+    const startX = cx - totalW / 2, startY = cy - totalH / 2;
+    let out = '';
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        out += `<rect x="${(startX + c * (cellSize + gapSize)).toFixed(1)}" y="${(startY + r * (cellSize + gapSize)).toFixed(1)}" width="${cellSize}" height="${cellSize}" fill="#ffffff" opacity="0.9"/>`;
+      }
+    }
+    return out;
+  }
+  if (mouthId === 'dot_row') {
+    // A single horizontal row of small dots — simpler and flatter than
+    // circuit_grid's 2-row block, a plain "..." read rather than a grid.
+    const n = 6, spacing = 14, r = 2.2;
+    const startX = cx - (n - 1) * spacing / 2;
+    let out = '';
+    for (let i = 0; i < n; i++) out += `<circle cx="${(startX + i * spacing).toFixed(1)}" cy="${cy}" r="${r}" fill="#ffffff" opacity="0.85"/>`;
+    return out;
+  }
+  return '';
 }
 
 // ---------- background texture overlays ----------
@@ -817,6 +854,19 @@ function backgroundOverlay(rng, pattern) {
   }
   else if (pattern === 'stars') {
     for (let i = 0; i < 35; i++) out += `<circle cx="${Math.round(rng() * 600)}" cy="${Math.round(rng() * 250)}" r="${(rng() * 1.5 + 0.5).toFixed(1)}" fill="#ffffff" opacity="${(rng() * 0.5 + 0.35).toFixed(2)}"/>`;
+  }
+  else if (pattern === 'matte_stars') {
+    // Real 4-point sparkle shapes (a concave diamond path, not a plain
+    // dot) spread across the ENTIRE canvas height, not just the top —
+    // genuinely different from starfield's soft dot-scatter, a bolder and
+    // more graphic "night sky" look.
+    for (let i = 0; i < 14; i++) {
+      const cx = Math.round(rng() * 600), cy = Math.round(rng() * 600);
+      const s = 4 + rng() * 5;
+      const op = (0.5 + rng() * 0.4).toFixed(2);
+      out += `<path d="M ${cx} ${cy - s} Q ${cx} ${cy} ${cx + s} ${cy} Q ${cx} ${cy} ${cx} ${cy + s} Q ${cx} ${cy} ${cx - s} ${cy} Q ${cx} ${cy} ${cx} ${cy - s} Z" fill="#ffffff" opacity="${op}"/>`;
+    }
+    for (let i = 0; i < 10; i++) out += `<circle cx="${Math.round(rng() * 600)}" cy="${Math.round(rng() * 600)}" r="${(rng() * 0.8 + 0.3).toFixed(1)}" fill="#ffffff" opacity="${(rng() * 0.25 + 0.15).toFixed(2)}"/>`;
   }
   else if (pattern === 'rain') {
     for (let i = 0; i < 24; i++) {
@@ -1000,12 +1050,39 @@ function backgroundOverlay(rng, pattern) {
     for (let i = 0; i < 25; i++) out += `<circle cx="${Math.round(rng() * 600)}" cy="${Math.round(rng() * 280)}" r="${(rng() * 1.2 + 0.4).toFixed(1)}" fill="#ffffff" opacity="${(rng() * 0.4 + 0.2).toFixed(2)}"/>`;
   }
   else if (pattern === 'blood_moon') {
-    // Same safe-corner placement convention as eclipse — clears every
-    // current headShape's bounding box rather than risking an overlap.
-    const moonX = 40 + rng() * 60;
-    const moonY = 38 + rng() * 14;
-    out += `<circle cx="${moonX.toFixed(1)}" cy="${moonY.toFixed(1)}" r="30" fill="#8a1414" opacity="0.18"/>`;
-    out += `<circle cx="${moonX.toFixed(1)}" cy="${moonY.toFixed(1)}" r="23" fill="#8a1414" opacity="0.9"/>`;
+    // The moon circle itself got per-piece color variation last round, but
+    // the CANVAS FILL underneath it (#1a0505) comes straight from the trait
+    // table as a static hex — that's set once, before backgroundOverlay()
+    // even runs, and rng never touches it. Every blood_moon piece had the
+    // literal identical base tone, which is what actually reads as "the
+    // background is always just red" — the moon color varying wasn't
+    // enough to fix that on its own.
+    //
+    // headMarkup/bodyMarkup's contrast-safety check receives the STATIC
+    // background.fill, not whatever this overlay draws — a full-opacity
+    // replacement tint here would let the real rendered color drift by
+    // 100+ units of distance from what that safety check believes the
+    // background is, silently reintroducing exactly the invisible-head
+    // risk that system exists to prevent. Kept to a tight shade range and
+    // partial opacity instead: real, visible per-piece variation, without
+    // the perceived base color drifting far enough from the static value
+    // to make the existing safety math meaningfully wrong.
+    const baseTint = shade('#1a0505', rng() * 16 - 8);
+    out += `<rect width="600" height="600" fill="${baseTint}" opacity="0.5"/>`;
+    // Was ranging x=40-100, y=38-52 — close to the corner but drifting
+    // noticeably toward center at the high end of that range. Tightened to
+    // sit consistently in the far corner (still with a little organic
+    // jitter, not perfectly fixed) — moving further INTO the corner only
+    // increases clearance from the head, which is centered, so this stays
+    // within the same safe-placement guarantee as before, just more so.
+    // The core fill was also a single hardcoded red regardless of rng,
+    // reading as "the same moon every time" — shaded per-piece now for
+    // real variation, same technique used throughout the rest of the file.
+    const moonX = 22 + rng() * 18;
+    const moonY = 22 + rng() * 12;
+    const moonColor = shade('#8a1414', rng() * 30 - 15);
+    out += `<circle cx="${moonX.toFixed(1)}" cy="${moonY.toFixed(1)}" r="30" fill="${moonColor}" opacity="0.18"/>`;
+    out += `<circle cx="${moonX.toFixed(1)}" cy="${moonY.toFixed(1)}" r="23" fill="${moonColor}" opacity="0.9"/>`;
     for (let i = 0; i < 18; i++) out += `<circle cx="${Math.round(rng() * 600)}" cy="${Math.round(rng() * 320)}" r="${(rng() * 1.1 + 0.4).toFixed(1)}" fill="#ff6b6b" opacity="${(rng() * 0.3 + 0.1).toFixed(2)}"/>`;
   }
   else if (pattern === 'toxic_haze') {
@@ -1089,7 +1166,7 @@ function accessoryMarkup(rng, accId, eyeCtx) {
     if (isCyclops) {
       const eyeCy = (eyeCtx && eyeCtx.noMouth) ? cy : cy - 10;
       bottomOffset = Math.round(eyeR * 1.3) + (eyeCy - cy); // fold cyclops's own cy shift into the offset from the shared cy below
-    } else if (!eyeCtx || !eyeCtx.eyeShape || eyeCtx.eyeShape === 'round_glow') {
+    } else if (!eyeCtx || !eyeCtx.eyeShape || eyeCtx.eyeShape === 'round_glow' || eyeCtx.eyeShape === 'radiant_glow') {
       bottomOffset = eyeR + 14; // outer glow ring radius (glowR[1]), verified == eyeR+14 at every defined size
     } else if (eyeCtx.eyeShape === 'glitch') {
       const barH = Math.max(5, Math.round(eyeR * 0.32));
@@ -1102,12 +1179,12 @@ function accessoryMarkup(rng, accId, eyeCtx) {
       bottomOffset = Math.round(eyeR * 0.6); // path amplitude (0.4) plus half the stroke width (0.16), rounded up slightly for safety
     } else if (eyeCtx.eyeShape === 'dot_eyes') {
       bottomOffset = Math.round(eyeR * 0.35) + 3; // dot radius plus a small gap
-    } else if (eyeCtx.eyeShape === 'ghost_eyes') {
-      bottomOffset = Math.round(eyeR * 0.75) + 3; // outer haze ellipse's own ry, plus a small gap
     } else if (eyeCtx.eyeShape === 'spiral') {
       bottomOffset = eyeR; // spiral's own max radius
     } else if (eyeCtx.eyeShape === 'scan_line') {
       bottomOffset = 6; // half the bar's height plus a small gap
+    } else if (eyeCtx.eyeShape === 'bar_eyes') {
+      bottomOffset = Math.round(eyeR * 0.45) + 3; // half the bar height plus a small gap
     } else {
       bottomOffset = eyeR + 14; // unrecognized shape (future-proofing) — fall back to the tallest known case rather than the shortest, so a new shape added later overshoots safely instead of overlapping
     }
@@ -1132,8 +1209,10 @@ function generatePiece(index, seed, tier, opts) {
   const bodyColor  = pickByRarity(rng, TRAITS.bodyColor, t);
   const size       = pickByRarity(rng, TRAITS.size, t);
   const headShape  = pickByRarity(rng, TRAITS.headShape, t);
-  const headColor  = pickByRarity(rng, TRAITS.headColor, t);
-  const eyeShape   = pickByRarity(rng, TRAITS.eyeShape, t);
+  let headColor    = pickByRarity(rng, TRAITS.headColor, t);
+  headColor = rerollTraitIfClashing(rng, { background: background.id }, 'headColor', headColor, TRAITS.headColor, t);
+  let eyeShape     = pickByRarity(rng, TRAITS.eyeShape, t);
+  eyeShape = rerollTraitIfClashing(rng, { size: size.id }, 'eyeShape', eyeShape, TRAITS.eyeShape, t);
   const eyeColor   = pickByRarity(rng, TRAITS.eyeColor, t);
   let mouth        = pickByRarity(rng, TRAITS.mouth, t);
   mouth = rerollTraitIfClashing(rng, { headShape: headShape.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id }, 'mouth', mouth, TRAITS.mouth, t);
