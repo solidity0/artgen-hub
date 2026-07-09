@@ -36,7 +36,16 @@ const TRAITS = {
     { id: 'black_splat',   weight: 8,  bg: '#0a0a0a', pattern: 'splatter',   rarity: 'rare' },
     { id: 'black_clean',   weight: 8,  bg: '#0d0d0d', pattern: 'none',       rarity: 'rare' },
     { id: 'grey_wash',     weight: 8,  bg: '#888888', pattern: 'wash',       rarity: 'rare' },
-    { id: 'chaos',         weight: 4,  bg: '#f5f5f5', pattern: 'chaos',      rarity: 'rare' }
+    { id: 'chaos',         weight: 4,  bg: '#f5f5f5', pattern: 'chaos',      rarity: 'rare' },
+    // True pure-black options — black_clean/black_splat above are near-black
+    // (#0d0d0d/#0a0a0a) but not literally #000000. These two are.
+    { id: 'matte_black',       weight: 5, bg: '#000000', pattern: 'none',     rarity: 'rare' },
+    { id: 'matte_black_stars', weight: 4, bg: '#000000', pattern: 'stars',    rarity: 'rare' },
+    // Pure-black versions of the existing wash/splatter patterns — ink_wash
+    // and black_splat above are near-black (#1a1a1a / #0a0a0a) but not #000000.
+    { id: 'matte_black_wash',  weight: 4, bg: '#000000', pattern: 'wash',     rarity: 'rare' },
+    { id: 'matte_black_splat', weight: 4, bg: '#000000', pattern: 'splatter', rarity: 'rare' },
+    { id: 'matte_black_red_stars', weight: 3, bg: '#000000', pattern: 'red_stars', rarity: 'rare' }
   ],
   headShape: [
     { id: 'round',      weight: 26, rarity: 'common' },
@@ -68,6 +77,7 @@ const TRAITS = {
     { id: 'cap',         weight: 8,  rarity: 'uncommon' },
     { id: 'bandana',     weight: 6,  rarity: 'rare' },
     { id: 'horns',       weight: 4,  rarity: 'rare' },
+    { id: 'horns_red',   weight: 3,  rarity: 'rare' },
     { id: 'tentacles',   weight: 2,  rarity: 'rare' }
   ],
   eyeColor: [
@@ -80,9 +90,12 @@ const TRAITS = {
     { id: 'purple', weight: 8,  hex: '#a855f7', glow: '#d8b4fe', rarity: 'rare' }
   ],
   eyeStyle: [
-    { id: 'starburst',     weight: 50, rarity: 'common' },
-    { id: 'starburst_lg',  weight: 20, rarity: 'uncommon' },
-    { id: 'hollow_star',   weight: 14, rarity: 'uncommon' },
+    { id: 'starburst',     weight: 42, rarity: 'common' },
+    { id: 'round',         weight: 22, rarity: 'common' },
+    { id: 'starburst_lg',  weight: 16, rarity: 'uncommon' },
+    { id: 'hollow_star',   weight: 12, rarity: 'uncommon' },
+    { id: 'slit',          weight: 10, rarity: 'uncommon' },
+    { id: 'hollow_socket', weight: 8,  rarity: 'uncommon' },
     { id: 'x_eyes',        weight: 10, rarity: 'rare' },
     { id: 'spiral',        weight: 6,  rarity: 'rare' }
   ],
@@ -152,6 +165,14 @@ function pickByRarity(rng, pool, tier) {
 // ---------- drawing helpers ----------
 function rj(rng, v=2) { return (rng()-0.5)*v*2; }
 
+// Perceived brightness of a hex color (0-255). Used for contrast safety
+// checks — e.g. making sure light text never lands on a light background.
+function hexLuma(hex) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+  return 0.299*r + 0.587*g + 0.114*b;
+}
+
 function roughPath(pts, rng, jit=1.5) {
   return 'M'+pts.map(([x,y])=>`${(x+rj(rng,jit)).toFixed(1)},${(y+rj(rng,jit)).toFixed(1)}`).join('L')+'Z';
 }
@@ -186,7 +207,30 @@ function hatchLines(x,y,w,h,rng,step=8,angle=45,op=0.2) {
 }
 
 // ---------- starburst eye (the signature trait) ----------
-function starburstEye(cx,cy,r,spikes,eyeColor,eyeGlow,rng,hollow=false,style='starburst') {
+// Wraps an eye's markup in SMIL motion matching its shape. animOpts carries
+// shared timing (blinkDur/Phase, pulseDur/Phase, spinDur/Dir) computed ONCE
+// per piece so the left and right eye animate in sync instead of drifting
+// independently. Returns `inner` unchanged when animation is off.
+function wrapEyeAnim(inner, style, cx, cy, animOpts) {
+  if (!animOpts || !animOpts.animate) return inner;
+  const { blinkDur, blinkPhase, pulseDur, pulsePhase, spinDur, spinDir } = animOpts;
+  if (style === 'spiral') {
+    return `<g><animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="${(spinDir*360).toFixed(0)} ${cx} ${cy}" dur="${spinDur}s" repeatCount="indefinite"/>${inner}</g>`;
+  }
+  if (style === 'round' || style === 'slit') {
+    // Quick blink (vertical squeeze) with a long pause between — realistic
+    // rhythm rather than a continuous flutter.
+    return `<g transform="translate(${cx},${cy})"><animateTransform attributeName="transform" type="scale" additive="sum" values="1,1;1,1;1,0.08;1,1;1,1" keyTimes="0;0.44;0.5;0.56;1" dur="${blinkDur}s" begin="-${blinkPhase}s" repeatCount="indefinite"/><g transform="translate(${-cx},${-cy})">${inner}</g></g>`;
+  }
+  if (style === 'x_eyes') {
+    return `<g opacity="1"><animate attributeName="opacity" values="1;0.5;1" dur="${pulseDur}s" begin="-${pulsePhase}s" repeatCount="indefinite"/>${inner}</g>`;
+  }
+  // starburst / starburst_lg / hollow_star / hollow_socket: gentle breathing
+  // pulse — suits a glowing/watching look better than a mechanical blink.
+  return `<g transform="translate(${cx},${cy})"><animateTransform attributeName="transform" type="scale" additive="sum" values="1;1.06;1" dur="${pulseDur}s" begin="-${pulsePhase}s" repeatCount="indefinite"/><g transform="translate(${-cx},${-cy})">${inner}</g></g>`;
+}
+
+function starburstEye(cx,cy,r,spikes,eyeColor,eyeGlow,rng,hollow=false,style='starburst',ink='#e8e8e8',animOpts=null) {
   let out='';
   const glowR=r+8;
   out+=`<circle cx="${cx}" cy="${cy}" r="${glowR+6}" fill="${eyeGlow}" opacity="0.15"/>`;
@@ -197,13 +241,40 @@ function starburstEye(cx,cy,r,spikes,eyeColor,eyeGlow,rng,hollow=false,style='st
       out+=`<path d="${roughEllipse(cx,cy,rr,rr*0.85,rng,14,1)}" fill="none" stroke="${eyeColor}" stroke-width="1.5"/>`;
     }
     out+=`<circle cx="${cx}" cy="${cy}" r="${r*0.2}" fill="${eyeColor}"/>`;
-    return out;
+    return wrapEyeAnim(out, style, cx, cy, animOpts);
   }
   if(style==='x_eyes'){
     const w=r*0.9, sw=r*0.38;
     out+=`<line x1="${(cx-w).toFixed(1)}" y1="${(cy-w).toFixed(1)}" x2="${(cx+w).toFixed(1)}" y2="${(cy+w).toFixed(1)}" stroke="${eyeColor}" stroke-width="${sw.toFixed(1)}" stroke-linecap="round"/>`;
     out+=`<line x1="${(cx+w).toFixed(1)}" y1="${(cy-w).toFixed(1)}" x2="${(cx-w).toFixed(1)}" y2="${(cy+w).toFixed(1)}" stroke="${eyeColor}" stroke-width="${sw.toFixed(1)}" stroke-linecap="round"/>`;
-    return out;
+    return wrapEyeAnim(out, style, cx, cy, animOpts);
+  }
+  if(style==='round'){
+    // Plain glowing round eye — solid disc with a dark pupil. Always gets an
+    // ink-colored outline: without it, black eyeColor on a dark background
+    // makes the whole eye vanish, since fill alone was the only cue.
+    out+=`<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${eyeColor}" stroke="${ink}" stroke-width="1.2"/>`;
+    out+=`<circle cx="${cx}" cy="${cy}" r="${(r*0.32).toFixed(1)}" fill="#0a0a0a"/>`;
+    return wrapEyeAnim(out, style, cx, cy, animOpts);
+  }
+  if(style==='slit'){
+    // Cat-eye slit — lens-shaped almond with a dark vertical pupil bar, always
+    // outlined in ink so the silhouette reads even when eyeColor is black.
+    const w=r, h=r*0.62;
+    out+=`<path d="M${(cx-w).toFixed(1)},${cy} Q${cx},${(cy-h).toFixed(1)} ${(cx+w).toFixed(1)},${cy} Q${cx},${(cy+h).toFixed(1)} ${(cx-w).toFixed(1)},${cy} Z" fill="${eyeColor}" stroke="${ink}" stroke-width="1"/>`;
+    out+=`<rect x="${(cx-r*0.12).toFixed(1)}" y="${(cy-h*0.7).toFixed(1)}" width="${(r*0.24).toFixed(1)}" height="${(h*1.4).toFixed(1)}" rx="${(r*0.1).toFixed(1)}" fill="#0a0a0a"/>`;
+    return wrapEyeAnim(out, style, cx, cy, animOpts);
+  }
+  if(style==='hollow_socket'){
+    // Hollow eye socket — a dark pit with an ink outline (so its edge is
+    // always visible against a same-toned background) and an inner highlight
+    // in eyeColor. If eyeColor itself is black, the highlight falls back to
+    // the ink color instead so there's always a visible accent in the socket.
+    const highlight = eyeColor==='#111111' ? ink : eyeColor;
+    out+=`<ellipse cx="${cx}" cy="${(cy+2).toFixed(1)}" rx="${(r+2).toFixed(1)}" ry="${(r+10).toFixed(1)}" fill="#000" stroke="${ink}" stroke-width="1" opacity="0.9"/>`;
+    out+=`<ellipse cx="${cx}" cy="${cy}" rx="${(r-2).toFixed(1)}" ry="${(r+6).toFixed(1)}" fill="#1a1a1a"/>`;
+    out+=`<ellipse cx="${(cx-r*0.2).toFixed(1)}" cy="${(cy-r*0.4).toFixed(1)}" rx="${(r*0.3).toFixed(1)}" ry="${(r*0.4).toFixed(1)}" fill="${highlight}" opacity="0.55"/>`;
+    return wrapEyeAnim(out, style, cx, cy, animOpts);
   }
   // starburst: inner circle + radiating spikes
   const innerR = r*0.38;
@@ -224,7 +295,7 @@ function starburstEye(cx,cy,r,spikes,eyeColor,eyeGlow,rng,hollow=false,style='st
     out+=`<path d="${stard}" fill="${eyeColor}" stroke="none"/>`;
   }
   out+=`<circle cx="${cx}" cy="${cy}" r="${innerR.toFixed(1)}" fill="${eyeColor}"/>`;
-  return out;
+  return wrapEyeAnim(out, style, cx, cy, animOpts);
 }
 
 // ---------- background pattern ----------
@@ -262,6 +333,35 @@ function bgPattern(pattern, bg, rng, ink) {
       let d=`M${x.toFixed(0)},${y.toFixed(0)}`;
       for(let j=0;j<8;j++) d+=` L${(x+(rng()-0.5)*80).toFixed(0)},${(y+(rng()-0.5)*80).toFixed(0)}`;
       out+=`<path d="${d}" stroke="${dotC}" stroke-width="0.6" fill="none" opacity="0.15"/>`;
+    }
+  } else if(pattern==='stars'){
+    // Sparse, elegant starfield: a handful of small 4-point sparkle marks
+    // plus a light scatter of plain dots. Deliberately minimal compared to
+    // 'splatter'/'chaos' — this is meant to read as a clean night sky, not noise.
+    const sparkleCount=4+Math.floor(rng()*3);
+    for(let i=0;i<sparkleCount;i++){
+      const x=rng()*W, y=rng()*H*0.9, s=2.5+rng()*3;
+      out+=`<path d="M${x.toFixed(1)} ${(y-s).toFixed(1)} L${(x+s*0.28).toFixed(1)} ${(y-s*0.28).toFixed(1)} L${(x+s).toFixed(1)} ${y.toFixed(1)} L${(x+s*0.28).toFixed(1)} ${(y+s*0.28).toFixed(1)} L${x.toFixed(1)} ${(y+s).toFixed(1)} L${(x-s*0.28).toFixed(1)} ${(y+s*0.28).toFixed(1)} L${(x-s).toFixed(1)} ${y.toFixed(1)} L${(x-s*0.28).toFixed(1)} ${(y-s*0.28).toFixed(1)} Z" fill="${dotC}" opacity="${(0.55+rng()*0.35).toFixed(2)}"/>`;
+    }
+    const dotCount=10+Math.floor(rng()*10);
+    for(let i=0;i<dotCount;i++){
+      const x=rng()*W, y=rng()*H;
+      out+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(0.5+rng()*0.7).toFixed(1)}" fill="${dotC}" opacity="${(0.3+rng()*0.35).toFixed(2)}"/>`;
+    }
+  } else if(pattern==='red_stars'){
+    // Same sparse starfield layout as 'stars', but the sparkle marks render
+    // in red instead of the standard contrast color — the plain scatter dots
+    // stay neutral so the red sparkles read as the accent, not the whole sky.
+    const redC='#e63e3e';
+    const sparkleCount=4+Math.floor(rng()*3);
+    for(let i=0;i<sparkleCount;i++){
+      const x=rng()*W, y=rng()*H*0.9, s=2.5+rng()*3;
+      out+=`<path d="M${x.toFixed(1)} ${(y-s).toFixed(1)} L${(x+s*0.28).toFixed(1)} ${(y-s*0.28).toFixed(1)} L${(x+s).toFixed(1)} ${y.toFixed(1)} L${(x+s*0.28).toFixed(1)} ${(y+s*0.28).toFixed(1)} L${x.toFixed(1)} ${(y+s).toFixed(1)} L${(x-s*0.28).toFixed(1)} ${(y+s*0.28).toFixed(1)} L${(x-s).toFixed(1)} ${y.toFixed(1)} L${(x-s*0.28).toFixed(1)} ${(y-s*0.28).toFixed(1)} Z" fill="${redC}" opacity="${(0.6+rng()*0.35).toFixed(2)}"/>`;
+    }
+    const dotCount=10+Math.floor(rng()*10);
+    for(let i=0;i<dotCount;i++){
+      const x=rng()*W, y=rng()*H;
+      out+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(0.5+rng()*0.7).toFixed(1)}" fill="${dotC}" opacity="${(0.3+rng()*0.35).toFixed(2)}"/>`;
     }
   } else if(pattern==='chaos'){
     for(let i=0;i<20;i++){
@@ -344,10 +444,11 @@ function hairMarkup(style,cx,cy,headRx,headRy,ink,rng) {
     out+=`<path d="M${(cx-headRx-2).toFixed(0)},${(cy-headRy*0.3).toFixed(0)} Q${cx},${(cy-headRy*1.2).toFixed(0)} ${(cx+headRx+2).toFixed(0)},${(cy-headRy*0.3).toFixed(0)}" stroke="${ink}" stroke-width="8" fill="none" stroke-linecap="round"/>`;
     // knot
     out+=`<path d="${roughEllipse(cx+headRx+6,cy-headRy*0.3,8,6,rng,10,1)}" fill="${ink}"/>`;
-  } else if(style==='horns'){
+  } else if(style==='horns' || style==='horns_red'){
+    const hornColor = style==='horns_red' ? '#e63e3e' : ink;
     [[-1,1],[1,1]].forEach(([side])=>{
       const bx=cx+side*headRx*0.5, by=cy-headRy*0.7;
-      out+=`<path d="M${(bx-6*side+(rng()-0.5)*2).toFixed(1)},${by.toFixed(1)} L${(bx+side*(14+rng()*8)).toFixed(1)},${(by-30-rng()*20).toFixed(1)} L${(bx+10*side+(rng()-0.5)*2).toFixed(1)},${by.toFixed(1)}" fill="${ink}" stroke="${ink}" stroke-width="1"/>`;
+      out+=`<path d="M${(bx-6*side+(rng()-0.5)*2).toFixed(1)},${by.toFixed(1)} L${(bx+side*(14+rng()*8)).toFixed(1)},${(by-30-rng()*20).toFixed(1)} L${(bx+10*side+(rng()-0.5)*2).toFixed(1)},${by.toFixed(1)}" fill="${hornColor}" stroke="${hornColor}" stroke-width="1"/>`;
     });
   } else if(style==='tentacles'){
     const count=5+Math.floor(rng()*4);
@@ -376,7 +477,7 @@ function hairMarkup(style,cx,cy,headRx,headRy,ink,rng) {
 }
 
 // ---------- clothing markup ----------
-function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng) {
+function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng,bgHex) {
   const neckX=cx, neckY=cy+headRy-4;
   const bw=140, bh=110, bx=cx-bw/2, by=neckY+30;
   let out='';
@@ -420,12 +521,19 @@ function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng) {
   } else if(style==='tank'){
     out+=`<path d="${roughPath([[bx+20,by],[bx+bw-20,by],[bx+bw,by+bh],[bx,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
   } else if(style==='chains'){
+    // eyeHex gives the chain an accent tied to the character's eyes, but if
+    // that color is too close in brightness to the background (e.g. black
+    // eyeColor on a black background), the chain nearly vanishes. Fall back
+    // to the contrast ink color in that case.
+    const bgLuma = bgHex ? hexLuma(bgHex) : 0;
+    const eyeLuma = hexLuma(eyeHex);
+    const chainColor = Math.abs(bgLuma - eyeLuma) < 60 ? ink : eyeHex;
     out+=`<path d="${roughRect(bx+10,by,bw-20,bh,rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
     for(let i=0;i<3;i++){
       const cy2=neckY+20+i*14;
-      out+=`<path d="${roughLine(cx-40,cy2,cx+40,cy2+(rng()-0.5)*4,rng,2)}" stroke="${eyeHex}" stroke-width="2.5" fill="none" opacity="0.8"/>`;
+      out+=`<path d="${roughLine(cx-40,cy2,cx+40,cy2+(rng()-0.5)*4,rng,2)}" stroke="${chainColor}" stroke-width="2.5" fill="none" opacity="0.8"/>`;
       for(let j=-3;j<=3;j++){
-        out+=`<circle cx="${(cx+j*13+(rng()-0.5)*2).toFixed(0)}" cy="${(cy2+(rng()-0.5)*2).toFixed(0)}" r="3" fill="none" stroke="${eyeHex}" stroke-width="1.2"/>`;
+        out+=`<circle cx="${(cx+j*13+(rng()-0.5)*2).toFixed(0)}" cy="${(cy2+(rng()-0.5)*2).toFixed(0)}" r="3" fill="none" stroke="${chainColor}" stroke-width="1.2"/>`;
       }
     }
   } else if(style==='armor'){
@@ -439,7 +547,7 @@ function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng) {
 }
 
 // ---------- accessory markup ----------
-function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,hairId) {
+function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,hairId,isOneOfOne,bgHex,clothingId) {
   let out='';
   if(style==='glasses'){
     [[eyeL,eyeY],[eyeR,eyeY]].forEach(([gx,gy])=>{
@@ -480,20 +588,31 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
       out+=`<path d="${roughLine(cx+(rng()-0.5)*50,cy+(rng()-0.5)*40,cx+(rng()-0.5)*50,cy+(rng()-0.5)*40,rng,15)}" stroke="${ink}" stroke-width="0.7" fill="none" opacity="0.3"/>`;
     }
   } else if(style==='graffiti_tag'){
-    // Text color distribution: 20% red, 20% chain color (bitcoin or eth,
-    // picked independently of the collection's UI chain toggle so the
-    // engine stays self-contained), 60% the piece's own ink color.
+    // Text color: red is 1/1-exclusive (20% chance, only rollable when
+    // isOneOfOne). Everyone else splits between chain color (bitcoin/eth,
+    // picked independently of the UI chain toggle) and the piece's own ink.
     const bucket=rng();
     let textColor=ink;
-    if(bucket<0.2) textColor='#e63e3e';
+    if(isOneOfOne && bucket<0.2) textColor='#e63e3e';
     else if(bucket<0.4) textColor=rng()<0.5?'#f7931a':'#627eea';
+    // Hard contrast safety net: whatever bucket fired, check the result
+    // against the ACTUAL background brightness and force it to the correct
+    // contrasting ink color if it would wash out (e.g. light text on a
+    // light/white background never happens, regardless of which color path
+    // produced it).
+    if (bgHex) {
+      const bgLuma = hexLuma(bgHex), txtLuma = hexLuma(textColor);
+      const bgIsLight = bgLuma > 140;
+      if (bgIsLight && txtLuma > 140) textColor = '#111111';
+      else if (!bgIsLight && txtLuma < 90) textColor = '#e8e8e8';
+    }
     // Top-of-head placement is allowed, but only for hairstyles where the
     // dead-center zone above the head is actually clear. 'none' has no hair
     // at all; 'horns' sit at ±0.5*headRx leaving the center gap open. Every
     // other style (mohawk, spiky, cap, bandana, etc.) covers that zone to
     // varying degrees, so those fall back to the neck/collar placement that
     // fixed the original overlap bug.
-    const TOP_SAFE_HAIR=['none','horns'];
+    const TOP_SAFE_HAIR=['none','horns','horns_red'];
     let tx, ty, rot;
     if(TOP_SAFE_HAIR.includes(hairId)){
       tx=cx+(rng()-0.5)*8;
@@ -501,7 +620,10 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
       rot=(rng()-0.5)*10;
     } else {
       tx=cx+(rng()-0.5)*8;
-      ty=cy+(headRy||80)+46+(rng()-0.5)*8;
+      // chains clothing draws its last decorative row at roughly cy+headRy+44,
+      // right where COB used to land — push it lower to clear that row.
+      const clearance = clothingId==='chains' ? 78 : 46;
+      ty=cy+(headRy||80)+clearance+(rng()-0.5)*8;
       rot=(rng()-0.5)*8;
     }
     out+=`<text x="${tx.toFixed(0)}" y="${ty.toFixed(0)}" font-size="15" fill="${textColor}" opacity="0.7" font-family="monospace" font-weight="bold" text-anchor="middle" transform="rotate(${rot.toFixed(0)} ${tx.toFixed(0)} ${ty.toFixed(0)})">COB</text>`;
@@ -597,7 +719,11 @@ function headFillMarkup(style,headPath,cx,cy,headRx,headRy,ink,rng) {
     out+=`<path d="${hatchLines(cx-headRx,cy-headRy,headRx*2,headRy*2,rng,5,60)}" stroke="${ink}" stroke-width="0.8" fill="none" opacity="0.28"/>`;
     out+=`<path d="${hatchLines(cx-headRx,cy-headRy,headRx*2,headRy*2,mulberry32((rng()*99999)|0),5,150)}" stroke="${ink}" stroke-width="0.6" fill="none" opacity="0.18"/>`;
   } else if(style==='ink_black'){
-    out+=`<path d="${headPath}" fill="${ink}" opacity="0.85"/>`;
+    // Was filling with `ink` (the CONTRAST color) — on a dark background that's
+    // near-white, making the head render light grey instead of black, and
+    // erasing contrast for the nose/mouth (also drawn in ink) on top of it.
+    // Genuinely dark fill, independent of background, fixes both.
+    out+=`<path d="${headPath}" fill="#0a0a0a" opacity="0.92"/>`;
   } else if(style==='splatter'){
     for(let i=0;i<20;i++){
       const sx=cx+(rng()-0.5)*headRx*1.6, sy=cy+(rng()-0.5)*headRy*1.6, sr=rng()*6+1;
@@ -619,11 +745,31 @@ function inkParams(style,rng) {
 }
 
 // ---------- render from explicit trait objects (used by UI lock system) ----------
-function renderFromTraits(picks, index, seed) {
+function renderFromTraits(picks, index, seed, opts) {
+  const isOneOfOne = !!(opts && opts.isOneOfOne);
+  const animate = !!(opts && opts.animate);
   const { background, headShape, headFill, hair, eyeColor, eyeStyle, mouth, clothing, accessory, expression, inkStyle } = picks;
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   // consume the same 11 picks worth of rng so downstream salted streams line up
   for (let i = 0; i < 11; i++) rng();
+
+  // Animation timing is computed from a SEPARATE seeded stream (offset well
+  // clear of the trait-picking/rendering streams above) so turning animation
+  // on/off never changes which traits were picked — same safety pattern used
+  // for the glyph engine. Both eyes share these values so they move in sync.
+  let eyeAnimOpts = null;
+  if (animate) {
+    const animRng = mulberry32((seed ?? 0) * 70001 + index * 9973 + 3);
+    eyeAnimOpts = {
+      animate: true,
+      blinkDur: (3.2 + animRng() * 2.6).toFixed(2),
+      blinkPhase: (animRng() * 3).toFixed(2),
+      pulseDur: (2.2 + animRng() * 1.8).toFixed(2),
+      pulsePhase: (animRng() * 2).toFixed(2),
+      spinDur: (6 + animRng() * 6).toFixed(2),
+      spinDir: animRng() < 0.5 ? 1 : -1
+    };
+  }
 
   const W=400, H=480;
   const cx=200, cy=210;
@@ -660,7 +806,7 @@ function renderFromTraits(picks, index, seed) {
   let svg=`<svg width="400" height="480" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
   svg+=`<rect width="${W}" height="${H}" fill="${background.bg}"/>`;
   svg+=bgPattern(background.pattern, background.bg, rng, ink);
-  svg+=clothingMarkup(clothing.id, cx, cy, headRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5));
+  svg+=clothingMarkup(clothing.id, cx, cy, headRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5), background.bg);
   svg+=headFillMarkup(headFill.id, headPath, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+6));
   svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round"/>`;
   svg+=hairMarkup(hair.id, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+7));
@@ -676,10 +822,10 @@ function renderFromTraits(picks, index, seed) {
     svg+=`<circle cx="${(cx-6).toFixed(0)}" cy="${cy+26}" r="3" fill="${ink}" opacity="0.6"/>`;
     svg+=`<circle cx="${(cx+6).toFixed(0)}" cy="${cy+26}" r="3" fill="${ink}" opacity="0.6"/>`;
   }
-  svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id);
-  svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id);
+  svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id,ink,eyeAnimOpts);
+  svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
-  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id);
+  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id);
   svg+='</svg>';
   return svg;
 }
@@ -700,6 +846,20 @@ function pickEyeColorForPiece(rng, tier, isOneOfOne) {
   return choice;
 }
 
+// Hair options in this list can ONLY appear on 1/1 pieces — same pattern as
+// ONE_OF_ONE_ONLY_EYE_COLORS above. horns_red stays in the normal TRAITS.hair
+// pool (so tier math and locks keep working), but any non-1/1 draw that
+// lands on it rerolls to a different hair from the same tier fallback.
+const ONE_OF_ONE_ONLY_HAIR = ['horns_red'];
+function pickHairForPiece(rng, tier, isOneOfOne) {
+  let choice = pickByRarity(rng, TRAITS.hair, tier);
+  if (!isOneOfOne && ONE_OF_ONE_ONLY_HAIR.includes(choice.id)) {
+    const pool = TRAITS.hair.filter(h => !ONE_OF_ONE_ONLY_HAIR.includes(h.id));
+    choice = pickByRarity(rng, pool, tier);
+  }
+  return choice;
+}
+
 function generatePiece(index, seed, tier, opts) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const t = tier || 'any';
@@ -709,10 +869,10 @@ function generatePiece(index, seed, tier, opts) {
   // per-trait picks happen at all.
   const sigOverride = maybeSignatureCombo(rng, isOneOfOne);
 
-  const background = sigOverride ? sigOverride.background : pickByRarity(rng, TRAITS.background, t);
+  const background = sigOverride ? sigOverride.background : (isOneOfOne ? pickOneOfOneBackground(rng) : pickByRarity(rng, TRAITS.background, t));
   const headShape   = sigOverride ? sigOverride.headShape  : pickByRarity(rng, TRAITS.headShape, t);
-  const headFill    = sigOverride ? sigOverride.headFill   : pickByRarity(rng, TRAITS.headFill, t);
-  const hair        = sigOverride ? sigOverride.hair       : pickByRarity(rng, TRAITS.hair, t);
+  const headFill    = sigOverride ? sigOverride.headFill   : (isOneOfOne ? pickOneOfOneHeadFill(rng) : pickByRarity(rng, TRAITS.headFill, t));
+  const hair        = sigOverride ? sigOverride.hair       : pickHairForPiece(rng, t, isOneOfOne);
   const eyeColor    = sigOverride ? sigOverride.eyeColor   : pickEyeColorForPiece(rng, t, isOneOfOne);
   const resolvedBackground = sigOverride ? sigOverride.background : resolveEyeBackgroundConflict(background, eyeColor, rng);
   const eyeStyle    = sigOverride ? sigOverride.eyeStyle   : pickByRarity(rng, TRAITS.eyeStyle, t);
@@ -727,7 +887,7 @@ function generatePiece(index, seed, tier, opts) {
   // natural picks happen to land on one, expression mutates to break it.
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, false);
 
-  const svg = renderFromTraits(picks, index, seed);
+  const svg = renderFromTraits(picks, index, seed, { isOneOfOne });
 
   return {
     index, svg, tier: t,
@@ -764,7 +924,7 @@ function shadeColor(hex, percent) {
 // occur, the background rerolls to one of the dark/mid options instead. Eye
 // color is left alone (it's the more central trait); only background moves.
 const LIGHT_BACKGROUND_IDS = ['white_dots','white_clean','light_hatch','cross_hatch','scribble','chaos'];
-const DARK_BACKGROUND_FALLBACK_IDS = ['ink_wash','black_splat','black_clean','grey_wash'];
+const DARK_BACKGROUND_FALLBACK_IDS = ['ink_wash','black_splat','black_clean','grey_wash','matte_black','matte_black_stars','matte_black_wash','matte_black_splat','matte_black_red_stars'];
 function resolveEyeBackgroundConflict(background, eyeColor, rng) {
   if (eyeColor.id === 'white' && LIGHT_BACKGROUND_IDS.includes(background.id)) {
     const pool = TRAITS.background.filter(b => DARK_BACKGROUND_FALLBACK_IDS.includes(b.id));
@@ -783,6 +943,12 @@ const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'ghostwriter',
     background: 'black_clean', headShape: 'elongated', headFill: 'hatch_shade', hair: 'long_wild',
+    eyeColor: 'white', eyeStyle: 'starburst_lg', mouth: 'grin', clothing: 'suit',
+    accessory: 'glasses', expression: 'goofy', inkStyle: 'heavy_ink'
+  },
+  {
+    name: 'ghostwriter_starlit',
+    background: 'matte_black_stars', headShape: 'elongated', headFill: 'hatch_shade', hair: 'long_wild',
     eyeColor: 'white', eyeStyle: 'starburst_lg', mouth: 'grin', clothing: 'suit',
     accessory: 'glasses', expression: 'goofy', inkStyle: 'heavy_ink'
   }
@@ -828,14 +994,17 @@ function breakSignatureMatch(picks, rng, expressionLocked) {
 const ONE_OF_ONE_EXCLUDED = [];
 
 // 1/1 eye color gets its own curated weighting instead of just "whatever is
-// rare-tier." Red and blue lead, orange has real presence, purple is
-// deliberately scarce (5%) and white sits between. Regular (non-1/1)
-// generation is untouched — this table only governs 1/1 selection.
+// rare-tier." Red and blue lead, orange has real presence, black gets a
+// modest slot (it's the base/default look for the general collection, so it
+// stays a minority here rather than dominating), purple is deliberately
+// scarce (5%), white sits between. Regular (non-1/1) generation is untouched
+// — this table only governs 1/1 selection.
 const ONE_OF_ONE_EYE_WEIGHTS = [
-  { id: 'red',    weight: 30 },
-  { id: 'blue',   weight: 30 },
-  { id: 'orange', weight: 25 },
-  { id: 'white',  weight: 10 },
+  { id: 'red',    weight: 27 },
+  { id: 'blue',   weight: 27 },
+  { id: 'orange', weight: 22 },
+  { id: 'black',  weight: 11 },
+  { id: 'white',  weight: 8  },
   { id: 'purple', weight: 5  }
 ];
 function pickOneOfOneEyeColor(rng) {
@@ -847,6 +1016,53 @@ function pickOneOfOneEyeColor(rng) {
   }
   return TRAITS.eyeColor.find(e=>e.id===ONE_OF_ONE_EYE_WEIGHTS[ONE_OF_ONE_EYE_WEIGHTS.length-1].id);
 }
+
+// 1/1 background gets its own curated weighting too — matte_black_stars leads
+// heavily (70%), with the remaining 30% spread across the other true-black
+// and near-black options. Regular generation is untouched.
+const ONE_OF_ONE_BACKGROUND_WEIGHTS = [
+  { id: 'matte_black_stars',     weight: 70 },
+  { id: 'matte_black',           weight: 6  },
+  { id: 'matte_black_wash',      weight: 6  },
+  { id: 'matte_black_splat',     weight: 6  },
+  { id: 'matte_black_red_stars', weight: 5  },
+  { id: 'black_clean',           weight: 3  },
+  { id: 'black_splat',           weight: 2  },
+  { id: 'ink_wash',              weight: 1  },
+  { id: 'grey_wash',             weight: 1  }
+];
+function pickOneOfOneBackground(rng) {
+  const total = ONE_OF_ONE_BACKGROUND_WEIGHTS.reduce((s,w)=>s+w.weight,0);
+  let r = rng()*total;
+  for (const w of ONE_OF_ONE_BACKGROUND_WEIGHTS) {
+    if (r < w.weight) return TRAITS.background.find(b=>b.id===w.id);
+    r -= w.weight;
+  }
+  return TRAITS.background.find(b=>b.id===ONE_OF_ONE_BACKGROUND_WEIGHTS[0].id);
+}
+
+// 1/1 head fill gets its own curated weighting too — 'outline' (a fully
+// transparent head, just the silhouette) is common-tier for the general
+// collection, which structurally excluded it from 1/1s entirely under plain
+// rare-tier forcing. It leads heavily here instead; the rest spread across
+// the shaded/solid options for variety.
+const ONE_OF_ONE_HEADFILL_WEIGHTS = [
+  { id: 'outline',     weight: 62 },
+  { id: 'hatch_shade', weight: 12 },
+  { id: 'light_shade', weight: 10 },
+  { id: 'heavy_shade', weight: 8  },
+  { id: 'ink_black',   weight: 5  },
+  { id: 'splatter',    weight: 3  }
+];
+function pickOneOfOneHeadFill(rng) {
+  const total = ONE_OF_ONE_HEADFILL_WEIGHTS.reduce((s,w)=>s+w.weight,0);
+  let r = rng()*total;
+  for (const w of ONE_OF_ONE_HEADFILL_WEIGHTS) {
+    if (r < w.weight) return TRAITS.headFill.find(h=>h.id===w.id);
+    r -= w.weight;
+  }
+  return TRAITS.headFill.find(h=>h.id===ONE_OF_ONE_HEADFILL_WEIGHTS[0].id);
+}
 const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea' };
 
 const api = { generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
@@ -854,7 +1070,10 @@ const api = { generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
   mulberry32, weightedPick, pickByRarity, shadeColor,
   ONE_OF_ONE_EXCLUDED, CHAIN_THEMES,
   ONE_OF_ONE_EYE_WEIGHTS, pickOneOfOneEyeColor,
+  ONE_OF_ONE_BACKGROUND_WEIGHTS, pickOneOfOneBackground,
+  ONE_OF_ONE_HEADFILL_WEIGHTS, pickOneOfOneHeadFill,
   ONE_OF_ONE_ONLY_EYE_COLORS, pickEyeColorForPiece,
+  ONE_OF_ONE_ONLY_HAIR, pickHairForPiece,
   LIGHT_BACKGROUND_IDS, DARK_BACKGROUND_FALLBACK_IDS, resolveEyeBackgroundConflict,
   ONE_OF_ONE_SIGNATURE_COMBOS, SIGNATURE_TRAIT_KEYS, resolveSignatureCombo,
   maybeSignatureCombo, matchesAnySignature, breakSignatureMatch };
