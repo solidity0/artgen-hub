@@ -974,6 +974,29 @@ function renderFromTraits(picks, index, seed, opts) {
     svg+=`<circle cx="${(cx-6).toFixed(0)}" cy="${cy+26}" r="3" fill="${ink}" opacity="0.6"/>`;
     svg+=`<circle cx="${(cx+6).toFixed(0)}" cy="${cy+26}" r="3" fill="${ink}" opacity="0.6"/>`;
   }
+  // outline/light_shade/hatch_shade/heavy_shade/splatter are ALL fundamentally
+  // transparent heads — only ink_black has genuine opaque fill. So the actual
+  // backdrop behind the eyes, in most cases, is just the piece's own page
+  // background showing straight through. If eyeColor's brightness is close to
+  // that backdrop's brightness (dark eyes on a dark background, light eyes on
+  // a light one), the eye can vanish outright — not merely get lost in clutter.
+  // The clearing disc color must contrast with the EYE itself (light backing
+  // for dark eyes, dark backing for light eyes) — using the background's own
+  // color here, as the previous version did, only helped with visual clutter
+  // and did nothing for this more fundamental case, since a same-color disc
+  // can't create contrast against itself.
+  const eyeLuma = hexLuma(eyeColor.hex);
+  const effectiveBackdropLuma = headFill.id === 'ink_black' ? hexLuma('#0a0a0a') : hexLuma(background.bg);
+  const needsClearing = Math.abs(eyeLuma - effectiveBackdropLuma) < 70;
+  let eyeClearing = '';
+  if (needsClearing) {
+    const clearingColor = eyeLuma < 128 ? '#e8e8e8' : '#0a0a0a';
+    const clearR = eyeR * 1.55;
+    eyeClearing =
+      `<ellipse cx="${eyeL}" cy="${eyeY}" rx="${clearR.toFixed(1)}" ry="${(clearR*0.95).toFixed(1)}" fill="${clearingColor}" opacity="0.4"/>` +
+      `<ellipse cx="${eyeR2_pos}" cy="${eyeY}" rx="${clearR.toFixed(1)}" ry="${(clearR*0.95).toFixed(1)}" fill="${clearingColor}" opacity="0.4"/>`;
+  }
+  svg+=eyeClearing;
   svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
