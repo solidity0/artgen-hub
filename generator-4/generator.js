@@ -38,6 +38,14 @@ const TRAITS = {
     { id: 'mohawk_spike', weight: 15, rarity: 'uncommon' },
     { id: 'none',         weight: 10, rarity: 'rare' }
   ],
+  ears: [
+    { id: 'round_oval',     weight: 34, rarity: 'common' },
+    { id: 'pointed',        weight: 26, rarity: 'common' },
+    { id: 'antenna_dish',   weight: 16, rarity: 'uncommon' },
+    { id: 'none',           weight: 10, rarity: 'uncommon' },
+    { id: 'large_round',    weight: 8,  rarity: 'rare' },
+    { id: 'jagged_broken',  weight: 6,  rarity: 'rare' }
+  ],
   eyes: [
     { id: 'ring_plain',  weight: 30, rarity: 'common' },
     { id: 'spiral',      weight: 28, rarity: 'common' },
@@ -334,6 +342,26 @@ function renderChest(cx, cy, size, style, rng, ink) {
   return out;
 }
 
+// Ears are drawn per-side (x = ear's x position, flip mirrors shapes that
+// aren't symmetric like the pointed-ear triangle).
+function renderEars(x, y, style, rng, flip) {
+  const f = flip ? -1 : 1;
+  if (style === 'none') return '';
+  if (style === 'pointed') {
+    return doubleStroke([[x - 8 * f, y + 12], [x + 14 * f, y - 2], [x - 6 * f, y - 14], [x - 8 * f, y + 12]], rng, 1.4, 'stroke');
+  } else if (style === 'antenna_dish') {
+    let out = doubleStroke(ellipsePtsAt(x, y, 9, 9), rng, 1.2, 'stroke');
+    out += doubleStroke(ellipsePtsAt(x, y, 3.5, 3.5), rng, 1, 'stroke');
+    out += doubleStroke([[x, y - 9], [x, y - 16]], rng, 1, 'stroke'); // small antenna stalk
+    return out;
+  } else if (style === 'large_round') {
+    return doubleStroke(ellipsePtsAt(x, y, 14, 22), rng, 1.6, 'stroke');
+  } else if (style === 'jagged_broken') {
+    return doubleStroke([[x - 9 * f, y - 16], [x + 6 * f, y - 10], [x - 4 * f, y - 2], [x + 8 * f, y + 6], [x - 8 * f, y + 15], [x - 9 * f, y - 16]], rng, 1.6, 'stroke');
+  }
+  return doubleStroke(ellipsePtsAt(x, y, 10, 16), rng, 1.5, 'stroke'); // round_oval (default)
+}
+
 function renderHand(x, y, style, rng, flip) {
   const f = flip ? -1 : 1;
   if (style === 'mitten_bow') {
@@ -476,15 +504,6 @@ function renderFromTraits(picks, index, seed) {
   const ink = inkFor(bg.id);
   const cx = W / 2;
 
-  function ellipsePts(x, y, rx, ry, n = 14) {
-    const pts = [];
-    for (let i = 0; i <= n; i++) {
-      const a = (i / n) * Math.PI * 2;
-      pts.push([x + Math.cos(a) * rx, y + Math.sin(a) * ry]);
-    }
-    return pts;
-  }
-
   let body = '';
   if (bg.id === 'black' || bg.id === 'deep_black') body += renderStarfield(W, H, rng);
   body += renderSky(cx, 24, picks.sky.id, rng);
@@ -509,8 +528,8 @@ function renderFromTraits(picks, index, seed) {
      [headCx - headSize / 2, headTop]];
   body += doubleStroke(headOutline, rng, 2.5, 'strokeThick');
   body += chalkGrain(headOutline, rng, ink, 0.3);
-  body += doubleStroke(ellipsePts(headCx - headSize / 2 - 6, headCy, 10, 16), rng, 1.5, 'stroke');
-  body += doubleStroke(ellipsePts(headCx + headSize / 2 + 6, headCy, 10, 16), rng, 1.5, 'stroke');
+  body += renderEars(headCx - headSize / 2 - 24, headCy, picks.ears.id, rng, true);
+  body += renderEars(headCx + headSize / 2 + 24, headCy, picks.ears.id, rng, false);
   const eyeColorHex = picks.eyeColor.hex || null;
   body += renderEyes(headCx, headCy - 10, picks.eyes.id, rng, ink, eyeColorHex);
   body += renderMouth(headCx, headCy + 45, picks.mouth.id, rng);
@@ -575,11 +594,11 @@ function renderFromTraits(picks, index, seed) {
 const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
-    background: 'black', hair: 'wild_spike', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
+    background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
     chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -613,6 +632,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'black', weight: 55 }, { id: 'deep_black', weight: 45 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
+  ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
   eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }],
   eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }],
   mouth: [{ id: 'fangs_stitch', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'single_line', weight: 24 }, { id: 'stitches_uneven', weight: 20 }],
@@ -672,6 +692,7 @@ function generatePiece(index, seed, tier, opts) {
   let picks = {
     background: sigOverride ? sigOverride.background : pick('background'),
     hair: sigOverride ? sigOverride.hair : pick('hair'),
+    ears: sigOverride ? sigOverride.ears : pick('ears'),
     eyes: sigOverride ? sigOverride.eyes : pick('eyes'),
     eyeColor: sigOverride ? sigOverride.eyeColor : pick('eyeColor'),
     mouth: sigOverride ? sigOverride.mouth : pick('mouth'),
