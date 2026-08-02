@@ -100,6 +100,11 @@ const TRAITS = {
     { id: 'heavy_scribble',  weight: 20, rarity: 'uncommon' },
     { id: 'scorched',        weight: 5,  rarity: 'rare' }
   ],
+  grassColor: [
+    { id: 'default', weight: 60, rarity: 'common' },
+    { id: 'green',   hex: '#3fa34d', weight: 26, rarity: 'uncommon' },
+    { id: 'white',   hex: '#ffffff', weight: 14, rarity: 'rare' }
+  ],
   companion: [
     { id: 'none',      weight: 60, rarity: 'common' },
     { id: 'cat',       weight: 15, rarity: 'uncommon' },
@@ -384,30 +389,34 @@ function renderSky(cx, y, style, rng) {
     pts.push(pts[0]);
     return doubleStroke(pts, rng, 1.8, 'stroke');
   } else if (style === 'comet') {
-    let out = doubleStroke([[cx - 150, y - 40], [cx + 130, y + 10]], rng, 2, 'stroke');
-    for (let i = 0; i < 5; i++) {
-      const t = i / 4;
-      const x = (cx - 150) + t * 280, yy = (y - 40) + t * 50;
-      out += '<circle cx="' + x.toFixed(1) + '" cy="' + yy.toFixed(1) + '" r="' + (2 + rng() * 2).toFixed(1) + '" class="dotFill"/>';
+    // No connecting line at all now — just a small scattered dot trail,
+    // tucked into a top corner well clear of the head/hair area entirely.
+    // The stroked line (even short/repositioned) kept reading as a stray
+    // mark drawn across the character.
+    const side = cx; // anchor near center-top, but dots stay compact and high
+    let out = '';
+    for (let i = 0; i < 7; i++) {
+      const t = i / 6;
+      const x = (side - 130) + t * 90 + rj(rng, 6);
+      const yy = 12 + t * 14 + rj(rng, 4);
+      out += '<circle cx="' + x.toFixed(1) + '" cy="' + yy.toFixed(1) + '" r="' + (1.6 + rng() * 2.2).toFixed(1) + '" class="dotFill"/>';
     }
     return out;
   }
   return '';
 }
 
-function renderGround(w, y, style, rng) {
+function renderGround(w, y, style, rng, grassColor) {
   const counts = { light_scribble: 18, medium_scribble: 30, heavy_scribble: 46, scorched: 26 };
   const n = counts[style] || 18;
   let out = '';
+  const colorCss = grassColor ? ('stroke:' + grassColor + ';') : '';
   for (let i = 0; i < n; i++) {
     const x = rng() * w;
     const h = 6 + rng() * 16;
-    out += '<path d="' + pathD(chalkLine([[x, y], [x + rj(rng, 6), y - h]], rng, 1)) + '" class="strokeThin"/>';
+    out += '<path d="' + pathD(chalkLine([[x, y], [x + rj(rng, 6), y - h]], rng, 1)) + '" class="strokeThin" style="' + colorCss + '"/>';
   }
-  out += doubleStroke([[0, y], [w, y]], rng, 1.5, 'strokeThin');
-  if (style === 'scorched') {
-    out += '<ellipse cx="' + (w / 2) + '" cy="' + (y + 4) + '" rx="70" ry="10" class="scorchFill"/>';
-  }
+  out += doubleStroke([[0, y], [w, y]], rng, 1.5, 'strokeThin', grassColor);
   return out;
 }
 
@@ -478,10 +487,23 @@ function renderFromTraits(picks, index, seed) {
 
   let body = '';
   if (bg.id === 'black' || bg.id === 'deep_black') body += renderStarfield(W, H, rng);
-  body += renderSky(cx, 80, picks.sky.id, rng);
+  body += renderSky(cx, 24, picks.sky.id, rng);
 
   const headTop = 90, headSize = 150, headCx = cx, headCy = headTop + headSize / 2;
   body += renderHair(headCx, headTop, picks.hair.id, rng);
+  // Ground/grass drawn as a backdrop layer BEFORE the character — previously
+  // this was drawn last, on top of everything, which meant the grass texture
+  // visually covered the character's feet instead of the character standing
+  // on top of it. groundY isn't known until the character's proportions are
+  // computed below, so we compute it up front and draw the ground here,
+  // then draw the character (which will correctly layer on top).
+  const chestSize = 150;
+  const hipY = 90 + 150 + 22 + chestSize; // headTop + headSize + neck + chestSize
+  const groundY = hipY + 130;
+  let grassColorHex = picks.grassColor.hex || null;
+  if (grassColorHex === '#ffffff' && (bg.id === 'white' || bg.id === 'cream')) grassColorHex = null;
+  body += renderGround(W, groundY, picks.ground.id, rng, grassColorHex);
+
   const headOutline = [[headCx - headSize / 2, headTop], [headCx + headSize / 2, headTop],
      [headCx + headSize / 2, headTop + headSize], [headCx - headSize / 2, headTop + headSize],
      [headCx - headSize / 2, headTop]];
@@ -496,7 +518,7 @@ function renderFromTraits(picks, index, seed) {
   const neckTop = headTop + headSize;
   body += doubleStroke([[headCx, neckTop], [headCx, neckTop + 22]], rng, 2, 'strokeThick');
 
-  const chestSize = 150, chestCy = neckTop + 22 + chestSize / 2;
+  const chestCy = neckTop + 22 + chestSize / 2;
   body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink);
 
   const shoulderY = chestCy - chestSize / 2 + 10;
@@ -505,28 +527,22 @@ function renderFromTraits(picks, index, seed) {
   body += renderHand(headCx - chestSize / 2 - 60, shoulderY + 118, picks.hands.id, rng, true);
   body += renderHand(headCx + chestSize / 2 + 60, shoulderY + 118, picks.hands.id, rng, false);
 
-  const hipY = chestCy + chestSize / 2;
-  const groundY = hipY + 130;
   const footStyle = picks.feet.id;
+  // Feet now rest right at the ground line instead of floating a few units
+  // above it, so they read as standing ON the grass rather than hovering.
   if (footStyle === 'peg_legs') {
-    // Straight leg down to the ankle, then a visible wedge tapering to a
-    // sharp point at ground level — a subtle jog in the line (the previous
-    // approach) is invisible at this stroke width; an actual triangular
-    // shape is what reads as a "peg."
-    body += doubleStroke([[headCx - 34, hipY], [headCx - 34, groundY - 16]], rng, 2, 'stroke');
-    body += doubleStroke([[headCx + 34, hipY], [headCx + 34, groundY - 16]], rng, 2, 'stroke');
-    body += doubleStroke([[headCx - 40, groundY - 16], [headCx - 28, groundY - 16], [headCx - 34, groundY], [headCx - 40, groundY - 16]], rng, 1.3, 'stroke');
-    body += doubleStroke([[headCx + 28, groundY - 16], [headCx + 40, groundY - 16], [headCx + 34, groundY], [headCx + 28, groundY - 16]], rng, 1.3, 'stroke');
+    body += doubleStroke([[headCx - 34, hipY], [headCx - 34, groundY - 12]], rng, 2, 'stroke');
+    body += doubleStroke([[headCx + 34, hipY], [headCx + 34, groundY - 12]], rng, 2, 'stroke');
+    body += doubleStroke([[headCx - 40, groundY - 15], [headCx - 28, groundY - 15], [headCx - 34, groundY - 3], [headCx - 40, groundY - 15]], rng, 1.3, 'stroke');
+    body += doubleStroke([[headCx + 28, groundY - 15], [headCx + 40, groundY - 15], [headCx + 34, groundY - 3], [headCx + 28, groundY - 15]], rng, 1.3, 'stroke');
   } else {
-    body += doubleStroke([[headCx - 34, hipY], [headCx - 34, groundY - 22]], rng, 2, 'stroke');
-    body += doubleStroke([[headCx + 34, hipY], [headCx + 34, groundY - 22]], rng, 2, 'stroke');
-    body += renderFoot(headCx - 34, groundY - 14, footStyle, rng, true);
-    body += renderFoot(headCx + 34, groundY - 14, footStyle, rng, false);
+    body += doubleStroke([[headCx - 34, hipY], [headCx - 34, groundY - 18]], rng, 2, 'stroke');
+    body += doubleStroke([[headCx + 34, hipY], [headCx + 34, groundY - 18]], rng, 2, 'stroke');
+    body += renderFoot(headCx - 34, groundY - 13, footStyle, rng, true);
+    body += renderFoot(headCx + 34, groundY - 13, footStyle, rng, false);
   }
 
   if (picks.companion.id !== 'none') body += renderCompanion(headCx + 110, groundY - 40, picks.companion.id, rng);
-
-  body += renderGround(W, groundY, picks.ground.id, rng);
 
   // Scoped by #piece{uid} — without this, identical class names (.stroke,
   // .strokeThick, etc.) across every tile on the gallery page are NOT scoped
@@ -560,10 +576,10 @@ const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
     background: 'black', hair: 'wild_spike', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
-    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', companion: 'cat_ghost'
+    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'companion'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -605,6 +621,7 @@ const ONE_OF_ONE_WEIGHTS = {
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
+  grassColor: [{ id: 'white', weight: 46 }, { id: 'default', weight: 42 }, { id: 'green', weight: 12 }],
   companion: [{ id: 'cat_ghost', weight: 22 }, { id: 'bunny', weight: 20 }, { id: 'cat', weight: 18 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 14 }, { id: 'none', weight: 10 }]
 };
 function pickOneOfOne(category, rng) {
@@ -624,6 +641,8 @@ function pickOneOfOne(category, rng) {
 // the same tier fallback — unless the user explicitly locked it themselves,
 // which always wins.
 const ONE_OF_ONE_ONLY_CHESTMARK = ['emoji_broken_heart', 'emoji_blast'];
+const ONE_OF_ONE_ONLY_GRASSCOLOR = ['green'];
+const ONE_OF_ONE_ONLY_BY_CATEGORY = { chestMark: ONE_OF_ONE_ONLY_CHESTMARK, grassColor: ONE_OF_ONE_ONLY_GRASSCOLOR };
 
 function generatePiece(index, seed, tier, opts) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
@@ -642,8 +661,9 @@ function generatePiece(index, seed, tier, opts) {
     }
     if (isOneOfOne) return pickOneOfOne(category, rng);
     let choice = pickByRarity(rng, TRAITS[category], t);
-    if (category === 'chestMark' && !explicitLock && ONE_OF_ONE_ONLY_CHESTMARK.includes(choice.id)) {
-      const pool = TRAITS.chestMark.filter((p) => !ONE_OF_ONE_ONLY_CHESTMARK.includes(p.id));
+    const exclusiveList = ONE_OF_ONE_ONLY_BY_CATEGORY[category];
+    if (exclusiveList && !explicitLock && exclusiveList.includes(choice.id)) {
+      const pool = TRAITS[category].filter((p) => !exclusiveList.includes(p.id));
       choice = pickByRarity(rng, pool, t);
     }
     return choice;
@@ -660,6 +680,7 @@ function generatePiece(index, seed, tier, opts) {
     feet: sigOverride ? sigOverride.feet : pick('feet'),
     sky: sigOverride ? sigOverride.sky : pick('sky'),
     ground: sigOverride ? sigOverride.ground : pick('ground'),
+    grassColor: sigOverride ? sigOverride.grassColor : pick('grassColor'),
     companion: sigOverride ? sigOverride.companion : pick('companion')
   };
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
@@ -681,7 +702,7 @@ const api = {
   TRAITS, TIER_FALLBACK, CHAIN_THEMES,
   mulberry32, weightedPick, pickByRarity, shadeColor,
   renderFromTraits, generatePiece, generateBatch,
-  ONE_OF_ONE_WEIGHTS, pickOneOfOne, ONE_OF_ONE_ONLY_CHESTMARK,
+  ONE_OF_ONE_WEIGHTS, pickOneOfOne, ONE_OF_ONE_ONLY_CHESTMARK, ONE_OF_ONE_ONLY_GRASSCOLOR, ONE_OF_ONE_ONLY_BY_CATEGORY,
   ONE_OF_ONE_SIGNATURE_COMBOS, SIGNATURE_TRAIT_KEYS, resolveSignatureCombo,
   maybeSignatureCombo, matchesAnySignature, breakSignatureMatch
 };
