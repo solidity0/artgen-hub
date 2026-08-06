@@ -47,7 +47,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .status-row { display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px; flex-wrap:wrap; gap:8px; }
 .status-label { font-family:'Space Mono',monospace; font-size:11px; color:var(--mid); }
 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:6px; overflow-anchor:none; }
-.tile { background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; }
+.tile { background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; aspect-ratio:500/620; }
 .tile:hover { border-color:var(--acid); }
 .tile svg { display:block; width:100%; height:auto; aspect-ratio:500/572; }
 .tile-label { padding:5px 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
@@ -68,7 +68,23 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .lb-actions { display:flex; gap:8px; margin-top:auto; flex-wrap:wrap; }
 .toast { position:fixed; bottom:20px; right:20px; z-index:400; background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--acid); padding:10px 16px; font-family:'Space Mono',monospace; font-size:11px; transform:translateY(60px); opacity:0; transition:all .3s; max-width:260px; }
 .toast.show { transform:translateY(0); opacity:1; }
-@media(max-width:600px) { .lb-inner { grid-template-columns:1fr; } header { padding:22px 16px 16px; } main { padding:16px; } .grid { grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); } }
+@media(max-width:600px) {
+  .lb-inner { grid-template-columns:1fr; }
+  header { padding:22px 16px 16px; }
+  main { padding:16px; }
+  /* Trait groups stacking one-per-row was making the page ~2800px tall
+     before the gallery grid even started — far beyond the lazy-load
+     observer's margin, so tiles never got their real content until the
+     user scrolled almost the whole way down. Two columns cuts that height
+     roughly in half. */
+  .controls-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+  .trait-group { padding:8px; }
+  .chip { font-size:9px; padding:5px 7px; }
+  .run-row { padding:12px; gap:8px; }
+  .run-row .field input { width:64px; }
+  .grid { grid-template-columns:repeat(3,1fr); gap:4px; }
+  .tile-label { font-size:9px; padding:4px 5px; }
+}
 </style>
 </head>
 <body>
@@ -90,6 +106,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
         <div class="chip-row" id="chain-controls">
           <button class="chip" data-chain="bitcoin">bitcoin</button>
           <button class="chip active" data-chain="ethereum">ethereum</button>
+          <button class="chip" data-chain="robinhood">robinhood</button>
         </div>
       </div>
       <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata"></textarea></div>
@@ -163,8 +180,8 @@ const gShadeColor = G.shadeColor;
 const gChainThemes = G.CHAIN_THEMES;
 
 const CATEGORY_META = {
-  background:'Background', hair:'Hair', eyes:'Eyes', eyeColor:'Eye Color', mouth:'Mouth',
-  chestMark:'Chest Mark', hands:'Hands', feet:'Feet', sky:'Sky', ground:'Ground', companion:'Companion'
+  background:'Background', hair:'Hair', ears:'Ears', eyes:'Eyes', eyeColor:'Eye Color', mouth:'Mouth',
+  chestMark:'Chest Mark', hands:'Hands', feet:'Feet', sky:'Sky', ground:'Ground', grassColor:'Grass Color', companion:'Companion', companionColor:'Companion Color'
 };
 
 const locks = {};
@@ -222,28 +239,74 @@ function buildControls() {
 
 function render() {
   const seed = parseFormattedInt(document.getElementById('seed-input').value) || 0;
-  const count = Math.max(1, Math.min(2000, parseFormattedInt(document.getElementById('count-input').value) || 24));
+  const count = Math.max(1, Math.min(10000, parseFormattedInt(document.getElementById('count-input').value) || 24));
   const oneOfOneCount = Math.max(0, Math.min(count, parseFormattedInt(document.getElementById('oneofone-input').value) || 0));
 
-  const opts = { locks };
-  currentPieces = [];
-  for (let i = 1; i <= count; i++) {
-    const isOneOfOne = i <= oneOfOneCount;
-    currentPieces.push(G.generatePiece(i, seed, currentTier, { locks, isOneOfOne }));
-  }
-  renderGrid();
+  if (count > 500) document.getElementById('status-label').textContent = 'Generating ' + count + ' pieces…';
+
+  // Deferred so the status label above actually paints before the
+  // (synchronous) generation loop runs — otherwise a large batch looks
+  // frozen for the whole generation step with no feedback at all.
+  setTimeout(() => {
+    const opts = { locks };
+    currentPieces = [];
+    for (let i = 1; i <= count; i++) {
+      const isOneOfOne = i <= oneOfOneCount;
+      currentPieces.push(G.generatePiece(i, seed, currentTier, { locks, isOneOfOne }));
+    }
+    renderGrid();
+  }, 10);
 }
 
+let gridObserver = null;
 function renderGrid() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-  currentPieces.forEach((p, idx) => {
-    const tile = document.createElement('div'); tile.className = 'tile'; tile.dataset.idx = idx;
-    tile.innerHTML = p.svg + '<div class="tile-label' + (p.isOneOfOne ? ' is-1of1' : '') + '">#' + p.index + (p.isOneOfOne ? ' · 1/1' : '') + '</div>';
-    grid.appendChild(tile);
-  });
   const oneOfOnes = currentPieces.filter(p => p.isOneOfOne).length;
   document.getElementById('status-label').textContent = currentPieces.length + ' pieces generated' + (oneOfOnes ? ' (' + oneOfOnes + ' marked 1/1)' : '');
+
+  // Each piece's SVG is ~150-200 elements — inserting all of them upfront for
+  // a large batch (the hub allows up to 10,000) means hundreds of thousands
+  // of DOM nodes and multi-minute freezes. Instead, tiles start as lightweight
+  // placeholders and only get their real SVG filled in once they scroll near
+  // the viewport (matching the lazy/virtualized grid pattern the other
+  // generators already use) — the lightbox still works on any tile
+  // immediately since it reads straight from the currentPieces array, not
+  // from whatever's currently in the DOM.
+  function loadTile(tile) {
+    const idx = parseInt(tile.dataset.idx, 10);
+    const p = currentPieces[idx];
+    if (tile.dataset.loaded) return;
+    tile.dataset.loaded = '1';
+    tile.innerHTML = p.svg + '<div class="tile-label' + (p.isOneOfOne ? ' is-1of1' : '') + '">#' + p.index + (p.isOneOfOne ? ' · 1/1' : '') + '</div>';
+    if (gridObserver) gridObserver.unobserve(tile);
+  }
+
+  if (gridObserver) gridObserver.disconnect();
+  gridObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) loadTile(entry.target);
+    }
+  }, { root: null, rootMargin: '800px 0px', threshold: 0.01 });
+
+  const frag = document.createDocumentFragment();
+  currentPieces.forEach((p, idx) => {
+    const tile = document.createElement('div'); tile.className = 'tile'; tile.dataset.idx = idx;
+    frag.appendChild(tile);
+  });
+  grid.appendChild(frag);
+  const tiles = grid.querySelectorAll('.tile');
+  // Eagerly load the first screenful worth of tiles regardless of scroll
+  // position — relying purely on intersection meant the grid stayed
+  // completely blank on mobile, where the stacked trait panels push the
+  // grid thousands of pixels below the fold, far past any reasonable
+  // margin. A fixed first-batch guarantees something is visible immediately
+  // on any device, and the observer still handles everything past that.
+  const EAGER_COUNT = 16;
+  tiles.forEach((tile, i) => {
+    if (i < EAGER_COUNT) loadTile(tile);
+    else gridObserver.observe(tile);
+  });
 }
 
 function showToast(msg) {
