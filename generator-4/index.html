@@ -68,7 +68,23 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .lb-actions { display:flex; gap:8px; margin-top:auto; flex-wrap:wrap; }
 .toast { position:fixed; bottom:20px; right:20px; z-index:400; background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--acid); padding:10px 16px; font-family:'Space Mono',monospace; font-size:11px; transform:translateY(60px); opacity:0; transition:all .3s; max-width:260px; }
 .toast.show { transform:translateY(0); opacity:1; }
-@media(max-width:600px) { .lb-inner { grid-template-columns:1fr; } header { padding:22px 16px 16px; } main { padding:16px; } .grid { grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); } }
+@media(max-width:600px) {
+  .lb-inner { grid-template-columns:1fr; }
+  header { padding:22px 16px 16px; }
+  main { padding:16px; }
+  /* Trait groups stacking one-per-row was making the page ~2800px tall
+     before the gallery grid even started — far beyond the lazy-load
+     observer's margin, so tiles never got their real content until the
+     user scrolled almost the whole way down. Two columns cuts that height
+     roughly in half. */
+  .controls-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+  .trait-group { padding:8px; }
+  .chip { font-size:9px; padding:5px 7px; }
+  .run-row { padding:12px; gap:8px; }
+  .run-row .field input { width:64px; }
+  .grid { grid-template-columns:repeat(3,1fr); gap:4px; }
+  .tile-label { font-size:9px; padding:4px 5px; }
+}
 </style>
 </head>
 <body>
@@ -90,6 +106,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
         <div class="chip-row" id="chain-controls">
           <button class="chip" data-chain="bitcoin">bitcoin</button>
           <button class="chip active" data-chain="ethereum">ethereum</button>
+          <button class="chip" data-chain="robinhood">robinhood</button>
         </div>
       </div>
       <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata"></textarea></div>
@@ -192,11 +209,16 @@ const TRAITS = {
     { id: 'jagged_broken',  weight: 6,  rarity: 'rare' }
   ],
   eyes: [
-    { id: 'ring_plain',  weight: 30, rarity: 'common' },
-    { id: 'spiral',      weight: 28, rarity: 'common' },
-    { id: 'ring_double', weight: 18, rarity: 'uncommon' },
-    { id: 'asymmetric',  weight: 14, rarity: 'uncommon' },
-    { id: 'void',        weight: 10, rarity: 'rare' }
+    { id: 'ring_plain',       weight: 26, rarity: 'common' },
+    { id: 'spiral',           weight: 23, rarity: 'common' },
+    { id: 'ring_double',      weight: 15, rarity: 'uncommon' },
+    { id: 'asymmetric',       weight: 12, rarity: 'uncommon' },
+    { id: 'ring_plain_glow',  weight: 8,  rarity: 'uncommon' },
+    { id: 'spiral_glow',      weight: 7,  rarity: 'uncommon' },
+    { id: 'void',             weight: 7,  rarity: 'rare' },
+    { id: 'ring_double_glow', weight: 5,  rarity: 'rare' },
+    { id: 'asymmetric_glow',  weight: 4,  rarity: 'rare' },
+    { id: 'void_glow',        weight: 3,  rarity: 'rare' }
   ],
   eyeColor: [
     { id: 'default', weight: 60, rarity: 'common' },
@@ -265,6 +287,13 @@ const TRAITS = {
     { id: 'bird',      weight: 7,  rarity: 'uncommon' },
     { id: 'cat_ghost', weight: 3,  rarity: 'rare' },
     { id: 'bunny',     weight: 2,  rarity: 'rare' }
+  ],
+  companionColor: [
+    { id: 'default', weight: 52, rarity: 'common' },
+    { id: 'orange',  hex: '#ff8c42', weight: 18, rarity: 'uncommon' },
+    { id: 'gray',    hex: '#9aa0ab', weight: 13, rarity: 'uncommon' },
+    { id: 'brown',   hex: '#8a5a34', weight: 8,  rarity: 'rare' },
+    { id: 'red',     hex: '#e6453c', weight: 9,  rarity: 'rare' }
   ]
 };
 
@@ -291,7 +320,7 @@ function shadeColor(hex, percent) {
   return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
 }
 
-const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea' };
+const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea', robinhood: '#00C805' };
 
 // ---------- drawing helpers ----------
 // Chalk strokes need three things clean vector lines don't have: waviness
@@ -395,10 +424,17 @@ function renderHair(cx, top, style, rng) {
   return out;
 }
 
-function renderEyes(cx, cy, style, rng, ink, eyeColor) {
+function renderEyes(cx, cy, style, rng, ink, eyeColor, uid) {
   const spacing = 26;
   const lx = cx - spacing, rx = cx + spacing;
   const col = eyeColor || null;
+  // Every eye style has a "_glow" twin — same geometry, wrapped in a soft
+  // blurred halo behind the fully crisp original. Scoped filter (wraps only
+  // the eye shapes, not the whole figure) so it can't reintroduce the
+  // earlier whole-piece blur regression.
+  const isGlow = style.endsWith('_glow');
+  const baseStyle = isGlow ? style.slice(0, -5) : style;
+
   function ring(x, y, r) {
     return doubleStroke(
       Array.from({ length: 13 }, (_, i) => {
@@ -417,15 +453,52 @@ function renderEyes(cx, cy, style, rng, ink, eyeColor) {
     return doubleStroke(pts, rng, 1, 'stroke', col);
   }
   let out = '';
-  if (style === 'ring_plain') out += ring(lx, cy, 13) + ring(rx, cy, 13);
-  else if (style === 'spiral') out += spiral(lx, cy, 13) + spiral(rx, cy, 13);
-  else if (style === 'ring_double') out += ring(lx, cy, 14) + ring(lx, cy, 7) + ring(rx, cy, 14) + ring(rx, cy, 7);
-  else if (style === 'asymmetric') out += ring(lx, cy, 13) + spiral(rx, cy, 13);
-  else if (style === 'void') {
+  if (baseStyle === 'ring_plain') out += ring(lx, cy, 13) + ring(rx, cy, 13);
+  else if (baseStyle === 'spiral') out += spiral(lx, cy, 13) + spiral(rx, cy, 13);
+  else if (baseStyle === 'ring_double') out += ring(lx, cy, 14) + ring(lx, cy, 7) + ring(rx, cy, 14) + ring(rx, cy, 7);
+  else if (baseStyle === 'asymmetric') out += ring(lx, cy, 13) + spiral(rx, cy, 13);
+  else if (baseStyle === 'void') {
     const fillCol = col || ink;
     out += '<circle cx="' + lx + '" cy="' + cy + '" r="14" fill="' + fillCol + '"/>';
     out += '<circle cx="' + rx + '" cy="' + cy + '" r="14" fill="' + fillCol + '"/>';
     out += ring(lx, cy, 15) + ring(rx, cy, 15);
+  }
+
+  if (isGlow && out) {
+    // Concentric radial-gradient glow, matching the reference exactly: a
+    // black pupil center, a bright core band, and a warm dark outer band
+    // fading to nothing — not a blur. Pure gradient fill stays perfectly
+    // crisp (gradients are just color transitions, no resampling), and it
+    // sits BEHIND the existing ring/spiral/void geometry, which still draws
+    // fully sharp on top.
+    const baseHex = col || '#e8b23a'; // warm gold default when no eyeColor picked
+    const core = shadeColor(baseHex, 30);
+    const outer = shadeColor(baseHex, -50);
+    const gradId = 'eyeglow' + uid;
+    // Tight transition zones (1-2% spans) between bands instead of a smooth
+    // continuous blend — that's what was reading as "blurry": a gradual
+    // interpolation over 10-38% of the radius looks soft no matter how
+    // crisp the underlying rendering is. Real ring separation needs each
+    // color to hold flat, then snap to the next.
+    const gradDef = '<radialGradient id="' + gradId + '" cx="50%" cy="50%" r="50%">' +
+      '<stop offset="0%" stop-color="#000"/>' +
+      '<stop offset="13%" stop-color="#000"/>' +
+      '<stop offset="15%" stop-color="' + core + '"/>' +
+      '<stop offset="44%" stop-color="' + core + '"/>' +
+      '<stop offset="46%" stop-color="' + outer + '"/>' +
+      '<stop offset="76%" stop-color="' + outer + '" stop-opacity="1"/>' +
+      '<stop offset="100%" stop-color="' + outer + '" stop-opacity="0"/>' +
+      '</radialGradient>';
+    const glowDiscs = '<circle cx="' + lx + '" cy="' + cy + '" r="23" fill="url(#' + gradId + ')"/>' +
+      '<circle cx="' + rx + '" cy="' + cy + '" r="23" fill="url(#' + gradId + ')"/>';
+    // void's own opaque fill+ring would just mask the gradient bands entirely
+    // (its solid circle is bigger than the gradient's bright core) — the
+    // gradient alone already reads as a complete glowing eye (it has its own
+    // black pupil built in), so skip drawing void's normal geometry on top.
+    // Line-based styles (rings/spiral) still draw over the glow, since an
+    // outline sitting on top of the glow reads as "a ring around a glowing iris."
+    if (baseStyle === 'void') return gradDef + glowDiscs;
+    return gradDef + glowDiscs + out;
   }
   return out;
 }
@@ -593,49 +666,49 @@ function renderGround(w, y, style, rng, grassColor) {
   return out;
 }
 
-function renderCompanion(x, y, style, rng) {
+function renderCompanion(x, y, style, rng, col) {
   const cls = style === 'cat_ghost' ? 'strokeGhost' : 'stroke';
   let out = '<g transform="translate(' + x + ',' + y + ')">';
 
   if (style === 'cat' || style === 'cat_ghost') {
-    out += doubleStroke([[-30, 20], [-20, -6], [10, -10], [30, 10], [30, 22]], rng, 2, cls);
-    for (const lx of [-22, -8, 8, 22]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls);
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [34 + Math.cos(a) * 16, -4 + Math.sin(a) * 13]; }), rng, 1.2, cls);
-    out += doubleStroke([[24, -14], [20, -30], [30, -18]], rng, 1.5, cls);
-    out += doubleStroke([[42, -14], [46, -30], [38, -18]], rng, 1.5, cls);
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [29 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls);
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [39 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls);
-    for (let i = 0; i < 3; i++) out += doubleStroke([[30 + i * 4, 3], [30 + i * 4, 7]], rng, 0.6, cls);
+    out += doubleStroke([[-30, 20], [-20, -6], [10, -10], [30, 10], [30, 22]], rng, 2, cls, col);
+    for (const lx of [-22, -8, 8, 22]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls, col);
+    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [34 + Math.cos(a) * 16, -4 + Math.sin(a) * 13]; }), rng, 1.2, cls, col);
+    out += doubleStroke([[24, -14], [20, -30], [30, -18]], rng, 1.5, cls, col);
+    out += doubleStroke([[42, -14], [46, -30], [38, -18]], rng, 1.5, cls, col);
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [29 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls, col);
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [39 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls, col);
+    for (let i = 0; i < 3; i++) out += doubleStroke([[30 + i * 4, 3], [30 + i * 4, 7]], rng, 0.6, cls, col);
   } else if (style === 'dog') {
     // Longer snout, floppy ears, wagging tail — same visual language, distinct silhouette.
-    out += doubleStroke([[-32, 20], [-22, -4], [12, -8], [34, 12], [34, 22]], rng, 2, cls);
-    for (const lx of [-24, -8, 10, 26]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls);
-    out += doubleStroke([[34, -6], [50, -2], [48, 8], [34, 6]], rng, 1.2, cls); // snout
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [30 + Math.cos(a) * 15, -10 + Math.sin(a) * 12]; }), rng, 1.2, cls); // head
-    out += doubleStroke([[20, -18], [12, -6], [22, -2]], rng, 1.5, cls); // floppy ear
-    out += doubleStroke([[42, -20], [50, -8], [40, -4]], rng, 1.5, cls); // floppy ear
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [26 + Math.cos(a) * 3, -12 + Math.sin(a) * 3]; }), rng, 0.7, cls);
-    out += doubleStroke([[44, 4], [46, 2], [46, 6], [44, 4]], rng, 0.5, cls); // nose
-    out += doubleStroke([[-32, 20], [-42, 8], [-46, -2]], rng, 1.5, cls); // tail
+    out += doubleStroke([[-32, 20], [-22, -4], [12, -8], [34, 12], [34, 22]], rng, 2, cls, col);
+    for (const lx of [-24, -8, 10, 26]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls, col);
+    out += doubleStroke([[34, -6], [50, -2], [48, 8], [34, 6]], rng, 1.2, cls, col); // snout
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [30 + Math.cos(a) * 15, -10 + Math.sin(a) * 12]; }), rng, 1.2, cls, col); // head
+    out += doubleStroke([[20, -18], [12, -6], [22, -2]], rng, 1.5, cls, col); // floppy ear
+    out += doubleStroke([[42, -20], [50, -8], [40, -4]], rng, 1.5, cls, col); // floppy ear
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [26 + Math.cos(a) * 3, -12 + Math.sin(a) * 3]; }), rng, 0.7, cls, col);
+    out += doubleStroke([[44, 4], [46, 2], [46, 6], [44, 4]], rng, 0.5, cls, col); // nose
+    out += doubleStroke([[-32, 20], [-42, 8], [-46, -2]], rng, 1.5, cls, col); // tail
   } else if (style === 'bird') {
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 18, 0 + Math.sin(a) * 14]; }), rng, 1.3, cls); // body
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [22 + Math.cos(a) * 11, -14 + Math.sin(a) * 10]; }), rng, 1.1, cls); // head
-    out += doubleStroke([[32, -14], [44, -10], [32, -6]], rng, 1, cls); // beak
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 2.6, -16 + Math.sin(a) * 2.6]; }), rng, 0.6, cls); // eye
-    out += doubleStroke([[-6, 10], [-6, 26]], rng, 1.2, cls); // leg
-    out += doubleStroke([[8, 10], [8, 26]], rng, 1.2, cls); // leg
-    out += doubleStroke([[-10, 26], [-2, 26]], rng, 1, cls);
-    out += doubleStroke([[4, 26], [12, 26]], rng, 1, cls);
-    out += doubleStroke([[-16, 2], [-30, -6], [-16, -8]], rng, 1.3, cls); // wing
+    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 18, 0 + Math.sin(a) * 14]; }), rng, 1.3, cls, col); // body
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [22 + Math.cos(a) * 11, -14 + Math.sin(a) * 10]; }), rng, 1.1, cls, col); // head
+    out += doubleStroke([[32, -14], [44, -10], [32, -6]], rng, 1, cls, col); // beak
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 2.6, -16 + Math.sin(a) * 2.6]; }), rng, 0.6, cls, col); // eye
+    out += doubleStroke([[-6, 10], [-6, 26]], rng, 1.2, cls, col); // leg
+    out += doubleStroke([[8, 10], [8, 26]], rng, 1.2, cls, col); // leg
+    out += doubleStroke([[-10, 26], [-2, 26]], rng, 1, cls, col);
+    out += doubleStroke([[4, 26], [12, 26]], rng, 1, cls, col);
+    out += doubleStroke([[-16, 2], [-30, -6], [-16, -8]], rng, 1.3, cls, col); // wing
   } else if (style === 'bunny') {
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 20, 6 + Math.sin(a) * 15]; }), rng, 1.4, cls); // body
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [26 + Math.cos(a) * 13, -8 + Math.sin(a) * 11]; }), rng, 1.2, cls); // head
-    out += doubleStroke([[20, -18], [16, -42], [24, -20]], rng, 1.4, cls); // long ear
-    out += doubleStroke([[32, -18], [36, -42], [28, -20]], rng, 1.4, cls); // long ear
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls);
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [30 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls);
-    for (const lx of [-14, 0, 12, 24]) out += doubleStroke([[lx, 18], [lx, 30]], rng, 1.3, cls);
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [-18 + Math.cos(a) * 6, 12 + Math.sin(a) * 6]; }), rng, 1, cls); // tail puff
+    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 20, 6 + Math.sin(a) * 15]; }), rng, 1.4, cls, col); // body
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [26 + Math.cos(a) * 13, -8 + Math.sin(a) * 11]; }), rng, 1.2, cls, col); // head
+    out += doubleStroke([[20, -18], [16, -42], [24, -20]], rng, 1.4, cls, col); // long ear
+    out += doubleStroke([[32, -18], [36, -42], [28, -20]], rng, 1.4, cls, col); // long ear
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls, col);
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [30 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls, col);
+    for (const lx of [-14, 0, 12, 24]) out += doubleStroke([[lx, 18], [lx, 30]], rng, 1.3, cls, col);
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [-18 + Math.cos(a) * 6, 12 + Math.sin(a) * 6]; }), rng, 1, cls, col); // tail puff
   }
 
   out += '</g>';
@@ -648,6 +721,7 @@ function renderFromTraits(picks, index, seed) {
   const bg = TRAITS.background.find((o) => o.id === picks.background.id);
   const ink = inkFor(bg.id);
   const cx = W / 2;
+  const uid = (seed ?? 0) + '_' + index;
 
   let body = '';
   if (bg.id === 'black' || bg.id === 'deep_black') body += renderStarfield(W, H, rng);
@@ -676,7 +750,7 @@ function renderFromTraits(picks, index, seed) {
   body += renderEars(headCx - headSize / 2 - 24, headCy, picks.ears.id, rng, true);
   body += renderEars(headCx + headSize / 2 + 24, headCy, picks.ears.id, rng, false);
   const eyeColorHex = picks.eyeColor.hex || null;
-  body += renderEyes(headCx, headCy - 10, picks.eyes.id, rng, ink, eyeColorHex);
+  body += renderEyes(headCx, headCy - 10, picks.eyes.id, rng, ink, eyeColorHex, uid);
   body += renderMouth(headCx, headCy + 45, picks.mouth.id, rng);
 
   const neckTop = headTop + headSize;
@@ -706,7 +780,8 @@ function renderFromTraits(picks, index, seed) {
     body += renderFoot(headCx + 34, groundY - 13, footStyle, rng, false);
   }
 
-  if (picks.companion.id !== 'none') body += renderCompanion(headCx + 110, groundY - 40, picks.companion.id, rng);
+  const companionColorHex = picks.companionColor.hex || null;
+  if (picks.companion.id !== 'none') body += renderCompanion(headCx + 110, groundY - 40, picks.companion.id, rng, companionColorHex);
 
   // Scoped by #piece{uid} — without this, identical class names (.stroke,
   // .strokeThick, etc.) across every tile on the gallery page are NOT scoped
@@ -714,7 +789,6 @@ function renderFromTraits(picks, index, seed) {
   // rendered on the page silently overrides every earlier piece's ink color.
   // That's what made black-background tiles look near-blank: their strokes
   // were secretly repainted in whatever ink the last tile on the page used.
-  const uid = (seed ?? 0) + '_' + index;
   const style =
     '<style>' +
     '#piece' + uid + ' .stroke{stroke:' + ink + ';stroke-width:4.2px;fill:none;}' +
@@ -739,11 +813,11 @@ function renderFromTraits(picks, index, seed) {
 const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
-    background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
-    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost'
+    background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void_glow', eyeColor: 'red', mouth: 'fangs_stitch',
+    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', companionColor: 'gray'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'companionColor'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -778,7 +852,7 @@ const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'black', weight: 55 }, { id: 'deep_black', weight: 45 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
-  eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }],
+  eyes: [{ id: 'void_glow', weight: 22 }, { id: 'asymmetric_glow', weight: 18 }, { id: 'ring_double_glow', weight: 16 }, { id: 'void', weight: 14 }, { id: 'spiral_glow', weight: 12 }, { id: 'ring_plain_glow', weight: 10 }, { id: 'asymmetric', weight: 4 }, { id: 'ring_double', weight: 4 }],
   eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }],
   mouth: [{ id: 'fangs_stitch', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'single_line', weight: 24 }, { id: 'stitches_uneven', weight: 20 }],
   chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'blank', weight: 12 }, { id: 'emoji_ghost', weight: 11 }, { id: 'emoji_skull', weight: 11 }, { id: 'emoji_100', weight: 9 }, { id: 'emoji_rainbow', weight: 9 }, { id: 'emoji_rocket', weight: 9 }, { id: 'emoji_broken_heart', weight: 9 }, { id: 'emoji_blast', weight: 9 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
@@ -787,7 +861,8 @@ const ONE_OF_ONE_WEIGHTS = {
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
   grassColor: [{ id: 'white', weight: 46 }, { id: 'default', weight: 42 }, { id: 'green', weight: 12 }],
-  companion: [{ id: 'cat_ghost', weight: 22 }, { id: 'bunny', weight: 20 }, { id: 'cat', weight: 18 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 14 }, { id: 'none', weight: 10 }]
+  companion: [{ id: 'cat_ghost', weight: 22 }, { id: 'bunny', weight: 20 }, { id: 'cat', weight: 18 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 14 }, { id: 'none', weight: 10 }],
+  companionColor: [{ id: 'orange', weight: 30 }, { id: 'brown', weight: 26 }, { id: 'red', weight: 22 }, { id: 'gray', weight: 18 }, { id: 'default', weight: 8 }]
 };
 function pickOneOfOne(category, rng) {
   const weights = ONE_OF_ONE_WEIGHTS[category];
@@ -847,9 +922,28 @@ function generatePiece(index, seed, tier, opts) {
     sky: sigOverride ? sigOverride.sky : pick('sky'),
     ground: sigOverride ? sigOverride.ground : pick('ground'),
     grassColor: sigOverride ? sigOverride.grassColor : pick('grassColor'),
-    companion: sigOverride ? sigOverride.companion : pick('companion')
+    companion: sigOverride ? sigOverride.companion : pick('companion'),
+    companionColor: sigOverride ? sigOverride.companionColor : pick('companionColor')
   };
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
+
+  // Green grass is a guaranteed, sequential thing, not a random chance —
+  // every 1/1 numbered 1-25 gets it, no exceptions (this overrides even a
+  // fired signature combo), and it's never reachable past #25 or on any
+  // regular piece. Only an explicit user lock on grassColor can override this.
+  const grassLocked = !!(locks.grassColor && locks.grassColor.length);
+  if (!grassLocked) {
+    if (isOneOfOne && index <= 25) {
+      picks.grassColor = TRAITS.grassColor.find((o) => o.id === 'green');
+    } else if (picks.grassColor.id === 'green') {
+      const pool = ONE_OF_ONE_WEIGHTS.grassColor.filter((w) => w.id !== 'green');
+      const total = pool.reduce((s, w) => s + w.weight, 0);
+      let r = rng() * total;
+      let pickedId = pool[pool.length - 1].id;
+      for (const w of pool) { if (r < w.weight) { pickedId = w.id; break; } r -= w.weight; }
+      picks.grassColor = TRAITS.grassColor.find((o) => o.id === pickedId);
+    }
+  }
 
   const svg = renderFromTraits(picks, index, seed);
   const traits = {}, rarity = {};
@@ -907,7 +1001,7 @@ const gChainThemes = G.CHAIN_THEMES;
 
 const CATEGORY_META = {
   background:'Background', hair:'Hair', ears:'Ears', eyes:'Eyes', eyeColor:'Eye Color', mouth:'Mouth',
-  chestMark:'Chest Mark', hands:'Hands', feet:'Feet', sky:'Sky', ground:'Ground', grassColor:'Grass Color', companion:'Companion'
+  chestMark:'Chest Mark', hands:'Hands', feet:'Feet', sky:'Sky', ground:'Ground', grassColor:'Grass Color', companion:'Companion', companionColor:'Companion Color'
 };
 
 const locks = {};
@@ -999,17 +1093,19 @@ function renderGrid() {
   // generators already use) — the lightbox still works on any tile
   // immediately since it reads straight from the currentPieces array, not
   // from whatever's currently in the DOM.
+  function loadTile(tile) {
+    const idx = parseInt(tile.dataset.idx, 10);
+    const p = currentPieces[idx];
+    if (tile.dataset.loaded) return;
+    tile.dataset.loaded = '1';
+    tile.innerHTML = p.svg + '<div class="tile-label' + (p.isOneOfOne ? ' is-1of1' : '') + '">#' + p.index + (p.isOneOfOne ? ' · 1/1' : '') + '</div>';
+    if (gridObserver) gridObserver.unobserve(tile);
+  }
+
   if (gridObserver) gridObserver.disconnect();
   gridObserver = new IntersectionObserver((entries) => {
     for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      const tile = entry.target;
-      const idx = parseInt(tile.dataset.idx, 10);
-      const p = currentPieces[idx];
-      if (tile.dataset.loaded) continue;
-      tile.dataset.loaded = '1';
-      tile.innerHTML = p.svg + '<div class="tile-label' + (p.isOneOfOne ? ' is-1of1' : '') + '">#' + p.index + (p.isOneOfOne ? ' · 1/1' : '') + '</div>';
-      gridObserver.unobserve(tile);
+      if (entry.isIntersecting) loadTile(entry.target);
     }
   }, { root: null, rootMargin: '800px 0px', threshold: 0.01 });
 
@@ -1019,7 +1115,18 @@ function renderGrid() {
     frag.appendChild(tile);
   });
   grid.appendChild(frag);
-  grid.querySelectorAll('.tile').forEach((tile) => gridObserver.observe(tile));
+  const tiles = grid.querySelectorAll('.tile');
+  // Eagerly load the first screenful worth of tiles regardless of scroll
+  // position — relying purely on intersection meant the grid stayed
+  // completely blank on mobile, where the stacked trait panels push the
+  // grid thousands of pixels below the fold, far past any reasonable
+  // margin. A fixed first-batch guarantees something is visible immediately
+  // on any device, and the observer still handles everything past that.
+  const EAGER_COUNT = 16;
+  tiles.forEach((tile, i) => {
+    if (i < EAGER_COUNT) loadTile(tile);
+    else gridObserver.observe(tile);
+  });
 }
 
 function showToast(msg) {
