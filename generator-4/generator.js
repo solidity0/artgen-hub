@@ -771,7 +771,20 @@ function coilPts(path, amp, step) {
 // How far below the wrist point each hand shape reaches (for hands resting on the floor).
 const HAND_REACH = { mitten_bow: 11, round_paw: 10, claw: 12, broken_stub: 10, pincer: 21, three_finger: 20, hook: 21, magnet: 21, plug: 21 };
 
-function renderFromTraits(picks, index, seed) {
+// 1/1 marker: a thin gold-foil double frame with corner studs, so 1/1s read as special on any background
+function oneOfOneFrame(uid, SW, H, OX) {
+  const x = -OX + 12, y = 12, w = SW - 24, h = H - 24;
+  let o = '<defs><linearGradient id="foil' + uid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset="0.35" stop-color="#e2ac3a"/><stop offset="0.6" stop-color="#fbe08a"/><stop offset="1" stop-color="#b9821f"/></linearGradient></defs>';
+  o += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="none" stroke="url(#foil' + uid + ')" stroke-width="5"/>';
+  o += '<rect x="' + (x + 9) + '" y="' + (y + 9) + '" width="' + (w - 18) + '" height="' + (h - 18) + '" fill="none" stroke="url(#foil' + uid + ')" stroke-width="1.5" opacity=".75"/>';
+  for (const [cx, cy] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) {
+    o += '<path d="M ' + cx + ' ' + (cy - 9) + ' L ' + (cx + 9) + ' ' + cy + ' L ' + cx + ' ' + (cy + 9) + ' L ' + (cx - 9) + ' ' + cy + ' Z" fill="url(#foil' + uid + ')" stroke="#8a5d12" stroke-width="1"/>';
+  }
+  return o;
+}
+
+function renderFromTraits(picks, index, seed, opts) {
+  const isOneOfOne = !!(opts && opts.isOneOfOne);
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const deco = mulberry32((seed ?? 0) * 100003 + index + 7777); // background texture only
   const W = 500, H = 572;
@@ -1014,7 +1027,7 @@ function renderFromTraits(picks, index, seed) {
   return '<svg id="piece' + uid + '" viewBox="' + -OX + ' 0 ' + SW + ' ' + H + '" width="' + SW + '" height="' + H + '" xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' + defs + '</defs>' +
     '<rect x="' + -OX + '" y="0" width="' + SW + '" height="' + H + '" fill="' + bg.hex + '"/>' + style +
-    back + '<g>' + body + '</g></svg>';
+    back + '<g>' + body + '</g>' + (isOneOfOne ? oneOfOneFrame(uid, SW, H, OX) : '') + '</svg>';
 }
 
 // ---------- 1/1-exclusive signature combos ----------
@@ -1057,8 +1070,8 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // forcing tier:'rare' against pools that only have one rare value (the
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
-  background: [{ id: 'black', weight: 40 }, { id: 'deep_black', weight: 35 }, { id: 'midnight', weight: 25 }],
-  bodyColor: [{ id: 'chrome', weight: 12 }, { id: 'gold', weight: 12 }, { id: 'holo', weight: 11 }, { id: 'rose_gold', weight: 11 }, { id: 'purple', weight: 10 }, { id: 'obsidian', weight: 11 }, { id: 'aurora', weight: 11 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'classic', weight: 4 }],
+  background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'sage', weight: 8 }, { id: 'blush', weight: 8 }, { id: 'powder', weight: 8 }, { id: 'lemon', weight: 8 }, { id: 'lavender', weight: 8 }],
+  bodyColor: [{ id: 'gold', weight: 7 }, { id: 'chrome', weight: 7 }, { id: 'holo', weight: 6 }, { id: 'rose_gold', weight: 6 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'aurora', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'magenta', weight: 4 }, { id: 'lime', weight: 4 }, { id: 'tangerine', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'butter', weight: 4 }, { id: 'orchid', weight: 4 }, { id: 'snow', weight: 4 }, { id: 'charcoal', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'sky', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'cocoa', weight: 3 }, { id: 'classic', weight: 3 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
@@ -1069,13 +1082,13 @@ const ONE_OF_ONE_WEIGHTS = {
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
-  headColor: [{ id: 'matching', weight: 30 }, { id: 'gold', weight: 12 }, { id: 'chrome', weight: 12 }, { id: 'holo', weight: 10 }, { id: 'aurora', weight: 10 }, { id: 'obsidian', weight: 10 }, { id: 'charcoal', weight: 8 }, { id: 'snow', weight: 8 }],
+  headColor: [{ id: 'matching', weight: 26 }, { id: 'gold', weight: 7 }, { id: 'chrome', weight: 6 }, { id: 'holo', weight: 5 }, { id: 'aurora', weight: 5 }, { id: 'obsidian', weight: 5 }, { id: 'rose_gold', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'snow', weight: 4 }, { id: 'charcoal', weight: 4 }, { id: 'butter', weight: 4 }, { id: 'sky', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'mint', weight: 4 }, { id: 'bubblegum', weight: 4 }, { id: 'navy', weight: 4 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
-  grassColor: [{ id: 'white', weight: 46 }, { id: 'default', weight: 42 }, { id: 'green', weight: 12 }],
-  companion: [{ id: 'cat_ghost', weight: 22 }, { id: 'bunny', weight: 20 }, { id: 'cat', weight: 18 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 14 }, { id: 'none', weight: 10 }]
+  grassColor: [{ id: 'default', weight: 50 }, { id: 'white', weight: 30 }, { id: 'green', weight: 20 }],
+  companion: [{ id: 'none', weight: 24 }, { id: 'bunny', weight: 16 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 16 }, { id: 'cat', weight: 16 }, { id: 'cat_ghost', weight: 12 }]
 };
 function pickOneOfOne(category, rng) {
   const weights = ONE_OF_ONE_WEIGHTS[category];
@@ -1179,7 +1192,7 @@ function generatePiece(index, seed, tier, opts) {
   }
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
 
-  const svg = renderFromTraits(picks, index, seed);
+  const svg = renderFromTraits(picks, index, seed, { isOneOfOne });
   const traits = {}, rarity = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { traits[k] = picks[k].id; rarity[k] = picks[k].rarity; });
 
