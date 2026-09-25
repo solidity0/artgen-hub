@@ -803,9 +803,15 @@ function renderFromTraits(picks, index, seed, opts) {
   const eyeR=eyeStyle.id==='starburst_lg'?16:12;
   const hollow=eyeStyle.id==='hollow_star';
 
-  let svg=`<svg width="400" height="480" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  svg+=`<rect width="${W}" height="${H}" fill="${background.bg}"/>`;
-  svg+=bgPattern(background.pattern, background.bg, rng, ink);
+  // Square canvas (NFT-standard 1:1): the 400-wide stage is centred in a 480x480 frame.
+  // The centre pattern is drawn exactly as before (same rng stream); the side strips get
+  // their own clipped copy of the pattern from a separate seeded rng.
+  const SW=H, OX=(SW-W)/2, sid=`sq${(seed??0)}_${index}`;
+  let svg=`<svg width="${SW}" height="${H}" viewBox="${-OX} 0 ${SW} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  svg+=`<rect x="${-OX}" width="${SW}" height="${H}" fill="${background.bg}"/>`;
+  const sidePat=bgPattern(background.pattern, background.bg, mulberry32((seed??0)*100003+index+31), ink);
+  if(sidePat) svg+=`<clipPath id="${sid}"><rect x="${-OX}" width="${OX}" height="${H}"/><rect x="${W}" width="${OX}" height="${H}"/></clipPath><g clip-path="url(#${sid})"><g transform="translate(${-W+OX} 0)">${sidePat}</g><g transform="translate(${W-OX} 0)">${sidePat}</g></g>`;
+  svg+=bgPattern(background.pattern, background.bg, rng, ink); // centre pattern may spill over the strips so there's no seam
   svg+=clothingMarkup(clothing.id, cx, cy, headRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5), background.bg);
   svg+=headFillMarkup(headFill.id, headPath, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+6));
   svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round"/>`;

@@ -1286,7 +1286,7 @@ function generatePiece(index, seed, tier, opts) {
   const eyeOpts = { noMouth: mouth.id === 'none' };
   if (animate) { eyeOpts.animate = true; eyeOpts.rng = animRng; eyeOpts.headColor = headColor.hex; }
 
-  const svg = `<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+  const svg = `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <rect width="600" height="600" fill="${background.fill}"/>
 ${backgroundOverlay(rng, background.pattern)}
 ${bodyMarkup(body.id, bodyColor.hex, background.fill)}

@@ -500,12 +500,15 @@ function renderCompanion(x, y, style, rng) {
 function renderFromTraits(picks, index, seed) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const W = 500, H = 572;
+  // Square canvas (NFT-standard 1:1): the figure is laid out on the 500-wide stage and
+  // centred; the backdrop (bg, stars, ground) extends across the full square width.
+  const SW = H, OX = (SW - W) / 2;
   const bg = TRAITS.background.find((o) => o.id === picks.background.id);
   const ink = inkFor(bg.id);
   const cx = W / 2;
 
   let body = '';
-  if (bg.id === 'black' || bg.id === 'deep_black') body += renderStarfield(W, H, rng);
+  if (bg.id === 'black' || bg.id === 'deep_black') body += '<g transform="translate(' + -OX + ' 0)">' + renderStarfield(SW, H, rng) + '</g>';
   body += renderSky(cx, 24, picks.sky.id, rng);
 
   const headTop = 90, headSize = 150, headCx = cx, headCy = headTop + headSize / 2;
@@ -521,7 +524,7 @@ function renderFromTraits(picks, index, seed) {
   const groundY = hipY + 130;
   let grassColorHex = picks.grassColor.hex || null;
   if (grassColorHex === '#ffffff' && (bg.id === 'white' || bg.id === 'cream')) grassColorHex = null;
-  body += renderGround(W, groundY, picks.ground.id, rng, grassColorHex);
+  body += '<g transform="translate(' + -OX + ' 0)">' + renderGround(SW, groundY, picks.ground.id, rng, grassColorHex) + '</g>';
 
   const headOutline = [[headCx - headSize / 2, headTop], [headCx + headSize / 2, headTop],
      [headCx + headSize / 2, headTop + headSize], [headCx - headSize / 2, headTop + headSize],
@@ -585,8 +588,8 @@ function renderFromTraits(picks, index, seed) {
   // every edge no matter how low the scale is set. All the chalk roughness
   // now lives purely in the vector paths themselves (subdivided + jittered,
   // multiple offset passes), so it stays crisp at any zoom level.
-  return '<svg id="piece' + uid + '" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' +
-    '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="' + bg.hex + '"/>' + style +
+  return '<svg id="piece' + uid + '" viewBox="' + -OX + ' 0 ' + SW + ' ' + H + '" width="' + SW + '" height="' + H + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="' + -OX + '" y="0" width="' + SW + '" height="' + H + '" fill="' + bg.hex + '"/>' + style +
     '<g>' + body + '</g></svg>';
 }
 

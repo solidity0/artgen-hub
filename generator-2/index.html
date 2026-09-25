@@ -79,7 +79,8 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .tile-label.is-1of1 { color:var(--acid); font-weight:700; }
 .lightbox { display:none; position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.88); align-items:center; justify-content:center; padding:20px; }
 .lightbox.open { display:flex; }
-.lb-inner { background:var(--panel); border:1px solid var(--border); max-width:680px; width:100%; display:grid; grid-template-columns:1fr 1fr; align-items:start; max-height:88vh; overflow:auto; position:relative; }
+.lb-inner { background:var(--panel); border:1px solid var(--border); max-width:720px; width:100%; max-height:90vh; max-height:90dvh; position:relative; display:flex; flex-direction:column; }
+.lb-body { display:grid; grid-template-columns:1fr 1fr; align-items:start; overflow:auto; min-height:0; overscroll-behavior:contain; }
 .lb-preview { background:#000; }
 .lb-preview svg { display:block; width:100%; }
 .lb-meta { padding:20px; display:flex; flex-direction:column; gap:12px; }
@@ -89,8 +90,11 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .lb-trait { background:var(--bg); border:1px solid var(--border); padding:8px 10px; }
 .lb-trait-k { font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); margin-bottom:2px; }
 .lb-trait-v { font-size:12px; font-weight:600; }
-.lb-close { position:absolute; top:8px; right:8px; background:var(--border); border:none; color:var(--white); width:26px; height:26px; cursor:pointer; }
-.lb-actions { display:flex; gap:8px; margin-top:auto; flex-wrap:wrap; }
+.lb-close { position:absolute; top:8px; right:8px; z-index:5; width:32px; height:32px; display:flex; align-items:center; justify-content:center; background:rgba(20,20,20,.9); border:1px solid var(--border); color:var(--white); font-size:14px; line-height:1; cursor:pointer; }
+.lb-close:hover, .lb-close:focus-visible { border-color:var(--acid); color:var(--acid); outline:none; }
+.lb-title { padding-right:36px; }
+.lb-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:auto; }
+.lb-actions .btn { width:100%; text-align:center; padding:12px 8px; white-space:nowrap; }
 .toast {
   position:fixed; bottom:20px; right:20px; z-index:400;
   background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--acid);
@@ -99,7 +103,6 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 }
 .toast.show { transform:translateY(0); opacity:1; }
 @media(max-width:600px) {
-  .lb-inner { grid-template-columns:1fr; }
   header { padding:22px 16px 16px; }
   main { padding:16px; }
 }
@@ -107,6 +110,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .lb-preview svg { height:auto; }
 .copy-hint { position:absolute; left:8px; right:8px; bottom:8px; background:rgba(0,0,0,.78); color:#fff; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.04em; padding:7px 9px; border-left:3px solid var(--acid); pointer-events:none; }
 @media(max-width:600px) { .tile-label { height:20px; font-size:9px; padding:0 5px; } }
+@media(max-width:600px) { .lightbox { padding:12px; } .lb-inner { max-height:calc(100vh - 24px); max-height:calc(100dvh - 24px); } .lb-body { grid-template-columns:1fr; } .lb-close { top:10px; right:10px; width:38px; height:38px; font-size:16px; } .lb-actions .btn { font-size:10px; letter-spacing:.06em; } }
 </style>
 </head>
 <body>
@@ -177,15 +181,17 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lb-title">
   <div class="lb-inner">
     <button class="lb-close" id="lb-close-btn" aria-label="Close">✕</button>
-    <div class="lb-preview" id="lb-preview"></div>
-    <div class="lb-meta">
-      <div class="lb-title" id="lb-title"></div>
-      <div class="lb-traits" id="lb-traits"></div>
-      <div class="lb-actions">
-        <button class="btn btn-acid" id="lb-download-png">Download PNG</button>
-        <button class="btn btn-ghost" id="lb-download">Download SVG</button>
-        <button class="btn btn-acid" id="lb-copy-img" title="Copy the image to your clipboard (shortcut: C)">Copy image</button>
-        <button class="btn btn-ghost" id="lb-copy">Copy markup</button>
+    <div class="lb-body">
+      <div class="lb-preview" id="lb-preview"></div>
+      <div class="lb-meta">
+        <div class="lb-title" id="lb-title"></div>
+        <div class="lb-traits" id="lb-traits"></div>
+        <div class="lb-actions">
+          <button class="btn btn-acid" id="lb-download-png">Download PNG</button>
+          <button class="btn btn-ghost" id="lb-download">Download SVG</button>
+          <button class="btn btn-acid" id="lb-copy-img" title="Copy the image to your clipboard (shortcut: C)">Copy image</button>
+          <button class="btn btn-ghost" id="lb-copy">Copy markup</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1083,7 +1089,7 @@ function downloadSVG(p) {
 }
 async function downloadPNG(p) {
   try {
-    const blob = await svgToPngBlob(p.svg, 1024);
+    const blob = await svgToPngBlob(p.svg, 1200);
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = getFileSafeName() + '-' + p.index + '.png';
@@ -1142,7 +1148,7 @@ async function downloadBatchZip() {
     const end = Math.min(start + BATCH, currentPieces.length);
     const batch = currentPieces.slice(start, end);
     const results = await Promise.all(batch.map(p =>
-      svgToPngBlob(p.svg, 1024).then(blob => ({ p, blob })).catch(() => ({ p, blob: null }))
+      svgToPngBlob(p.svg, 1200).then(blob => ({ p, blob })).catch(() => ({ p, blob: null }))
     ));
     for (const { p, blob } of results) {
       if (blob) images.file(p.index + '.png', blob, { compression: 'STORE' });
@@ -1207,7 +1213,7 @@ lbIdx = -1;
 // gallery hooks for the shared virtual grid / lightbox below
 const GALLERY_ASPECT = 1; // art height / width
 function galleryThumb(p) { return p.svgThumb; }
-function galleryPng(p) { return svgToPngBlob(p.svg, 1024); }
+function galleryPng(p) { return svgToPngBlob(p.svg, 1200); }
 
 /* ---------- virtual grid (shared gallery view, same as Generator 5) ----------
    Absolutely-positioned tiles against the page scroll; only tiles entering/leaving the
