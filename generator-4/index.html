@@ -350,6 +350,7 @@ const TRAITS = {
     { id: 'jointed',  weight: 22, rarity: 'common' },
     { id: 'spring',   weight: 14, rarity: 'uncommon' },
     { id: 'telescopic', weight: 12, rarity: 'uncommon' },
+    { id: 'floating',   weight: 6,  rarity: 'rare' },       // always paired with pincer hands
     { id: 'on_floor', weight: 8,  rarity: 'rare' },
     { id: 'broken',   weight: 8,  rarity: 'rare' }
   ],
@@ -989,7 +990,9 @@ function renderFromTraits(picks, index, seed) {
   const arms = [];   // { pts, kind: 'tube' | 'jointed' | 'spring' | 'stub' }
   const hands = [];  // { x, y, flip, rot }
   let sparks = null;
-  if (armStyle === 'on_floor') {
+  if (armStyle === 'floating') {
+    for (const side of [-1, 1]) hands.push({ x: headCx + side * (bodyW + 46), y: shoulderY + 92, flip: side < 0, float: true });
+  } else if (armStyle === 'on_floor') {
     for (const side of [-1, 1]) { const p = floorArm(side); arms.push({ pts: p, kind: 'tube' }); hands.push({ x: p[2][0], y: p[2][1] + 2, flip: side < 0 }); }
   } else if (armStyle === 'broken') {
     const L = armPath(-1), R = armPath(1);
@@ -1080,9 +1083,14 @@ function renderFromTraits(picks, index, seed) {
   for (const h of hands) {
     let g = renderHand(h.x, h.y, picks.hands.id, rng, h.flip, paint.fill, ink);
     // hands read at thumbnail size (hands resting on the floor stay 1x so they sit on the ground)
-    const hs = (h.rot || armStyle === 'on_floor') ? 1 : 1.2;
+    const hs = h.float ? 1.6 : (h.rot || armStyle === 'on_floor') ? 1 : 1.2;
     if (hs !== 1) g = '<g transform="translate(' + h.x + ' ' + h.y + ') scale(' + hs + ') translate(' + -h.x + ' ' + -h.y + ')">' + g + '</g>';
     if (h.rot) g = '<g transform="rotate(' + h.rot + ' ' + h.x + ' ' + h.y + ')">' + g + '</g>';
+    if (h.float) {
+      const d = h.flip ? 1 : -1; // motion marks point back toward the body
+      g += '<path d="M ' + (h.x + d * 30) + ' ' + (h.y - 6) + ' q ' + (d * 6) + ' 8 0 16 M ' + (h.x + d * 37) + ' ' + (h.y - 2) + ' q ' + (d * 4) + ' 6 0 10" stroke="' + ink + '" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".6"/>';
+      g += '<ellipse cx="' + h.x + '" cy="' + (groundY + 1) + '" rx="12" ry="3" fill="' + shadowCol + '" opacity="' + (dark ? 0.4 : 0.1) + '"/>';
+    }
     body += g;
   }
 
@@ -1230,7 +1238,7 @@ const ONE_OF_ONE_WEIGHTS = {
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
-  arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 22 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
+  arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
@@ -1309,6 +1317,8 @@ function generatePiece(index, seed, tier, opts) {
   picks.headShape = sigOverride ? sigOverride.headShape : pick('headShape');
   picks.bodyShape = sigOverride ? sigOverride.bodyShape : pick('bodyShape');
   picks.arms = sigOverride ? sigOverride.arms : pick('arms');
+  // floating arms are the signature pincer look: pincer hands unless hands were explicitly locked
+  if (picks.arms.id === 'floating' && !(locks.hands && locks.hands.length)) picks.hands = TRAITS.hands.find((o) => o.id === 'pincer');
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
 
   const svg = renderFromTraits(picks, index, seed);
