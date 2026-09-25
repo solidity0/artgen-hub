@@ -213,6 +213,11 @@ TRAITS.headColor = [{ id: 'matching', weight: 36, rarity: 'common' }].concat(
   TRAITS.bodyColor.filter((c) => c.id !== 'classic').map((c) => ({ id: c.id, hex: c.hex, weight: c.rarity === 'rare' ? 0.5 : c.rarity === 'uncommon' ? 1.6 : 3, rarity: c.rarity }))
 );
 
+// Legs (with feet) and hands can also take their own colour. Solid hexes are used for these parts
+// (limb strokes are too thin for the gradient finishes to read), so finishes fall back to their base hex.
+TRAITS.legColor = [{ id: 'matching', weight: 40, rarity: 'common' }].concat(TRAITS.headColor.slice(1).map((c) => Object.assign({}, c)));
+TRAITS.handColor = [{ id: 'matching', weight: 40, rarity: 'common' }].concat(TRAITS.headColor.slice(1).map((c) => Object.assign({}, c)));
+
 const TIER_FALLBACK = {
   common:   ['common', 'uncommon', 'rare'],
   uncommon: ['uncommon', 'rare', 'common'],
@@ -788,6 +793,10 @@ function renderFromTraits(picks, index, seed, opts) {
   const paint = bodyPaint(bodyColor, bg, uid, dark);
   const headColor = picks.headColor && picks.headColor.id !== 'matching' ? TRAITS.headColor.find((o) => o.id === picks.headColor.id) : null;
   const headPaint = headColor ? bodyPaint(headColor, bg, uid, dark, 'h') : paint;
+  const legC = picks.legColor && picks.legColor.id !== 'matching' ? TRAITS.legColor.find((o) => o.id === picks.legColor.id) : null;
+  const handC = picks.handColor && picks.handColor.id !== 'matching' ? TRAITS.handColor.find((o) => o.id === picks.handColor.id) : null;
+  const legFill = legC ? legC.hex : paint.fill, legShoe = legC ? shadeColor(legC.hex, -22) : paint.shoe;
+  const handFill = handC ? handC.hex : paint.fill;
 
   // ---- proportions: chunkier than v1 (bigger head + chest, shorter legs) ----
   const headSize = 164, headTop = 98, headCx = cx, headCy = headTop + headSize / 2;
@@ -868,9 +877,9 @@ function renderFromTraits(picks, index, seed, opts) {
   body += '<g transform="translate(' + sdx + ' ' + sdy + ')" fill="' + shadowCol + '" opacity="' + sOp + '">' + sil + '</g>';
 
   // ---- limbs, drawn under head/chest ----
-  const limb = (pts, jit, thin) => {
+  const limb = (pts, jit, thin, col) => {
     const p = chalkLine(pts, rng, jit);
-    return tube(p, thin ? 11 : 15, ink) + tube(p, thin ? 5 : 8.5, paint.fill);
+    return tube(p, thin ? 11 : 15, ink) + tube(p, thin ? 5 : 8.5, col || paint.fill);
   };
   const joint = (x, y, r) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r + '" fill="' + paint.shoe + '" stroke="' + ink + '" stroke-width="3.2"/>' +
     '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * 0.32).toFixed(1) + '" fill="' + ink + '"/>';
@@ -906,9 +915,9 @@ function renderFromTraits(picks, index, seed, opts) {
     }
     body += '<circle cx="' + sx + '" cy="' + sy + '" r="4" fill="#FFE27A"/>';
   }
-  body += limb(legL, 1.2, peg) + limb(legR, 1.2, peg);
+  body += limb(legL, 1.2, peg, legFill) + limb(legR, 1.2, peg, legFill);
   for (const h of hands) {
-    let g = renderHand(h.x, h.y, picks.hands.id, rng, h.flip, paint.fill, ink);
+    let g = renderHand(h.x, h.y, picks.hands.id, rng, h.flip, handFill, ink);
     // hands read at thumbnail size (hands resting on the floor stay 1x so they sit on the ground)
     const hs = h.float ? 1.6 : (h.rot || armStyle === 'on_floor') ? 1 : 1.2;
     if (hs !== 1) g = '<g transform="translate(' + h.x + ' ' + h.y + ') scale(' + hs + ') translate(' + -h.x + ' ' + -h.y + ')">' + g + '</g>';
@@ -988,8 +997,8 @@ function renderFromTraits(picks, index, seed, opts) {
 
   // ---- feet ----
   if (!peg) {
-    body += renderFoot(headCx - legX, groundY - 13, picks.feet.id, rng, true, paint.shoe);
-    body += renderFoot(headCx + legX, groundY - 13, picks.feet.id, rng, false, paint.shoe);
+    body += renderFoot(headCx - legX, groundY - 13, picks.feet.id, rng, true, legShoe);
+    body += renderFoot(headCx + legX, groundY - 13, picks.feet.id, rng, false, legShoe);
   } else {
     body += doubleStroke([[headCx - legX - 6, groundY - 15], [headCx - legX + 6, groundY - 15], [headCx - legX, groundY - 3], [headCx - legX - 6, groundY - 15]], rng, 1.3, 'stroke');
     body += doubleStroke([[headCx + legX - 6, groundY - 15], [headCx + legX + 6, groundY - 15], [headCx + legX, groundY - 3], [headCx + legX - 6, groundY - 15]], rng, 1.3, 'stroke');
@@ -1023,10 +1032,10 @@ const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
     background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
-    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching'
+    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching', legColor: 'matching', handColor: 'matching'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor', 'headShape', 'bodyShape', 'arms', 'headColor'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor', 'headShape', 'bodyShape', 'arms', 'headColor', 'legColor', 'handColor'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -1071,6 +1080,8 @@ const ONE_OF_ONE_WEIGHTS = {
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   headColor: [{ id: 'matching', weight: 26 }, { id: 'gold', weight: 7 }, { id: 'chrome', weight: 6 }, { id: 'holo', weight: 5 }, { id: 'aurora', weight: 5 }, { id: 'obsidian', weight: 5 }, { id: 'rose_gold', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'snow', weight: 4 }, { id: 'charcoal', weight: 4 }, { id: 'butter', weight: 4 }, { id: 'sky', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'mint', weight: 4 }, { id: 'bubblegum', weight: 4 }, { id: 'navy', weight: 4 }],
+  legColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'charcoal', weight: 6 }, { id: 'snow', weight: 6 }, { id: 'tomato', weight: 5 }, { id: 'sky', weight: 5 }, { id: 'butter', weight: 5 }, { id: 'navy', weight: 5 }, { id: 'magenta', weight: 5 }],
+  handColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'charcoal', weight: 6 }, { id: 'snow', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'lime', weight: 5 }, { id: 'tangerine', weight: 5 }, { id: 'cobalt', weight: 5 }, { id: 'bubblegum', weight: 5 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
@@ -1177,6 +1188,13 @@ function generatePiece(index, seed, tier, opts) {
   if (!(locks.headColor && locks.headColor.length)) {
     for (let k = 0; k < 8 && picks.headColor.id !== 'matching' && tooClose(picks.headColor, picks.bodyColor); k++) picks.headColor = pick('headColor');
     if (picks.headColor.id !== 'matching' && tooClose(picks.headColor, picks.bodyColor)) picks.headColor = TRAITS.headColor[0];
+  }
+  // leg and hand colours: same idea, each must read as different from the body it attaches to
+  for (const cat of ['legColor', 'handColor']) {
+    picks[cat] = sigOverride && sigOverride[cat] ? sigOverride[cat] : pick(cat);
+    if (locks[cat] && locks[cat].length) continue;
+    for (let k = 0; k < 8 && picks[cat].id !== 'matching' && tooClose(picks[cat], picks.bodyColor); k++) picks[cat] = pick(cat);
+    if (picks[cat].id !== 'matching' && tooClose(picks[cat], picks.bodyColor)) picks[cat] = TRAITS[cat][0];
   }
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
 
