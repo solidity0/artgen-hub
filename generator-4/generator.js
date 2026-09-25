@@ -771,18 +771,6 @@ function coilPts(path, amp, step) {
 // How far below the wrist point each hand shape reaches (for hands resting on the floor).
 const HAND_REACH = { mitten_bow: 11, round_paw: 10, claw: 12, broken_stub: 10, pincer: 21, three_finger: 20, hook: 21, magnet: 21, plug: 21 };
 
-// 1/1 marker: a thin gold-foil double frame with corner studs, so 1/1s read as special on any background
-function oneOfOneFrame(uid, SW, H, OX) {
-  const x = -OX + 12, y = 12, w = SW - 24, h = H - 24;
-  let o = '<defs><linearGradient id="foil' + uid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset="0.35" stop-color="#e2ac3a"/><stop offset="0.6" stop-color="#fbe08a"/><stop offset="1" stop-color="#b9821f"/></linearGradient></defs>';
-  o += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="none" stroke="url(#foil' + uid + ')" stroke-width="5"/>';
-  o += '<rect x="' + (x + 9) + '" y="' + (y + 9) + '" width="' + (w - 18) + '" height="' + (h - 18) + '" fill="none" stroke="url(#foil' + uid + ')" stroke-width="1.5" opacity=".75"/>';
-  for (const [cx, cy] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) {
-    o += '<path d="M ' + cx + ' ' + (cy - 9) + ' L ' + (cx + 9) + ' ' + cy + ' L ' + cx + ' ' + (cy + 9) + ' L ' + (cx - 9) + ' ' + cy + ' Z" fill="url(#foil' + uid + ')" stroke="#8a5d12" stroke-width="1"/>';
-  }
-  return o;
-}
-
 function renderFromTraits(picks, index, seed, opts) {
   const isOneOfOne = !!(opts && opts.isOneOfOne);
   const rng = mulberry32((seed ?? 0) * 100003 + index);
@@ -1027,7 +1015,7 @@ function renderFromTraits(picks, index, seed, opts) {
   return '<svg id="piece' + uid + '" viewBox="' + -OX + ' 0 ' + SW + ' ' + H + '" width="' + SW + '" height="' + H + '" xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' + defs + '</defs>' +
     '<rect x="' + -OX + '" y="0" width="' + SW + '" height="' + H + '" fill="' + bg.hex + '"/>' + style +
-    back + '<g>' + body + '</g>' + (isOneOfOne ? oneOfOneFrame(uid, SW, H, OX) : '') + '</svg>';
+    back + '<g>' + body + '</g></svg>';
 }
 
 // ---------- 1/1-exclusive signature combos ----------
@@ -1192,12 +1180,16 @@ function generatePiece(index, seed, tier, opts) {
   }
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
 
-  const svg = renderFromTraits(picks, index, seed, { isOneOfOne });
+  // opts.render === false: traits only (fast, tiny); draw later with renderPiece()
+  const svg = opts && opts.render === false ? null : renderFromTraits(picks, index, seed, { isOneOfOne });
   const traits = {}, rarity = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { traits[k] = picks[k].id; rarity[k] = picks[k].rarity; });
 
-  return { index, svg, tier: t, isOneOfOne, traits, rarity };
+  return { index, svg, tier: t, isOneOfOne, traits, rarity, picks, renderIndex: index, seed };
 }
+
+// Draws a piece produced with { render: false } (or re-draws any piece).
+function renderPiece(p) { return renderFromTraits(p.picks, p.renderIndex, p.seed, { isOneOfOne: p.isOneOfOne }); }
 
 function generateBatch(count, seed, tier, opts) {
   const out = [];
@@ -1208,7 +1200,7 @@ function generateBatch(count, seed, tier, opts) {
 const api = {
   TRAITS, TIER_FALLBACK, CHAIN_THEMES,
   mulberry32, weightedPick, pickByRarity, shadeColor,
-  renderFromTraits, generatePiece, generateBatch,
+  renderFromTraits, renderPiece, generatePiece, generateBatch,
   ONE_OF_ONE_WEIGHTS, pickOneOfOne, ONE_OF_ONE_ONLY_CHESTMARK, ONE_OF_ONE_ONLY_GRASSCOLOR, ONE_OF_ONE_ONLY_BY_CATEGORY,
   ONE_OF_ONE_SIGNATURE_COMBOS, SIGNATURE_TRAIT_KEYS, resolveSignatureCombo,
   maybeSignatureCombo, matchesAnySignature, breakSignatureMatch

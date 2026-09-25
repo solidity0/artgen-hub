@@ -53,7 +53,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .tile .art { flex:1; min-height:0; background:#0e0e0e; }
 .tile:focus-visible { outline:2px solid var(--acid); outline-offset:1px; }
 .tile:hover { border-color:var(--acid); }
-.tile svg { display:block; width:100%; height:100%; }
+.tile svg, .tile .art img { display:block; width:100%; height:100%; }
 .tile-label { height:24px; display:flex; align-items:center; padding:0 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
 .tile-label.is-1of1 { color:var(--acid); font-weight:700; }
 .lightbox { display:none; position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.88); align-items:center; justify-content:center; padding:20px; }
@@ -258,28 +258,34 @@ function buildControls() {
   }
 }
 
+let _renderRun = 0;
 function render() {
+  const myRun = ++_renderRun;
   const seed = parseFormattedInt(document.getElementById('seed-input').value) || 0;
-  const count = Math.max(1, Math.min(10000, parseFormattedInt(document.getElementById('count-input').value) || 24));
+  // no supply cap: pieces are traits-only (tiny) until they are shown or exported
+  const count = Math.max(1, parseFormattedInt(document.getElementById('count-input').value) || 24);
   const oneOfOneCount = Math.max(0, Math.min(count, parseFormattedInt(document.getElementById('oneofone-input').value) || 0));
-
-  if (count > 500) document.getElementById('status-label').textContent = 'Generating ' + count + ' pieces…';
-
-  // Deferred so the status label above actually paints before the
-  // (synchronous) generation loop runs — otherwise a large batch looks
-  // frozen for the whole generation step with no feedback at all.
-  setTimeout(() => {
-    const opts = { locks };
-    currentPieces = [];
-    // 1/1s: re-roll (deterministically, via an index offset) so no two share a body colour while
-    // colours remain, then no two share body colour + background — keeps a 1/1 set visually varied
-    const usedBody = new Set(), usedPair = new Set();
-    for (let i = 1; i <= count; i++) {
+  document.getElementById('count-input').value = formatWithCommas(count);
+  document.getElementById('oneofone-input').value = formatWithCommas(oneOfOneCount);
+  const status = document.getElementById('status-label');
+  const genBtn = document.getElementById('generate-btn');
+  _svgCache.clear();
+  const pieces = [];
+  // 1/1s: re-roll (deterministically, via an index offset) so no two share a body colour while
+  // colours remain, then no two share body colour + background — keeps a 1/1 set visually varied
+  const usedBody = new Set(), usedPair = new Set();
+  const opts = { locks, render: false };
+  let i = 1;
+  genBtn.disabled = count > 5000;
+  function chunk() {
+    if (myRun !== _renderRun) return; // a newer Generate click took over
+    const end = Math.min(count, i + 2000);
+    for (; i <= end; i++) {
       const isOneOfOne = i <= oneOfOneCount;
-      if (!isOneOfOne) { currentPieces.push(G.generatePiece(i, seed, currentTier, { locks, isOneOfOne })); continue; }
+      if (!isOneOfOne) { pieces.push(G.generatePiece(i, seed, currentTier, { ...opts, isOneOfOne })); continue; }
       let pick = null, fallback = null, first = null;
       for (let k = 0; k < 40 && !pick; k++) {
-        const p = G.generatePiece(i + k * 10000000, seed, currentTier, { locks, isOneOfOne });
+        const p = G.generatePiece(i + k * 10000000, seed, currentTier, { ...opts, isOneOfOne });
         if (!first) first = p;
         const pair = p.traits.bodyColor + '|' + p.traits.background;
         if (!usedBody.has(p.traits.bodyColor)) pick = p;
@@ -288,15 +294,24 @@ function render() {
       const p = pick || fallback || first;
       usedBody.add(p.traits.bodyColor); usedPair.add(p.traits.bodyColor + '|' + p.traits.background);
       p.index = i;
-      currentPieces.push(p);
+      pieces.push(p);
     }
-    renderGrid();
-  }, 10);
+    if (i <= count) {
+      status.textContent = 'Generating ' + formatWithCommas(i - 1) + ' / ' + formatWithCommas(count) + '…';
+      setTimeout(chunk, 0);
+    } else {
+      genBtn.disabled = false;
+      currentPieces = pieces;
+      renderGrid();
+    }
+  }
+  status.textContent = 'Generating ' + formatWithCommas(count) + ' pieces…';
+  setTimeout(chunk, 10);
 }
 
 function renderGrid() {
   const oneOfOnes = currentPieces.filter(p => p.isOneOfOne).length;
-  document.getElementById('status-label').textContent = currentPieces.length + ' pieces generated' + (oneOfOnes ? ' (' + oneOfOnes + ' marked 1/1)' : '');
+  document.getElementById('status-label').textContent = formatWithCommas(currentPieces.length) + ' pieces generated' + (oneOfOnes ? ' (' + formatWithCommas(oneOfOnes) + ' marked 1/1)' : '');
   VG.reset(currentPieces.length);
 }
 
@@ -307,8 +322,18 @@ function showToast(msg) {
   t._timer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-function ensureSVG(p) { return p.svg; }
-function getDisplaySVG(p) { return p.svg; }
+// Art is drawn on demand and kept in a bounded cache, so any supply size stays light on memory.
+const _svgCache = new Map(), SVG_CACHE_LIMIT = 600;
+function ensureSVG(p) {
+  let s = _svgCache.get(p);
+  if (!s) {
+    s = p.svg || G.renderPiece(p);
+    _svgCache.set(p, s);
+    if (_svgCache.size > SVG_CACHE_LIMIT) _svgCache.delete(_svgCache.keys().next().value);
+  }
+  return s;
+}
+function getDisplaySVG(p) { return ensureSVG(p); }
 function downloadSVG(p) {
   const blob = new Blob([getDisplaySVG(p)], { type: 'image/svg+xml' });
   const u = URL.createObjectURL(blob);
@@ -407,13 +432,22 @@ function closeLightbox() { document.getElementById('lightbox').classList.remove(
 
 // gallery hooks for the shared virtual grid / lightbox below
 const GALLERY_ASPECT = 1; // art height / width (square 572x572 canvas)
-function galleryThumb(p) { return p.svg; }
+function galleryThumb(p) { return ensureSVG(p); }
 function galleryPng(p) { return svgToPngBlob(ensureSVG(p), 1200); }
 
 /* ---------- virtual grid (shared gallery view, same as Generator 5) ----------
    Absolutely-positioned tiles against the page scroll; only tiles entering/leaving the
    window are added/removed (existing tiles are never re-parsed), and new tiles fill
    their SVG a few per animation frame after an instant sized placeholder. */
+// Tiles show the art as an <img> of the SVG (rasterised once by the browser) instead of live inline
+// SVG, so scrolling a big gallery doesn't repaint thousands of vector nodes every frame.
+function setThumb(el, svg) {
+  const u = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  el.dataset.url = u;
+  el.firstChild.innerHTML = '<img src="' + u + '" alt="" decoding="async" draggable="false">';
+  el.dataset.ready = '1';
+}
+function dropThumb(el) { if (el.dataset.url) { URL.revokeObjectURL(el.dataset.url); delete el.dataset.url; } }
 const VG = (function(){
   const grid = document.getElementById('grid');
   const tileEls = new Map(), queue = [];
@@ -449,7 +483,7 @@ const VG = (function(){
     while (n-- > 0 && queue.length) {
       const i = queue.shift(), el = tileEls.get(i);
       if (!el || el.dataset.ready) continue;
-      el.firstChild.innerHTML = galleryThumb(currentPieces[i]); el.dataset.ready = '1';
+      setThumb(el, galleryThumb(currentPieces[i]));
     }
     if (queue.length) raf = requestAnimationFrame(pump);
   }
@@ -461,7 +495,7 @@ const VG = (function(){
     const r0 = Math.max(0, Math.floor(into / rowH) - 3);
     const r1 = Math.max(0, Math.ceil((into + winH) / rowH) + 3);
     const i0 = r0 * cols, i1 = Math.min(count, r1 * cols);
-    for (const [i, el] of tileEls) if (i < i0 || i >= i1) { el.remove(); tileEls.delete(i); }
+    for (const [i, el] of tileEls) if (i < i0 || i >= i1) { dropThumb(el); el.remove(); tileEls.delete(i); }
     const frag = document.createDocumentFragment();
     for (let i = i0; i < i1; i++) {
       if (tileEls.has(i)) continue;
@@ -480,7 +514,7 @@ const VG = (function(){
     schedule();
   });
   return {
-    reset(n){ count = n; tileEls.clear(); queue.length = 0; grid.innerHTML = ''; measure(); renderVisible(); },
+    reset(n){ count = n; for (const el of tileEls.values()) dropThumb(el); tileEls.clear(); queue.length = 0; grid.innerHTML = ''; measure(); renderVisible(); },
     // pieces generated so far (chunked generation grows the grid as it goes)
     grow(n){ count = n; measure(); schedule(); }
   };
