@@ -219,18 +219,51 @@ const TRAITS = {
     { id: 'midnight', hex: '#1B1F3B', weight: 8,  rarity: 'rare' }
   ],
   bodyColor: [
-    { id: 'classic',   weight: 14, rarity: 'common' },               // unfilled: the v1 look
-    { id: 'tomato',    hex: '#FF6F59', weight: 20, rarity: 'common' },
-    { id: 'sky',       hex: '#79C3FF', weight: 20, rarity: 'common' },
-    { id: 'butter',    hex: '#FFD45C', weight: 18, rarity: 'common' },
-    { id: 'mint',      hex: '#7FD8BE', weight: 18, rarity: 'common' },
-    { id: 'bubblegum', hex: '#FF9ECF', weight: 14, rarity: 'uncommon' },
-    { id: 'lilac',     hex: '#B69CFF', weight: 14, rarity: 'uncommon' },
-    { id: 'tangerine', hex: '#FF9F45', weight: 12, rarity: 'uncommon' },
-    { id: 'steel',     hex: '#A3AEBB', weight: 10, rarity: 'uncommon' },
-    { id: 'chrome',    hex: '#C9CED6', weight: 5,  rarity: 'rare' },
-    { id: 'gold',      hex: '#F2C14E', weight: 4,  rarity: 'rare' },
-    { id: 'holo',      hex: '#C7B8FF', weight: 3,  rarity: 'rare' }
+    { id: 'classic',   weight: 6, rarity: 'common' },               // unfilled: the v1 look
+    { id: 'tomato',    hex: '#FF6F59', weight: 7, rarity: 'common' },
+    { id: 'sky',       hex: '#79C3FF', weight: 7, rarity: 'common' },
+    { id: 'butter',    hex: '#FFD45C', weight: 7, rarity: 'common' },
+    { id: 'mint',      hex: '#7FD8BE', weight: 7, rarity: 'common' },
+    { id: 'coral',     hex: '#FF8A7A', weight: 7, rarity: 'common' },
+    { id: 'teal',      hex: '#33B5AC', weight: 7, rarity: 'common' },
+    { id: 'cobalt',    hex: '#4F7CFF', weight: 7, rarity: 'common' },
+    { id: 'grape',     hex: '#8E6CEF', weight: 7, rarity: 'common' },
+    { id: 'lime',      hex: '#B5E655', weight: 7, rarity: 'common' },
+    { id: 'peach',     hex: '#FFB38A', weight: 7, rarity: 'common' },
+    { id: 'seafoam',   hex: '#9EE6CF', weight: 7, rarity: 'common' },
+    { id: 'sand',      hex: '#E8C98F', weight: 7, rarity: 'common' },
+    { id: 'bubblegum', hex: '#FF9ECF', weight: 4, rarity: 'uncommon' },
+    { id: 'lilac',     hex: '#B69CFF', weight: 4, rarity: 'uncommon' },
+    { id: 'tangerine', hex: '#FF9F45', weight: 4, rarity: 'uncommon' },
+    { id: 'steel',     hex: '#A3AEBB', weight: 4, rarity: 'uncommon' },
+    { id: 'cherry',    hex: '#E8434F', weight: 4, rarity: 'uncommon' },
+    { id: 'forest',    hex: '#3E9C6B', weight: 4, rarity: 'uncommon' },
+    { id: 'navy',      hex: '#3A5A96', weight: 4, rarity: 'uncommon' },
+    { id: 'plum',      hex: '#A0529B', weight: 4, rarity: 'uncommon' },
+    { id: 'mustard',   hex: '#E0A526', weight: 4, rarity: 'uncommon' },
+    { id: 'rose',      hex: '#F48FB1', weight: 4, rarity: 'uncommon' },
+    { id: 'aqua',      hex: '#5FD3F3', weight: 4, rarity: 'uncommon' },
+    { id: 'olive',     hex: '#9AA85A', weight: 4, rarity: 'uncommon' },
+    { id: 'neon',      hex: '#3DFF8F', weight: 1.5, rarity: 'rare' },
+    { id: 'chrome',    hex: '#C9CED6', weight: 1.5, rarity: 'rare' },
+    { id: 'gold',      hex: '#F2C14E', weight: 1.5, rarity: 'rare' },
+    { id: 'holo',      hex: '#C7B8FF', weight: 1.2, rarity: 'rare' },
+    { id: 'rose_gold', hex: '#E8A598', weight: 1.2, rarity: 'rare' },
+    { id: 'pearl',     hex: '#F3EEE6', weight: 1.2, rarity: 'rare' },
+    { id: 'obsidian',  hex: '#2B2640', weight: 1,   rarity: 'rare' },
+    { id: 'aurora',    hex: '#6FE3C5', weight: 1,   rarity: 'rare' }
+  ],
+  companionColor: [
+    { id: 'none',   weight: 0,  rarity: 'common' },                 // only when there is no companion
+    { id: 'snow',   hex: '#FAFAF7', weight: 24, rarity: 'common' },
+    { id: 'ginger', hex: '#F29B4B', weight: 22, rarity: 'common' },
+    { id: 'gray',   hex: '#A9ADB5', weight: 18, rarity: 'common' },
+    { id: 'cream',  hex: '#F3E3C3', weight: 16, rarity: 'common' },
+    { id: 'cocoa',  hex: '#9A6B4B', weight: 12, rarity: 'uncommon' },
+    { id: 'ink',    hex: '#34343C', weight: 10, rarity: 'uncommon' },
+    { id: 'pink',   hex: '#FFB7CF', weight: 6,  rarity: 'rare' },
+    { id: 'blue',   hex: '#9CCBFF', weight: 5,  rarity: 'rare' },
+    { id: 'golden', hex: '#F7C948', weight: 4,  rarity: 'rare' }
   ],
   hair: [
     { id: 'short_spike',  weight: 30, rarity: 'common' },
@@ -375,7 +408,7 @@ function chalkLine(points, rng, amt = 3) { return subdivide(points).map((p) => j
 function pathD(points) { return 'M ' + points.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L '); }
 // Chalk sticks are fat and leave a thick, uneven mark — the reference is
 // nowhere near thin single-pixel linework.
-const BASE_WIDTH = { stroke: 4.2, strokeThick: 6, strokeThin: 2.2, strokeGhost: 3 };
+const BASE_WIDTH = { stroke: 4.2, strokeThick: 6, strokeThin: 2.2, strokeGhost: 3, strokeMid: 3 };
 // 4 overlapping passes per line, each independently jittered with a WIDE
 // divergence and its own opacity/width — the reference shows a stick
 // re-dragged over roughly (not exactly) the same path several times, with
@@ -393,9 +426,9 @@ function doubleStroke(points, rng, amt, cls, colorOverride) {
   out += '<path d="' + pathD(anchor) + '" class="' + cls + '" fill="none" style="' + colorCss + 'opacity:1;stroke-width:' + base.toFixed(2) + 'px"/>';
   // One light, slightly-offset accent pass for a touch of hand-drawn
   // character, kept subtle enough that it never competes with the anchor.
-  const pts = chalkLine(points, rng, amt * 0.45);
-  const op = (0.3 + rng() * 0.2).toFixed(2);
-  const w = (base * 0.6).toFixed(2);
+  const pts = chalkLine(points, rng, amt * 0.3);
+  const op = (0.16 + rng() * 0.12).toFixed(2);
+  const w = (base * 0.5).toFixed(2);
   out += '<path d="' + pathD(pts) + '" class="' + cls + '" fill="none" style="' + colorCss + 'opacity:' + op + ';stroke-width:' + w + 'px"/>';
   return out;
 }
@@ -453,38 +486,57 @@ function renderHair(cx, top, style, rng) {
   return out;
 }
 
-function renderEyes(cx, cy, style, rng, ink, eyeColor) {
-  const spacing = 26;
+// v3 eyes: real eyeballs — white sclera, coloured iris, pupil and specular
+// highlights, with a small seeded gaze offset so each bot looks somewhere.
+function renderEyes(cx, cy, style, rng, ink, eyeColor, uid, dark) {
+  const spacing = 30;
   const lx = cx - spacing, rx = cx + spacing;
-  const col = eyeColor || null;
-  function ring(x, y, r) {
-    return doubleStroke(
-      Array.from({ length: 13 }, (_, i) => {
-        const a = (i / 12) * Math.PI * 2;
-        return [x + Math.cos(a) * r, y + Math.sin(a) * r];
-      }), rng, 1.5, 'stroke', col
-    );
-  }
-  function spiral(x, y, r) {
+  const iris = eyeColor || (dark ? '#2a2f45' : '#1c1c1c');
+  const gx = rj(rng, 3.2), gy = rj(rng, 2.4); // shared gaze direction
+  const pupil = '#0d0d0d';
+  const R = 16;
+  const sclera = (x, y) =>
+    '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="#ffffff"/>' +
+    '<path d="M ' + (x - R + 3) + ' ' + (y + 5) + ' A ' + R + ' ' + R + ' 0 0 0 ' + (x + R - 3) + ' ' + (y + 5) + '" fill="none" stroke="#000" stroke-opacity=".08" stroke-width="5"/>' +
+    doubleStroke(ellipsePtsAt(x, y, R, R, 18), rng, 0.8, 'stroke');
+  const shine = (x, y, s) =>
+    '<circle cx="' + (x - 4.5 * s).toFixed(1) + '" cy="' + (y - 4.5 * s).toFixed(1) + '" r="' + (3.4 * s).toFixed(1) + '" fill="#ffffff"/>' +
+    '<circle cx="' + (x + 3.2 * s).toFixed(1) + '" cy="' + (y + 3.4 * s).toFixed(1) + '" r="' + (1.5 * s).toFixed(1) + '" fill="#ffffff" opacity=".85"/>';
+  const ringEye = (x, y, dbl) => {
+    const ix = x + gx, iy = y + gy;
+    let o = sclera(x, y);
+    o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="9.5" fill="' + iris + '"/>';
+    if (dbl) o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="6.8" fill="none" stroke="#ffffff" stroke-opacity=".55" stroke-width="1.4"/>';
+    o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="' + (dbl ? 3.6 : 4.6) + '" fill="' + pupil + '"/>';
+    return o + shine(ix, iy, 1);
+  };
+  const spiralEye = (x, y) => {
+    let o = sclera(x, y);
     const pts = [];
-    for (let i = 0; i <= 20; i++) {
-      const a = (i / 20) * Math.PI * 3.2;
-      const rr = (i / 20) * r;
-      pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
+    for (let i = 0; i <= 26; i++) {
+      const a = (i / 26) * Math.PI * 4.2;
+      const rr = 1 + (i / 26) * 11;
+      pts.push([x + gx * 0.5 + Math.cos(a) * rr, y + gy * 0.5 + Math.sin(a) * rr]);
     }
-    return doubleStroke(pts, rng, 1, 'stroke', col);
-  }
+    o += '<path d="' + pathD(pts) + '" fill="none" stroke="' + iris + '" stroke-width="3" stroke-linecap="round"/>';
+    return o + shine(x + gx * 0.5, y + gy * 0.5, 0.8);
+  };
+  const voidEye = (x, y) => {
+    const col = eyeColor || '#15151c';
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + (R + 1) + '" fill="url(#vg' + uid + ')"/>' +
+      doubleStroke(ellipsePtsAt(x, y, R + 1, R + 1, 18), rng, 0.8, 'stroke') +
+      '<ellipse cx="' + (x - 5) + '" cy="' + (y - 7) + '" rx="6.5" ry="4" fill="#ffffff" opacity=".9" transform="rotate(-30 ' + (x - 5) + ' ' + (y - 7) + ')"/>' +
+      '<circle cx="' + (x + 6) + '" cy="' + (y + 6) + '" r="2" fill="#ffffff" opacity=".7"/>';
+  };
   let out = '';
-  if (style === 'ring_plain') out += ring(lx, cy, 13) + ring(rx, cy, 13);
-  else if (style === 'spiral') out += spiral(lx, cy, 13) + spiral(rx, cy, 13);
-  else if (style === 'ring_double') out += ring(lx, cy, 14) + ring(lx, cy, 7) + ring(rx, cy, 14) + ring(rx, cy, 7);
-  else if (style === 'asymmetric') out += ring(lx, cy, 13) + spiral(rx, cy, 13);
-  else if (style === 'void') {
-    const fillCol = col || ink;
-    out += '<circle cx="' + lx + '" cy="' + cy + '" r="14" fill="' + fillCol + '"/>';
-    out += '<circle cx="' + rx + '" cy="' + cy + '" r="14" fill="' + fillCol + '"/>';
-    out += ring(lx, cy, 15) + ring(rx, cy, 15);
-  }
+  if (style === 'void') {
+    const col = eyeColor || '#15151c';
+    out += '<defs><radialGradient id="vg' + uid + '" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="' + shadeColor(col, 35) + '"/><stop offset="0.55" stop-color="' + col + '"/><stop offset="1" stop-color="' + shadeColor(col, -55) + '"/></radialGradient></defs>';
+    out += voidEye(lx, cy) + voidEye(rx, cy);
+  } else if (style === 'spiral') out += spiralEye(lx, cy) + spiralEye(rx, cy);
+  else if (style === 'ring_double') out += ringEye(lx, cy, true) + ringEye(rx, cy, true);
+  else if (style === 'asymmetric') out += ringEye(lx, cy, false) + spiralEye(rx, cy);
+  else out += ringEye(lx, cy, false) + ringEye(rx, cy, false); // ring_plain
   return out;
 }
 
@@ -520,7 +572,7 @@ function renderMouth(cx, cy, style, rng) {
 function renderChest(cx, cy, size, style, rng, ink) {
   const half = size / 2;
   const boxOutline = [[cx - half, cy - half], [cx + half, cy - half], [cx + half, cy + half], [cx - half, cy + half], [cx - half, cy - half]];
-  let out = doubleStroke(boxOutline, rng, 2, 'stroke') + chalkGrain(boxOutline, rng, ink, 0.25);
+  let out = doubleStroke(boxOutline, rng, 2, 'stroke') + chalkGrain(boxOutline, rng, ink, 0.1);
   const emojiEntry = TRAITS.chestMark.find((o) => o.id === style && o.emoji);
   if (emojiEntry) {
     // Real emoji glyph, not a vector drawing — browsers render these in their
@@ -658,53 +710,69 @@ function renderGround(w, y, style, rng, grassColor) {
   return out;
 }
 
-function renderCompanion(x, y, style, rng) {
-  const cls = style === 'cat_ghost' ? 'strokeGhost' : 'stroke';
-  let out = '<g transform="translate(' + x + ',' + y + ')">';
+// v3 companions: filled, coloured little creatures with shiny eyes, blush and
+// details. (x, y) is the point on the ground the companion stands on.
+function renderCompanion(x, y, style, rng, col, ink, dark) {
+  const ghost = style === 'cat_ghost';
+  const fill = ghost ? '#EDE7FF' : (col || '#FAFAF7');
+  const shade = shadeColor(ghost ? '#C9BCFF' : fill, -22);
+  const cls = 'strokeMid';
+  const blob = (cx, cy, rx, ry, f, n) => fillPath(ellipsePtsAt(cx, cy, rx, ry, n || 18), f || fill) + doubleStroke(ellipsePtsAt(cx, cy, rx, ry, n || 18), rng, 0.9, cls);
+  const poly = (pts, f) => fillPath(pts, f || fill) + doubleStroke(pts.concat([pts[0]]), rng, 0.8, cls);
+  const eye = (ex, ey, r) =>
+    '<circle cx="' + ex + '" cy="' + ey + '" r="' + r + '" fill="#161616"/>' +
+    '<circle cx="' + (ex - r * 0.35).toFixed(1) + '" cy="' + (ey - r * 0.4).toFixed(1) + '" r="' + (r * 0.42).toFixed(1) + '" fill="#ffffff"/>';
+  const cheek = (bx, by) => '<ellipse cx="' + bx + '" cy="' + by + '" rx="4.5" ry="2.6" fill="#ff6f91" opacity=".55"/>';
+  const leg = (lx, top, len) => '<path d="' + pathD(chalkLine([[lx, top], [lx, top + len]], rng, 0.6)) + '" stroke="' + ink + '" stroke-width="9" stroke-linecap="round" fill="none"/>' +
+    '<path d="' + pathD([[lx, top], [lx, top + len]]) + '" stroke="' + fill + '" stroke-width="4.5" stroke-linecap="round" fill="none"/>';
+  let o = '<g transform="translate(' + x + ',' + y + ') scale(1.3)">';
+  o += '<ellipse cx="4" cy="1" rx="' + (style === 'bird' ? 20 : 38) + '" ry="5" fill="#000" opacity="' + (dark ? 0.45 : 0.12) + '"/>';
 
   if (style === 'cat' || style === 'cat_ghost') {
-    out += doubleStroke([[-30, 20], [-20, -6], [10, -10], [30, 10], [30, 22]], rng, 2, cls);
-    for (const lx of [-22, -8, 8, 22]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls);
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [34 + Math.cos(a) * 16, -4 + Math.sin(a) * 13]; }), rng, 1.2, cls);
-    out += doubleStroke([[24, -14], [20, -30], [30, -18]], rng, 1.5, cls);
-    out += doubleStroke([[42, -14], [46, -30], [38, -18]], rng, 1.5, cls);
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [29 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls);
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [39 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls);
-    for (let i = 0; i < 3; i++) out += doubleStroke([[30 + i * 4, 3], [30 + i * 4, 7]], rng, 0.6, cls);
+    if (ghost) o += '<ellipse cx="6" cy="-26" rx="46" ry="34" fill="#C9BCFF" opacity=".25"/>';
+    // tail
+    o += '<path d="' + pathD(chalkLine([[-26, -18], [-40, -30], [-38, -50], [-28, -56]], rng, 1)) + '" stroke="' + ink + '" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+    o += '<path d="' + pathD([[-26, -18], [-40, -30], [-38, -50], [-28, -56]]) + '" stroke="' + fill + '" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+    if (!ghost) for (const lx of [-16, -4, 10, 22]) o += leg(lx, -14, 13);
+    o += ghost ? poly([[-30, -12], [-24, -34], [26, -36], [32, -12], [24, -4], [14, -12], [4, -3], [-6, -12], [-16, -4]])
+               : blob(0, -22, 30, 15);
+    o += blob(30, -44, 20, 17);
+    o += poly([[15, -54], [16, -74], [28, -58]]) + poly([[33, -58], [44, -74], [46, -52]]);
+    o += '<path d="M 18.5 -58 L 18.5 -68 L 24 -59 Z" fill="#ff9fb8" opacity=".8"/><path d="M 37 -58 L 43 -68 L 43.5 -56 Z" fill="#ff9fb8" opacity=".8"/>';
+    o += eye(23, -46, 4) + eye(38, -46, 4) + cheek(18, -38) + cheek(43, -38);
+    o += '<path d="M 29 -40 L 32 -40 L 30.5 -38 Z" fill="#ff7a9c"/><path d="M 30.5 -38 Q 28 -35 26 -37 M 30.5 -38 Q 33 -35 35 -37" stroke="' + ink + '" stroke-width="1.4" fill="none"/>';
+    o += '<path d="M 12 -40 L 2 -42 M 12 -37 L 2 -35 M 48 -40 L 58 -42 M 48 -37 L 58 -35" stroke="' + ink + '" stroke-width="1.2" opacity=".7"/>';
+    if (!ghost) o += '<path d="M -8 -30 Q -4 -22 -8 -14 M 2 -32 Q 6 -24 2 -16" stroke="' + shade + '" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>';
   } else if (style === 'dog') {
-    // Longer snout, floppy ears, wagging tail — same visual language, distinct silhouette.
-    out += doubleStroke([[-32, 20], [-22, -4], [12, -8], [34, 12], [34, 22]], rng, 2, cls);
-    for (const lx of [-24, -8, 10, 26]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls);
-    out += doubleStroke([[34, -6], [50, -2], [48, 8], [34, 6]], rng, 1.2, cls); // snout
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [30 + Math.cos(a) * 15, -10 + Math.sin(a) * 12]; }), rng, 1.2, cls); // head
-    out += doubleStroke([[20, -18], [12, -6], [22, -2]], rng, 1.5, cls); // floppy ear
-    out += doubleStroke([[42, -20], [50, -8], [40, -4]], rng, 1.5, cls); // floppy ear
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [26 + Math.cos(a) * 3, -12 + Math.sin(a) * 3]; }), rng, 0.7, cls);
-    out += doubleStroke([[44, 4], [46, 2], [46, 6], [44, 4]], rng, 0.5, cls); // nose
-    out += doubleStroke([[-32, 20], [-42, 8], [-46, -2]], rng, 1.5, cls); // tail
+    o += '<path d="' + pathD(chalkLine([[-28, -24], [-40, -36], [-44, -46]], rng, 1)) + '" stroke="' + ink + '" stroke-width="10" stroke-linecap="round" fill="none"/><path d="' + pathD([[-28, -24], [-40, -36], [-44, -46]]) + '" stroke="' + fill + '" stroke-width="5" stroke-linecap="round" fill="none"/>';
+    for (const lx of [-18, -5, 10, 22]) o += leg(lx, -14, 13);
+    o += blob(0, -24, 32, 16);
+    o += '<ellipse cx="-6" cy="-26" rx="10" ry="7" fill="' + shade + '" opacity=".75"/>';
+    o += blob(32, -46, 19, 17);
+    o += blob(46, -38, 11, 8, shadeColor(fill, 12));
+    o += '<ellipse cx="54" cy="-41" rx="4" ry="3" fill="#161616"/>';
+    o += '<path d="M 44 -31 Q 46 -24 50 -30 Z" fill="#ff6f91" stroke="' + ink + '" stroke-width="1.2"/>';
+    o += poly([[18, -58], [10, -40], [20, -36], [24, -54]], shade) + poly([[38, -60], [48, -54], [44, -38]], shade);
+    o += eye(28, -50, 3.8) + eye(39, -50, 3.8) + cheek(24, -41);
   } else if (style === 'bird') {
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 18, 0 + Math.sin(a) * 14]; }), rng, 1.3, cls); // body
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [22 + Math.cos(a) * 11, -14 + Math.sin(a) * 10]; }), rng, 1.1, cls); // head
-    out += doubleStroke([[32, -14], [44, -10], [32, -6]], rng, 1, cls); // beak
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 2.6, -16 + Math.sin(a) * 2.6]; }), rng, 0.6, cls); // eye
-    out += doubleStroke([[-6, 10], [-6, 26]], rng, 1.2, cls); // leg
-    out += doubleStroke([[8, 10], [8, 26]], rng, 1.2, cls); // leg
-    out += doubleStroke([[-10, 26], [-2, 26]], rng, 1, cls);
-    out += doubleStroke([[4, 26], [12, 26]], rng, 1, cls);
-    out += doubleStroke([[-16, 2], [-30, -6], [-16, -8]], rng, 1.3, cls); // wing
+    o += leg(-5, -12, 11) + leg(6, -12, 11);
+    o += blob(0, -28, 20, 18);
+    o += '<ellipse cx="2" cy="-22" rx="11" ry="9" fill="#ffffff" opacity=".45"/>';
+    o += poly([[-8, -32], [-24, -24], [-10, -18]], shade);
+    o += poly([[17, -34], [30, -30], [17, -26]], '#FFB23E');
+    o += '<path d="M -2 -45 Q 2 -54 6 -46 Q 8 -54 12 -45" stroke="' + ink + '" stroke-width="2" fill="none" stroke-linecap="round"/>';
+    o += eye(9, -34, 3.4) + cheek(8, -26);
   } else if (style === 'bunny') {
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 20, 6 + Math.sin(a) * 15]; }), rng, 1.4, cls); // body
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [26 + Math.cos(a) * 13, -8 + Math.sin(a) * 11]; }), rng, 1.2, cls); // head
-    out += doubleStroke([[20, -18], [16, -42], [24, -20]], rng, 1.4, cls); // long ear
-    out += doubleStroke([[32, -18], [36, -42], [28, -20]], rng, 1.4, cls); // long ear
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls);
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [30 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls);
-    for (const lx of [-14, 0, 12, 24]) out += doubleStroke([[lx, 18], [lx, 30]], rng, 1.3, cls);
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [-18 + Math.cos(a) * 6, 12 + Math.sin(a) * 6]; }), rng, 1, cls); // tail puff
+    o += blob(-26, -24, 8, 8, '#ffffff');
+    for (const lx of [-12, 12]) o += blob(lx, -6, 9, 5);
+    o += blob(0, -24, 24, 18);
+    o += poly([[10, -56], [12, -92], [22, -58]]) + poly([[26, -58], [36, -90], [36, -54]]);
+    o += '<path d="M 14 -60 L 15 -84 L 19 -60 Z" fill="#ff9fb8" opacity=".85"/><path d="M 29 -60 L 34 -82 L 33 -58 Z" fill="#ff9fb8" opacity=".85"/>';
+    o += blob(24, -46, 17, 15);
+    o += eye(18, -48, 3.6) + eye(30, -48, 3.6) + cheek(14, -40) + cheek(34, -40);
+    o += '<path d="M 23 -42 L 26 -42 L 24.5 -40 Z" fill="#ff7a9c"/><path d="M 24.5 -40 L 24.5 -37" stroke="' + ink + '" stroke-width="1.3"/>';
   }
-
-  out += '</g>';
-  return out;
+  return o + '</g>';
 }
 
 // Solid fill under a chalk outline (no stroke) — the colour layer of the riso look.
@@ -728,6 +796,10 @@ function bodyPaint(bodyColor, bg, uid, dark) {
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
   if (id === 'chrome') return { fill: 'url(#' + gid + ')', shade: '#6d7580', shoe: '#8e96a1', glow: '#dfe6ee', defs: grad(['#f4f6f9', '#aeb6c1', '#eef1f5', '#8f98a4', '#dde2e8']) };
   if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#9a6a12', shoe: '#c9922a', glow: '#ffd970', defs: grad(['#fff1b8', '#e9b340', '#fbe08a', '#c98f1e', '#f6d06a']) };
+  if (id === 'rose_gold') return { fill: 'url(#' + gid + ')', shade: '#a8625a', shoe: '#c9837a', glow: '#ffc7bd', defs: grad(['#ffe1d8', '#e0a093', '#f7cbbf', '#c7867b', '#f2bfb2']) };
+  if (id === 'pearl') return { fill: 'url(#' + gid + ')', shade: '#b3a99a', shoe: '#d6cdbf', glow: '#fff6e8', defs: grad(['#ffffff', '#efe6f2', '#f8f1e4', '#e3eef3', '#fbf6ee']) };
+  if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
+  if (id === 'aurora') return { fill: 'url(#' + gid + ')', shade: '#2f7f8f', shoe: '#4aa3a0', glow: '#8ff5d9', defs: grad(['#7cf5c8', '#5ec8ff', '#9d8bff', '#6ff0b0', '#ffe28a']) };
   if (id === 'holo') return { fill: 'url(#' + gid + ')', shade: '#7b6bd0', shoe: '#a996ff', glow: '#d9c9ff', defs: grad(['#ffd1ec', '#c7b8ff', '#a8e6ff', '#c2ffd9', '#fff3b0', '#ffc2e2']) };
   return { fill: bodyColor.hex, shade: shadeColor(bodyColor.hex, -34), shoe: shadeColor(bodyColor.hex, -22), glow: bodyColor.hex, defs: '' };
 }
@@ -772,7 +844,7 @@ function renderFromTraits(picks, index, seed) {
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="228" fill="' + haloFill + '" opacity="' + (haloOp * 0.35).toFixed(2) + '"/>';
   let grain = '';
   for (let i = 0; i < 170; i++) {
-    grain += '<circle cx="' + (deco() * SW - OX).toFixed(1) + '" cy="' + (deco() * H).toFixed(1) + '" r="' + (0.5 + deco() * 1.1).toFixed(1) + '" fill="' + ink + '" opacity="' + (0.04 + deco() * 0.07).toFixed(2) + '"/>';
+    grain += '<circle cx="' + (deco() * SW - OX).toFixed(1) + '" cy="' + (deco() * H).toFixed(1) + '" r="' + (0.5 + deco() * 1.1).toFixed(1) + '" fill="' + ink + '" opacity="' + (0.03 + deco() * 0.04).toFixed(2) + '"/>';
   }
   back += grain;
 
@@ -810,7 +882,7 @@ function renderFromTraits(picks, index, seed) {
     '<mask id="hm' + uid + '" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#hg' + uid + ')"/></mask>';
   const block = (x0, y0, size) => {
     // colour plate slightly misregistered from the ink outline, then halftone, then outline
-    const ox = 2 + rng() * 3, oy = 2 + rng() * 3;
+    const ox = 1.5 + rng() * 2, oy = 1.5 + rng() * 2;
     let o = fillPath(wobblyRect(x0 + ox, y0 + oy, x0 + size + ox, y0 + size + oy, rng, 1.2), paint.fill);
     o += '<rect x="' + (x0 + ox + 3) + '" y="' + (y0 + oy + 3) + '" width="' + (size - 6) + '" height="' + (size - 6) + '" fill="url(#ht' + uid + ')" mask="url(#hm' + uid + ')" opacity="' + (paint.classic ? 0.35 : 0.55) + '"/>';
     return o;
@@ -821,7 +893,7 @@ function renderFromTraits(picks, index, seed) {
   body += block(headCx - hh, headTop, headSize);
   const headOutline = [[headCx - hh, headTop], [headCx + hh, headTop], [headCx + hh, headTop + headSize], [headCx - hh, headTop + headSize], [headCx - hh, headTop]];
   body += doubleStroke(headOutline, rng, 2.5, 'strokeThick');
-  body += chalkGrain(headOutline, rng, ink, 0.3);
+  body += chalkGrain(headOutline, rng, ink, 0.12);
   body += renderEars(headCx - hh - 24, headCy, picks.ears.id, rng, true, paint.fill);
   body += renderEars(headCx + hh + 24, headCy, picks.ears.id, rng, false, paint.fill);
   // cheek blush
@@ -830,18 +902,12 @@ function renderFromTraits(picks, index, seed) {
   body += '<ellipse cx="' + (headCx + 50) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
   const eyeColorHex = picks.eyeColor.hex || null;
   if (eyeColorHex) {
-    defs += '<radialGradient id="eg' + uid + '"><stop offset="0" stop-color="' + eyeColorHex + '" stop-opacity="0.75"/><stop offset="1" stop-color="' + eyeColorHex + '" stop-opacity="0"/></radialGradient>';
-    body += '<circle cx="' + (headCx - 30) + '" cy="' + (headCy - 12) + '" r="30" fill="url(#eg' + uid + ')"/>';
-    body += '<circle cx="' + (headCx + 30) + '" cy="' + (headCy - 12) + '" r="30" fill="url(#eg' + uid + ')"/>';
+    defs += '<radialGradient id="eg' + uid + '"><stop offset="0.35" stop-color="' + eyeColorHex + '" stop-opacity="0.9"/><stop offset="1" stop-color="' + eyeColorHex + '" stop-opacity="0"/></radialGradient>';
+    body += '<circle cx="' + (headCx - 32) + '" cy="' + (headCy - 12) + '" r="36" fill="url(#eg' + uid + ')"/>';
+    body += '<circle cx="' + (headCx + 32) + '" cy="' + (headCy - 12) + '" r="36" fill="url(#eg' + uid + ')"/>';
   }
-  // eye sockets: a light plate behind each eye so eyes pop off coloured bodies
-  if (!paint.classic) {
-    const sock = dark ? '#111111' : '#fffdf7';
-    body += '<circle cx="' + (headCx - 30) + '" cy="' + (headCy - 12) + '" r="19" fill="' + sock + '" opacity="0.9"/>';
-    body += '<circle cx="' + (headCx + 30) + '" cy="' + (headCy - 12) + '" r="19" fill="' + sock + '" opacity="0.9"/>';
-  }
-  body += '<g transform="translate(' + headCx + ' ' + (headCy - 12) + ') scale(1.15) translate(' + -headCx + ' ' + -(headCy - 12) + ')">' +
-    renderEyes(headCx, headCy - 12, picks.eyes.id, rng, ink, eyeColorHex) + '</g>';
+  body += '<g transform="translate(' + headCx + ' ' + (headCy - 12) + ') scale(1.06) translate(' + -headCx + ' ' + -(headCy - 12) + ')">' +
+    renderEyes(headCx, headCy - 12, picks.eyes.id, rng, ink, eyeColorHex, uid, dark) + '</g>';
   body += renderMouth(headCx, headCy + 44, picks.mouth.id, rng);
 
   // ---- neck + chest ----
@@ -859,7 +925,10 @@ function renderFromTraits(picks, index, seed) {
     body += doubleStroke([[headCx + legX - 6, groundY - 15], [headCx + legX + 6, groundY - 15], [headCx + legX, groundY - 3], [headCx + legX - 6, groundY - 15]], rng, 1.3, 'stroke');
   }
 
-  if (picks.companion.id !== 'none') body += renderCompanion(headCx + 132, groundY - 40, picks.companion.id, rng);
+  if (picks.companion.id !== 'none') {
+    const cc = picks.companionColor && picks.companionColor.hex;
+    body += renderCompanion(headCx + 138, groundY, picks.companion.id, rng, cc, ink, dark);
+  }
 
   // Scoped by #piece{uid} — class styles must not leak between the many inline SVGs on the page.
   const style =
@@ -867,6 +936,7 @@ function renderFromTraits(picks, index, seed) {
     '#piece' + uid + ' .stroke{stroke:' + ink + ';stroke-width:4.2px;fill:none;}' +
     '#piece' + uid + ' .strokeThick{stroke:' + ink + ';stroke-width:6px;fill:none;}' +
     '#piece' + uid + ' .strokeThin{stroke:' + ink + ';stroke-width:2.2px;fill:none;opacity:.85;}' +
+    '#piece' + uid + ' .strokeMid{stroke:' + ink + ';stroke-width:3px;fill:none;}' +
     '#piece' + uid + ' .strokeGhost{stroke:' + ink + ';stroke-width:3px;fill:none;opacity:.4;stroke-dasharray:3 3;}' +
     '#piece' + uid + ' .dotFill{fill:' + ink + ';opacity:.5;}' +
     '#piece' + uid + ' .scorchFill{fill:' + ink + ';opacity:.18;}' +
@@ -883,10 +953,10 @@ const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
     background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
-    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'chrome'
+    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -919,7 +989,8 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'black', weight: 40 }, { id: 'deep_black', weight: 35 }, { id: 'midnight', weight: 25 }],
-  bodyColor: [{ id: 'chrome', weight: 30 }, { id: 'gold', weight: 28 }, { id: 'holo', weight: 26 }, { id: 'tomato', weight: 8 }, { id: 'classic', weight: 8 }],
+  bodyColor: [{ id: 'chrome', weight: 12 }, { id: 'gold', weight: 12 }, { id: 'holo', weight: 11 }, { id: 'rose_gold', weight: 11 }, { id: 'pearl', weight: 10 }, { id: 'obsidian', weight: 11 }, { id: 'aurora', weight: 11 }, { id: 'neon', weight: 10 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'classic', weight: 4 }],
+  companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
   eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }],
@@ -995,6 +1066,12 @@ function generatePiece(index, seed, tier, opts) {
     // picked last so every earlier trait roll stays identical to v1 for the same seed
     bodyColor: sigOverride ? sigOverride.bodyColor : pick('bodyColor')
   };
+  picks.companionColor = picks.companion.id === 'none'
+    ? TRAITS.companionColor[0]
+    : (sigOverride && sigOverride.companionColor) || (function () {
+        const c = pick('companionColor');
+        return c.id === 'none' ? weightedPick(rng, TRAITS.companionColor.slice(1)) : c;
+      })();
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
 
   const svg = renderFromTraits(picks, index, seed);
