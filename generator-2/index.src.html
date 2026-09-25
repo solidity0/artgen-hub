@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Glyph Generator</title>
+<title>Glyphs — Generator</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -729,7 +730,7 @@ document.getElementById('chain-controls').addEventListener('click', e => {
 document.getElementById('collection-name-input').addEventListener('input', () => {
   const v = document.getElementById('collection-name-input').value.trim();
   document.getElementById('h1-text').textContent = v ? 'Build ' + v : 'Build your collection';
-  document.title = (v || 'Glyph') + ' — Generator';
+  document.title = (v || 'Glyphs') + ' — Generator';
 });
 document.getElementById('tier-controls').addEventListener('click', e => {
   const btn = e.target.closest('.chip'); if (!btn) return;
