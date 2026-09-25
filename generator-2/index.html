@@ -418,7 +418,7 @@ function fieldOverlay(rng, field, invert, index) {
 // shifts trait picks. When animate is false, output is byte-identical to static.
 function glyphForm(rng, core, ink, R, segN, frac, animOpts) {
   const cx = 300, cy = 300, sw = 2.5;
-  const open = `<g stroke="currentColor" stroke-width="${sw}" fill="none" stroke-linecap="square">`;
+  const open = `<g stroke="currentColor" fill="none" stroke-linecap="square">`;
   let d = '';
   // Cap the drop probability: ghost (0.78) and dissolved (0.88) fractures
   // pushed frac*1.4 above 1.0, which dropped EVERY segment and produced
@@ -710,6 +710,42 @@ function shadeColor(hex, percent) {
   return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
 }
 
+// ---------- instrument frame (v4) ----------
+// Dial ring with ticks, corner brackets, faint grid and a serial readout around the glyph.
+// Uses its own rng stream so glyph geometry and trait picks are unchanged.
+function hudFrame(seed, index, ink, glow) {
+  const r = mulberry32((seed ?? 0) * 100003 + index + 4242);
+  const cx = 300, cy = 300;
+  let o = `<pattern id="grid${index}" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="${ink}" stroke-width="0.6" opacity="0.07"/></pattern>`
+        + `<rect width="600" height="600" fill="url(#grid${index})"/>`;
+  // dial: outer ring, 72 ticks (long every 45 deg), dashed inner ring
+  const R1 = 262, R2 = 238;
+  o += `<circle cx="${cx}" cy="${cy}" r="${R1}" fill="none" stroke="${glow}" stroke-width="1.2" opacity="0.28"/>`;
+  let ticks = '';
+  for (let i = 0; i < 72; i++) {
+    const a = (i / 72) * Math.PI * 2, long = i % 9 === 0, len = long ? 16 : 7;
+    const x1 = cx + Math.cos(a) * R1, y1 = cy + Math.sin(a) * R1, x2 = cx + Math.cos(a) * (R1 - len), y2 = cy + Math.sin(a) * (R1 - len);
+    ticks += `M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  }
+  o += `<path d="${ticks}" stroke="${glow}" stroke-width="1.3" opacity="0.4"/>`;
+  const dash = 6 + Math.floor(r() * 10);
+  o += `<circle cx="${cx}" cy="${cy}" r="${R2}" fill="none" stroke="${ink}" stroke-width="1" stroke-dasharray="${dash} ${dash + 4}" opacity="0.16" transform="rotate(${Math.floor(r() * 360)} ${cx} ${cy})"/>`;
+  // a lit arc segment on the dial (seeded position) for a focal accent
+  const a0 = r() * Math.PI * 2, a1 = a0 + 0.5 + r() * 0.9;
+  o += `<path d="M${(cx + Math.cos(a0) * R1).toFixed(1)} ${(cy + Math.sin(a0) * R1).toFixed(1)}A${R1} ${R1} 0 0 1 ${(cx + Math.cos(a1) * R1).toFixed(1)} ${(cy + Math.sin(a1) * R1).toFixed(1)}" fill="none" stroke="${glow}" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>`;
+  // corner brackets
+  const m = 22, L = 34;
+  let br = '';
+  for (const [x, y, dx, dy] of [[m, m, 1, 1], [600 - m, m, -1, 1], [m, 600 - m, 1, -1], [600 - m, 600 - m, -1, -1]]) br += `M${x} ${y + dy * L}V${y}H${x + dx * L}`;
+  o += `<path d="${br}" fill="none" stroke="${ink}" stroke-width="2.2" opacity="0.6"/>`;
+  // serial readout
+  const hex = ((((seed ?? 0) * 2654435761) ^ (index * 40503)) >>> 0).toString(16).toUpperCase().padStart(8, '0');
+  const font = `font-family="'Space Mono','Courier New',monospace" font-size="12" letter-spacing="2"`;
+  o += `<text x="${m + 2}" y="${600 - m - 44}" ${font} fill="${ink}" opacity="0.55">SIG.${String(index).padStart(4, '0')}</text>`;
+  o += `<text x="${600 - m - 2}" y="${m + 54}" ${font} fill="${ink}" opacity="0.55" text-anchor="end">0x${hex}</text>`;
+  return o;
+}
+
 // ---------- shared renderer ----------
 // opts: { animate: boolean } — when true, adds inscription-safe SMIL to the glyph.
 // Animation uses a SEPARATE seeded stream (seed*70001+index*9973+1) so toggling
@@ -748,32 +784,37 @@ function renderGlyphSVG(picks, index, seed, opts) {
     for (let l = 1; l <= layers; l++) {
       const offset = slip * l;
       slipLayers +=
-        `<g color="#ff2b6d" transform="translate(${(-offset).toFixed(1)},0)" opacity="${(0.28/l).toFixed(2)}"><use href="#fg${index}"/></g>` +
-        `<g color="#2bd4ff" transform="translate(${offset.toFixed(1)},0)" opacity="${(0.28/l).toFixed(2)}"><use href="#fg${index}"/></g>`;
+        `<g color="#ff2b6d" stroke-width="3" transform="translate(${(-offset).toFixed(1)},0)" opacity="${(0.34/l).toFixed(2)}"><use href="#fg${index}"/></g>` +
+        `<g color="#2bd4ff" stroke-width="3" transform="translate(${offset.toFixed(1)},0)" opacity="${(0.34/l).toFixed(2)}"><use href="#fg${index}"/></g>`;
     }
   }
 
   // main layer: animated pieces need inline markup (SMIL lives on the shapes);
   // static pieces just reference the def like everything else
   const mainLayer = animate
-    ? `<g color="${ink}">${composedGlyph(mulberry32((seed??0)*100003+index+1), {core,symmetry}, ink, R, segN, frac, animOpts)}</g>`
-    : `<g color="${ink}"><use href="#fg${index}"/></g>`;
+    ? `<g color="${ink}" stroke-width="3.4">${composedGlyph(mulberry32((seed??0)*100003+index+1), {core,symmetry}, ink, R, segN, frac, animOpts)}</g>`
+    : `<g color="${ink}" stroke-width="3.4"><use href="#fg${index}"/></g>`;
 
   const vignette = palette.invert ? '' :
-    `<radialGradient id="vig${index}" cx="50%" cy="50%" r="62%"><stop offset="0%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="0.82"/></radialGradient><rect width="600" height="600" fill="url(#vig${index})"/>`;
+    `<radialGradient id="vig${index}" cx="50%" cy="50%" r="62%"><stop offset="0%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="0.6"/></radialGradient><rect width="600" height="600" fill="url(#vig${index})"/>`;
 
   return `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <g id="fg${index}">${staticGlyph}</g>
-<filter id="halo${index}" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="14"/></filter>
-<radialGradient id="emit${index}" cx="50%" cy="50%" r="36%"><stop offset="0%" stop-color="${hexA(glow,0.08)}"/><stop offset="100%" stop-color="${hexA(glow,0)}"/></radialGradient>
+<filter id="halo${index}" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9"/></filter>
+<radialGradient id="emit${index}" cx="50%" cy="50%" r="52%"><stop offset="0%" stop-color="${hexA(glow,0.2)}"/><stop offset="55%" stop-color="${hexA(glow,0.06)}"/><stop offset="100%" stop-color="${hexA(glow,0)}"/></radialGradient>
 </defs>
 <rect width="600" height="600" fill="${bg}"/>
 ${fieldOverlay(rng, field, palette.invert, index)}
 <rect width="600" height="600" fill="url(#emit${index})"/>
-<g color="${ink}" filter="url(#halo${index})" opacity="0.35"><use href="#fg${index}"/></g>
+${hudFrame(seed, index, ink, glow)}
+<g transform="translate(300 300) scale(1.2) translate(-300 -300)">
+<g color="${glow}" stroke-width="2" opacity="0.26" transform="rotate(${(((seed ?? 0) * 7 + index * 37) % 8) * 22.5 + 22.5} 300 300) translate(300 300) scale(0.55) translate(-300 -300)"><use href="#fg${index}"/></g>
+<g color="${glow}" stroke-width="12" filter="url(#halo${index})" opacity="0.55"><use href="#fg${index}"/></g>
 ${slipLayers}
 ${mainLayer}
+<g color="#ffffff" stroke-width="1.1" opacity="0.7"><use href="#fg${index}"/></g>
+</g>
 ${vignette}
 </svg>`;
 }
