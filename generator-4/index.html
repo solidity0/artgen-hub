@@ -242,15 +242,6 @@ const TRAITS = {
     { id: 'navy',      hex: '#243B7A', weight: 4, rarity: 'uncommon' },
     { id: 'plum',      hex: '#7A2E73', weight: 4, rarity: 'uncommon' },
     { id: 'steel',     hex: '#9AA6B4', weight: 4, rarity: 'uncommon' },
-    // bird palette: bold bird colours with a cream belly patch on the body
-    { id: 'fury_red',     hex: '#D8232A', belly: '#F3E1C0', weight: 3, rarity: 'uncommon' },
-    { id: 'zap_yellow',   hex: '#FFCE00', belly: '#FFF3C4', weight: 3, rarity: 'uncommon' },
-    { id: 'jay_blue',     hex: '#4AB3E6', belly: '#E4F4FC', weight: 3, rarity: 'uncommon' },
-    { id: 'pig_green',    hex: '#7CC242', belly: '#D9F0B8', weight: 3, rarity: 'uncommon' },
-    { id: 'coal_black',   hex: '#2A2A2A', belly: '#6B6B6B', weight: 3, rarity: 'uncommon' },
-    { id: 'hot_pink',     hex: '#F26FA9', belly: '#FDE0EC', weight: 3, rarity: 'uncommon' },
-    { id: 'ember_orange', hex: '#F7941D', belly: '#FDE3BF', weight: 3, rarity: 'uncommon' },
-    { id: 'maroon',       hex: '#7B1E24', belly: '#E8CFB0', weight: 2, rarity: 'rare' },
     { id: 'chrome',    hex: '#C9CED6', weight: 1.5, rarity: 'rare' },
     { id: 'gold',      hex: '#F2C14E', weight: 1.5, rarity: 'rare' },
     { id: 'holo',      hex: '#C7B8FF', weight: 1.2, rarity: 'rare' },
@@ -1163,10 +1154,6 @@ function renderFromTraits(picks, index, seed) {
   const neck = chalkLine([[headCx, neckTop - 2], [headCx, neckTop + neckLen + 2]], rng, 0.8);
   body += tube(neck, 17, ink) + tube(neck, 10, paint.fill);
   body += block(bodyPts, 'b');
-  if (bodyColor && bodyColor.belly) {
-    // bird-style belly patch, clipped to the body shape
-    body += '<ellipse cx="' + (headCx + 2) + '" cy="' + (chestCy + ch * 0.3).toFixed(1) + '" rx="' + (ch * 0.64).toFixed(1) + '" ry="' + (ch * 0.58).toFixed(1) + '" fill="' + bodyColor.belly + '" clip-path="url(#scb' + uid + ')"/>';
-  }
   body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink, bodyKind === 'box' ? null : closeLoop(bodyPts));
   if (bodyKind === 'barrel' || bodyKind === 'capsule') {
     // riveted belly band
