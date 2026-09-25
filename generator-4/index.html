@@ -1107,10 +1107,12 @@ function renderFromTraits(picks, index, seed) {
   const block = (pts, key, pp) => {
     pp = pp || paint;
     const pat = pp === paint ? 'ht' : 'hth';
-    // colour plate slightly misregistered from the ink outline, then halftone, then (caller) outline
-    const ox = 1.5 + rng() * 2, oy = 1.5 + rng() * 2;
-    const moved = pts.map(([x, y]) => [x + ox, y + oy]);
-    let o = fillPath(chalkLine(closeLoop(moved), rng, 1.2), pp.fill);
+    // colour plate sits exactly under the ink outline so it fills the whole shape (no gaps at the edges);
+    // rng draws kept so the rest of the piece renders the same
+    rng(); rng();
+    const moved = pts;
+    chalkLine(closeLoop(moved), rng, 1.2);
+    let o = fillPath(closeLoop(moved), pp.fill);
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const [x, y] of moved) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
     const cid = 'sc' + key + uid;
