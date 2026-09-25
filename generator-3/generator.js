@@ -953,7 +953,10 @@ function renderFromTraits(picks, index, seed, opts) {
   // their own clipped copy of the pattern from a separate seeded rng.
   const SW=H, OX=(SW-W)/2, sid=`sq${(seed??0)}_${index}`;
   // v3 portrait crop: head-and-shoulders framing (the whole stage is still drawn; the viewBox zooms in)
-  const VB_X=20, VB_Y=58, VB=360;
+  // zoom adapts to the character: big heads and tall/wide hair get a looser crop so nothing is cut off
+  const tallHair = ['tentacles','long_wild','dreads','bush','mohawk','horns','horns_red','spiky'].includes(hair.id);
+  const VB = Math.min(470, 392 + Math.max(0, headRy - 80) * 1.6 + Math.max(0, headRx - 72) * 1.2 + (tallHair ? 40 : 0));
+  const VB_X = cx - VB / 2, VB_Y = Math.max(0, (cy - 22) - VB / 2);
   const accent=eyeColor.hex, lightBg=!isDark;
   // stark whites become warm paper; darks stay as they are
   const paper = lightBg && background.bg !== '#888888' ? '#F1EBDF' : background.bg;
