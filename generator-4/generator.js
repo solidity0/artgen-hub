@@ -556,7 +556,7 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
     // tail
     o += '<path d="' + pathD(chalkLine([[-26, -18], [-40, -30], [-38, -50], [-28, -56]], rng, 1)) + '" stroke="' + ink + '" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
     o += '<path d="' + pathD([[-26, -18], [-40, -30], [-38, -50], [-28, -56]]) + '" stroke="' + fill + '" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
-    if (!ghost) for (const lx of [-16, -4, 10, 22]) o += leg(lx, -14, 13);
+    if (!ghost) for (const lx of [-16, -4, 10, 22]) o += leg(lx, -15, 10);
     o += ghost ? poly([[-30, -12], [-24, -34], [26, -36], [32, -12], [24, -4], [14, -12], [4, -3], [-6, -12], [-16, -4]])
                : blob(0, -22, 30, 15);
     o += blob(30, -44, 20, 17);
@@ -568,7 +568,7 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
     if (!ghost) o += '<path d="M -8 -30 Q -4 -22 -8 -14 M 2 -32 Q 6 -24 2 -16" stroke="' + shade + '" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>';
   } else if (style === 'dog') {
     o += '<path d="' + pathD(chalkLine([[-28, -24], [-40, -36], [-44, -46]], rng, 1)) + '" stroke="' + ink + '" stroke-width="10" stroke-linecap="round" fill="none"/><path d="' + pathD([[-28, -24], [-40, -36], [-44, -46]]) + '" stroke="' + fill + '" stroke-width="5" stroke-linecap="round" fill="none"/>';
-    for (const lx of [-18, -5, 10, 22]) o += leg(lx, -14, 13);
+    for (const lx of [-18, -5, 10, 22]) o += leg(lx, -15, 10);
     o += blob(0, -24, 32, 16);
     o += '<ellipse cx="-6" cy="-26" rx="10" ry="7" fill="' + shade + '" opacity=".75"/>';
     o += blob(32, -46, 19, 17);
@@ -578,7 +578,7 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
     o += poly([[18, -58], [10, -40], [20, -36], [24, -54]], shade) + poly([[38, -60], [48, -54], [44, -38]], shade);
     o += eye(28, -50, 3.8) + eye(39, -50, 3.8) + cheek(24, -41);
   } else if (style === 'bird') {
-    o += leg(-5, -12, 11) + leg(6, -12, 11);
+    o += leg(-5, -13, 8) + leg(6, -13, 8);
     o += blob(0, -28, 20, 18);
     o += '<ellipse cx="2" cy="-22" rx="11" ry="9" fill="#ffffff" opacity=".45"/>';
     o += poly([[-8, -32], [-24, -24], [-10, -18]], shade);
@@ -587,7 +587,7 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
     o += eye(9, -34, 3.4) + cheek(8, -26);
   } else if (style === 'bunny') {
     o += blob(-26, -24, 8, 8, '#ffffff');
-    for (const lx of [-12, 12]) o += blob(lx, -6, 9, 5);
+    for (const lx of [-12, 12]) o += blob(lx, -7, 9, 5);
     o += blob(0, -24, 24, 18);
     o += poly([[10, -56], [12, -92], [22, -58]]) + poly([[26, -58], [36, -90], [36, -54]]);
     o += '<path d="M 14 -60 L 15 -84 L 19 -60 Z" fill="#ff9fb8" opacity=".85"/><path d="M 29 -60 L 34 -82 L 33 -58 Z" fill="#ff9fb8" opacity=".85"/>';
@@ -750,7 +750,7 @@ function renderFromTraits(picks, index, seed) {
 
   if (picks.companion.id !== 'none') {
     const cc = picks.companionColor && picks.companionColor.hex;
-    body += renderCompanion(headCx + 138, groundY, picks.companion.id, rng, cc, ink, dark);
+    body += renderCompanion(headCx + 170, groundY, picks.companion.id, rng, cc, ink, dark);
   }
 
   // Scoped by #piece{uid} — class styles must not leak between the many inline SVGs on the page.
