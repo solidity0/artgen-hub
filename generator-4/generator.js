@@ -67,7 +67,6 @@ const TRAITS = {
     { id: 'rose',      hex: '#F48FB1', weight: 4, rarity: 'uncommon' },
     { id: 'aqua',      hex: '#5FD3F3', weight: 4, rarity: 'uncommon' },
     { id: 'olive',     hex: '#9AA85A', weight: 4, rarity: 'uncommon' },
-    { id: 'neon',      hex: '#3DFF8F', weight: 1.5, rarity: 'rare' },
     { id: 'chrome',    hex: '#C9CED6', weight: 1.5, rarity: 'rare' },
     { id: 'gold',      hex: '#F2C14E', weight: 1.5, rarity: 'rare' },
     { id: 'holo',      hex: '#C7B8FF', weight: 1.2, rarity: 'rare' },
@@ -505,10 +504,16 @@ function renderHand(x, y, style, rng, flip, fill, ink) {
       '<circle cx="' + (x - 6 * f) + '" cy="' + (y + 4) + '" r="7" class="stroke"' + fl + '/>';
   } else if (style === 'claw') {
     let out = '';
-    for (let i = -1; i <= 1; i++) out += '<path d="' + pathD(chalkLine([[x, y], [x + i * 8, y + 12]], rng, 1)) + '" class="stroke"/>';
-    return out;
+    for (let i = -1; i <= 1; i++) out += '<path d="' + pathD(chalkLine([[x, y + 3], [x + i * 9, y + 15]], rng, 1)) + '" class="stroke"/>';
+    return out + knuckle(8);
   } else if (style === 'broken_stub') {
-    return '<path d="' + pathD(chalkLine([[x - 8, y - 4], [x + 6, y + 6], [x - 4, y + 10]], rng, 1.5)) + '" class="stroke" fill="none"/>';
+    // cracked-off robot hand: palm with a jagged break, a crack, and two dangling wires
+    const palm = [[x - 11, y - 6], [x + 11, y - 6], [x + 12, y + 6], [x + 7, y + 10], [x + 3, y + 5], [x - 2, y + 11], [x - 6, y + 6], [x - 12, y + 9]];
+    return tubeP([[x - 3, y + 8], [x - 5, y + 15], [x - 2, y + 20]], 2.6, '#E8434F') +
+      tubeP([[x + 4, y + 7], [x + 6, y + 14], [x + 3, y + 18]], 2.6, '#FFC93C') +
+      '<circle cx="' + (x - 2) + '" cy="' + (y + 21) + '" r="2.4" fill="#FFE27A"/>' +
+      shape(palm) +
+      '<path d="M ' + (x - 3) + ' ' + (y - 6) + ' L ' + (x + 1) + ' ' + (y - 1) + ' L ' + (x - 2) + ' ' + (y + 3) + '" stroke="' + k + '" stroke-width="1.8" fill="none"/>';
   }
   return '<circle cx="' + x + '" cy="' + y + '" r="10" class="stroke"' + fl + '/>';
 }
@@ -891,10 +896,13 @@ function renderFromTraits(picks, index, seed) {
   body += limb(legL, 1.2, peg) + limb(legR, 1.2, peg);
   for (const h of hands) {
     let g = renderHand(h.x, h.y, picks.hands.id, rng, h.flip, paint.fill, ink);
+    // hands read at thumbnail size: floating hands are the whole limb, so they get the biggest boost
+    const hs = h.float ? 1.6 : (h.rot || armStyle === 'on_floor') ? 1 : 1.2;
+    if (hs !== 1) g = '<g transform="translate(' + h.x + ' ' + h.y + ') scale(' + hs + ') translate(' + -h.x + ' ' + -h.y + ')">' + g + '</g>';
     if (h.rot) g = '<g transform="rotate(' + h.rot + ' ' + h.x + ' ' + h.y + ')">' + g + '</g>';
     if (h.float) {
       const d = h.flip ? 1 : -1; // motion marks point back toward the body
-      g += '<path d="M ' + (h.x + d * 18) + ' ' + (h.y - 6) + ' q ' + (d * 6) + ' 8 0 16 M ' + (h.x + d * 26) + ' ' + (h.y - 2) + ' q ' + (d * 4) + ' 6 0 10" stroke="' + ink + '" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".6"/>';
+      g += '<path d="M ' + (h.x + d * 30) + ' ' + (h.y - 6) + ' q ' + (d * 6) + ' 8 0 16 M ' + (h.x + d * 26) + ' ' + (h.y - 2) + ' q ' + (d * 4) + ' 6 0 10" stroke="' + ink + '" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".6"/>';
       g += '<ellipse cx="' + h.x + '" cy="' + (groundY + 1) + '" rx="12" ry="3" fill="' + shadowCol + '" opacity="' + (dark ? 0.4 : 0.1) + '"/>';
     }
     body += g;
@@ -1033,7 +1041,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'black', weight: 40 }, { id: 'deep_black', weight: 35 }, { id: 'midnight', weight: 25 }],
-  bodyColor: [{ id: 'chrome', weight: 12 }, { id: 'gold', weight: 12 }, { id: 'holo', weight: 11 }, { id: 'rose_gold', weight: 11 }, { id: 'pearl', weight: 10 }, { id: 'obsidian', weight: 11 }, { id: 'aurora', weight: 11 }, { id: 'neon', weight: 10 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'classic', weight: 4 }],
+  bodyColor: [{ id: 'chrome', weight: 12 }, { id: 'gold', weight: 12 }, { id: 'holo', weight: 11 }, { id: 'rose_gold', weight: 11 }, { id: 'pearl', weight: 10 }, { id: 'obsidian', weight: 11 }, { id: 'aurora', weight: 11 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'classic', weight: 4 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
