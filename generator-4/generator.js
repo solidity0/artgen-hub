@@ -71,7 +71,7 @@ const TRAITS = {
     { id: 'gold',      hex: '#F2C14E', weight: 1.5, rarity: 'rare' },
     { id: 'holo',      hex: '#C7B8FF', weight: 1.2, rarity: 'rare' },
     { id: 'rose_gold', hex: '#E8A598', weight: 1.2, rarity: 'rare' },
-    { id: 'pearl',     hex: '#F3EEE6', weight: 1.2, rarity: 'rare' },
+    { id: 'purple',    hex: '#6B3FD1', weight: 1.2, rarity: 'rare' },
     { id: 'obsidian',  hex: '#2B2640', weight: 1,   rarity: 'rare' },
     { id: 'aurora',    hex: '#6FE3C5', weight: 1,   rarity: 'rare' }
   ],
@@ -680,7 +680,6 @@ function bodyPaint(bodyColor, bg, uid, dark) {
   if (id === 'chrome') return { fill: 'url(#' + gid + ')', shade: '#6d7580', shoe: '#8e96a1', glow: '#dfe6ee', defs: grad(['#f4f6f9', '#aeb6c1', '#eef1f5', '#8f98a4', '#dde2e8']) };
   if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#9a6a12', shoe: '#c9922a', glow: '#ffd970', defs: grad(['#fff1b8', '#e9b340', '#fbe08a', '#c98f1e', '#f6d06a']) };
   if (id === 'rose_gold') return { fill: 'url(#' + gid + ')', shade: '#a8625a', shoe: '#c9837a', glow: '#ffc7bd', defs: grad(['#ffe1d8', '#e0a093', '#f7cbbf', '#c7867b', '#f2bfb2']) };
-  if (id === 'pearl') return { fill: 'url(#' + gid + ')', shade: '#b3a99a', shoe: '#d6cdbf', glow: '#fff6e8', defs: grad(['#ffffff', '#efe6f2', '#f8f1e4', '#e3eef3', '#fbf6ee']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
   if (id === 'aurora') return { fill: 'url(#' + gid + ')', shade: '#2f7f8f', shoe: '#4aa3a0', glow: '#8ff5d9', defs: grad(['#7cf5c8', '#5ec8ff', '#9d8bff', '#6ff0b0', '#ffe28a']) };
   if (id === 'holo') return { fill: 'url(#' + gid + ')', shade: '#7b6bd0', shoe: '#a996ff', glow: '#d9c9ff', defs: grad(['#ffd1ec', '#c7b8ff', '#a8e6ff', '#c2ffd9', '#fff3b0', '#ffc2e2']) };
@@ -1050,7 +1049,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'black', weight: 40 }, { id: 'deep_black', weight: 35 }, { id: 'midnight', weight: 25 }],
-  bodyColor: [{ id: 'chrome', weight: 12 }, { id: 'gold', weight: 12 }, { id: 'holo', weight: 11 }, { id: 'rose_gold', weight: 11 }, { id: 'pearl', weight: 10 }, { id: 'obsidian', weight: 11 }, { id: 'aurora', weight: 11 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'classic', weight: 4 }],
+  bodyColor: [{ id: 'chrome', weight: 12 }, { id: 'gold', weight: 12 }, { id: 'holo', weight: 11 }, { id: 'rose_gold', weight: 11 }, { id: 'purple', weight: 10 }, { id: 'obsidian', weight: 11 }, { id: 'aurora', weight: 11 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'classic', weight: 4 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
