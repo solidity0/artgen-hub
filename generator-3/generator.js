@@ -1,7 +1,60 @@
 // ============================================================
-// Ink Character — Generative Trait Engine v1
+// Ink Character — Generative Trait Engine v2 "Brush & Form Shading"
 // Hand-drawn ink PFP style. Starburst eyes are the signature trait.
 // Eye color drives the collection palette (ETH: blue default).
+// v2: rendering technique rework — same trait pools/ids/rarity system as v1
+//     (fully back-compatible with existing metadata/locks), but the line and
+//     shading approach is rebuilt:
+//       - every jittered outline (head, clothing, glasses, teeth, etc.) now
+//         runs through a Catmull-Rom -> bezier smoother (smoothPath) instead
+//         of straight polyline joins, so linework reads as a confident inked
+//         curve rather than a faceted polygon
+//       - roughLine now wobbles through two control points (a natural
+//         S-curve) instead of one symmetric midpoint bump
+//       - the head outline gets a genuine double ink pass: a soft, wide,
+//         low-opacity underlay beneath the crisp defining line, simulating
+//         brush pressure/bleed
+//       - head shading (light_shade/hatch_shade/heavy_shade) is rebuilt on
+//         formHatch: hatch density and weight now fall off from a fixed
+//         upper-left "light" point, so shading reads as real dimensional
+//         form (a lit side, a shadowed side) instead of flat uniform noise;
+//         heavy_shade adds a stippled ink-halftone core shadow
+// v2.1: removed the 'cap' hair trait and 'slit' eyeStyle trait — reported
+//       as poor quality by user (cap silhouette read badly, slit eyes
+//       merged into a single dark bar).
+// v2.2: removed the 'sunglasses' accessory trait — user reported it renders
+//       as an opaque bar fully covering the eyes (it's filled with the
+//       contrast ink color, so it goes white on dark backgrounds and black
+//       on light ones, always erasing the eye detail beneath it).
+// v2.3: removed the 'teeth' mouth trait — user reported it doesn't fit
+//       (renders as a plain white pill with divider lines).
+// v2.4: fixed the 'scarf' clothing trait — its stripe detail was hardcoded
+//       to white, which vanished against the light scarf color used on dark
+//       backgrounds, leaving it looking like a bare, unfinished band. Stripes
+//       now always shade darker/lighter than the scarf's own ink color.
+// v2.5: removed the 'open' mouth trait (its two overlapping fill colors read
+//       as one indistinct dark blob on light backgrounds). Fixed the 'collar'
+//       clothing trait's tangled shoulder seam by drawing the torso + V-neck
+//       notch as one continuous jittered outline instead of two separately-
+//       jittered shapes that only approximately lined up.
+// v2.6: the 'scarf' clothing trait now draws a torso outline underneath the
+//       band + tail (it was the only clothing option with no body beneath
+//       it, so it read as a scarf floating with nothing worn under it).
+// v2.7: the 'robe' clothing trait now draws three visible curved folds
+//       (was one center line) and boosted, more-diagonal hatch texture
+//       (was 0.18 opacity at an angle nearly parallel to its own outline,
+//       so it never actually read as fabric) — was a bare oval with a
+//       single stray line down it.
+// v2.8: removed the 'robe' clothing trait entirely — the v2.7 fix wasn't
+//       enough; user asked to remove it.
+// v2.9: every remaining clothing trait (none, tshirt, collar, scarf, suit,
+//       tank, chains, armor) now has a second "_classic" variant using the
+//       original pre-rework straight-line primitives, so both body-rendering
+//       styles are available as independent trait options (16 clothing
+//       options total, up from 8) rather than the new style replacing the
+//       old one outright. Logic bugfixes (scarf's missing torso, collar's
+//       tangled seam) apply to both variants — those were correctness fixes,
+//       not stylistic differences between the two renderers.
 // Usage:
 //   Node:    const { generatePiece, generateBatch } = require('./generator.js');
 //   Browser: inlined into index.html by build.js -> window.InkGen
@@ -74,7 +127,6 @@ const TRAITS = {
     { id: 'long_wild',   weight: 12, rarity: 'uncommon' },
     { id: 'dreads',      weight: 10, rarity: 'uncommon' },
     { id: 'bush',        weight: 8,  rarity: 'uncommon' },
-    { id: 'cap',         weight: 8,  rarity: 'uncommon' },
     { id: 'bandana',     weight: 6,  rarity: 'rare' },
     { id: 'horns',       weight: 4,  rarity: 'rare' },
     { id: 'horns_red',   weight: 3,  rarity: 'rare' },
@@ -94,7 +146,6 @@ const TRAITS = {
     { id: 'round',         weight: 22, rarity: 'common' },
     { id: 'starburst_lg',  weight: 16, rarity: 'uncommon' },
     { id: 'hollow_star',   weight: 12, rarity: 'uncommon' },
-    { id: 'slit',          weight: 10, rarity: 'uncommon' },
     { id: 'hollow_socket', weight: 8,  rarity: 'uncommon' },
     { id: 'x_eyes',        weight: 10, rarity: 'rare' },
     { id: 'spiral',        weight: 6,  rarity: 'rare' }
@@ -102,8 +153,6 @@ const TRAITS = {
   mouth: [
     { id: 'flat',       weight: 18, rarity: 'common' },
     { id: 'grin',       weight: 20, rarity: 'common' },
-    { id: 'teeth',      weight: 18, rarity: 'common' },
-    { id: 'open',       weight: 14, rarity: 'uncommon' },
     { id: 'stitched',   weight: 12, rarity: 'uncommon' },
     { id: 'snarl',      weight: 10, rarity: 'uncommon' },
     { id: 'fangs',      weight: 6,  rarity: 'rare' },
@@ -115,15 +164,25 @@ const TRAITS = {
     { id: 'collar',      weight: 16, rarity: 'common' },
     { id: 'scarf',       weight: 14, rarity: 'uncommon' },
     { id: 'suit',        weight: 10, rarity: 'uncommon' },
-    { id: 'robe',        weight: 8,  rarity: 'uncommon' },
     { id: 'tank',        weight: 8,  rarity: 'uncommon' },
     { id: 'chains',      weight: 6,  rarity: 'rare' },
-    { id: 'armor',       weight: 4,  rarity: 'rare' }
+    { id: 'armor',       weight: 4,  rarity: 'rare' },
+    // "_classic" variants: identical silhouette/logic to the base trait above,
+    // rendered with the original pre-rework straight-line primitives instead
+    // of the newer bezier-smoothed ones — both body styles kept as separate,
+    // independently selectable options rather than one replacing the other.
+    { id: 'none_classic',    weight: 16, rarity: 'common' },
+    { id: 'tshirt_classic',  weight: 20, rarity: 'common' },
+    { id: 'collar_classic',  weight: 16, rarity: 'common' },
+    { id: 'scarf_classic',   weight: 14, rarity: 'uncommon' },
+    { id: 'suit_classic',    weight: 10, rarity: 'uncommon' },
+    { id: 'tank_classic',    weight: 8,  rarity: 'uncommon' },
+    { id: 'chains_classic',  weight: 6,  rarity: 'rare' },
+    { id: 'armor_classic',   weight: 4,  rarity: 'rare' }
   ],
   accessory: [
     { id: 'none',         weight: 30, rarity: 'common' },
     { id: 'glasses',      weight: 20, rarity: 'common' },
-    { id: 'sunglasses',   weight: 14, rarity: 'uncommon' },
     { id: 'scar',         weight: 12, rarity: 'uncommon' },
     { id: 'earring',      weight: 10, rarity: 'uncommon' },
     { id: 'nose_ring',    weight: 8,  rarity: 'uncommon' },
@@ -165,6 +224,26 @@ function pickByRarity(rng, pool, tier) {
 // ---------- drawing helpers ----------
 function rj(rng, v=2) { return (rng()-0.5)*v*2; }
 
+// smoothPath: turns a sequence of (jittered) points into a single cubic-
+// bezier path (Catmull-Rom -> bezier) instead of straight polyline joins —
+// the core line-quality upgrade. A jittered point set now reads as a
+// confident inked curve rather than a faceted polygon. `closed` wraps the
+// curve back to the first point (used for every filled/outlined shape).
+function smoothPath(pts, closed) {
+  if (pts.length < 2) return '';
+  const n = pts.length;
+  const get = i => closed ? pts[((i % n) + n) % n] : pts[Math.max(0, Math.min(n - 1, i))];
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < (closed ? n : n - 1); i++) {
+    const p0 = get(i-1), p1 = get(i), p2 = get(i+1), p3 = get(i+2);
+    const c1x = p1[0] + (p2[0]-p0[0])/6, c1y = p1[1] + (p2[1]-p0[1])/6;
+    const c2x = p2[0] - (p3[0]-p1[0])/6, c2y = p2[1] - (p3[1]-p1[1])/6;
+    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  if (closed) d += ' Z';
+  return d;
+}
+
 // Perceived brightness of a hex color (0-255). Used for contrast safety
 // checks — e.g. making sure light text never lands on a light background.
 function hexLuma(hex) {
@@ -174,15 +253,48 @@ function hexLuma(hex) {
 }
 
 function roughPath(pts, rng, jit=1.5) {
-  return 'M'+pts.map(([x,y])=>`${(x+rj(rng,jit)).toFixed(1)},${(y+rj(rng,jit)).toFixed(1)}`).join('L')+'Z';
+  const jp = pts.map(([x,y]) => [x+rj(rng,jit), y+rj(rng,jit)]);
+  return smoothPath(jp, true);
 }
 
 function roughLine(x1,y1,x2,y2,rng,w=2) {
-  const mx=(x1+x2)/2+rj(rng,w), my=(y1+y2)/2+rj(rng,w);
-  return `M${x1.toFixed(1)},${y1.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+  // Two independently-jittered control points instead of one symmetric
+  // midpoint bump — reads as a natural hand-wobbled S-curve rather than a
+  // single uniform bow.
+  const dx=x2-x1, dy=y2-y1;
+  const c1x=x1+dx*0.33+rj(rng,w), c1y=y1+dy*0.33+rj(rng,w);
+  const c2x=x1+dx*0.67+rj(rng,w), c2y=y1+dy*0.67+rj(rng,w);
+  return `M${x1.toFixed(1)},${y1.toFixed(1)} C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
 }
 
 function roughEllipse(cx,cy,rx,ry,rng,segs=20,jit=1.5) {
+  const pts=[];
+  for(let i=0;i<segs;i++){
+    const a=(i/segs)*Math.PI*2;
+    pts.push([cx+Math.cos(a)*rx+rj(rng,jit), cy+Math.sin(a)*ry+rj(rng,jit)]);
+  }
+  return smoothPath(pts, true);
+}
+
+function roughRect(x,y,w,h,rng,jit=1.5) {
+  return roughPath([[x,y],[x+w,y],[x+w,y+h],[x,y+h]], rng, jit);
+}
+
+// ---------- "classic" primitives (original pre-rework straight-line style) ----------
+// Kept alongside the smoothed versions above so every clothing trait can offer
+// BOTH body-rendering styles as separate, selectable options: the original
+// straight-polyline/quadratic-bump look ("_classic" trait ids) and the newer
+// bezier-smoothed organic look (the base trait ids). Nothing else about a
+// classic piece changes — same silhouette, same trait logic — only the line
+// quality reverts to the original technique.
+function roughPathClassic(pts, rng, jit=1.5) {
+  return 'M'+pts.map(([x,y])=>`${(x+rj(rng,jit)).toFixed(1)},${(y+rj(rng,jit)).toFixed(1)}`).join('L')+'Z';
+}
+function roughLineClassic(x1,y1,x2,y2,rng,w=2) {
+  const mx=(x1+x2)/2+rj(rng,w), my=(y1+y2)/2+rj(rng,w);
+  return `M${x1.toFixed(1)},${y1.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+}
+function roughEllipseClassic(cx,cy,rx,ry,rng,segs=20,jit=1.5) {
   const pts=[];
   for(let i=0;i<=segs;i++){
     const a=(i/segs)*Math.PI*2;
@@ -190,9 +302,8 @@ function roughEllipse(cx,cy,rx,ry,rng,segs=20,jit=1.5) {
   }
   return 'M'+pts.join('L')+'Z';
 }
-
-function roughRect(x,y,w,h,rng,jit=1.5) {
-  return roughPath([[x,y],[x+w,y],[x+w,y+h],[x,y+h]], rng, jit);
+function roughRectClassic(x,y,w,h,rng,jit=1.5) {
+  return roughPathClassic([[x,y],[x+w,y],[x+w,y+h],[x,y+h]], rng, jit);
 }
 
 function hatchLines(x,y,w,h,rng,step=8,angle=45,op=0.2) {
@@ -206,6 +317,33 @@ function hatchLines(x,y,w,h,rng,step=8,angle=45,op=0.2) {
   return d;
 }
 
+// formHatch: hatch-line density/weight/opacity falls off with distance from
+// a fixed light-source point instead of being uniform, so the result reads
+// as real dimensional shading — a lit side that stays mostly bare and a
+// shadowed side that goes dense — rather than flat, randomly-scattered
+// noise. Lines are bucketed into 3 opacity/weight tiers by how far into
+// shadow they fall (cheap equivalent of a per-line gradient).
+function formHatch(x,y,w,h,rng,step,angle,ink,lightX,lightY,maxDist,baseOp,swBase) {
+  const rad=angle*Math.PI/180, W=w+h, cx2=x+w/2, cy2=y+h/2;
+  const buckets=['','',''];
+  for(let i=-W;i<W;i+=step+(rng()-0.5)*step*0.3){
+    const x1=cx2+i*Math.cos(rad)-W*Math.sin(rad), y1=cy2+i*Math.sin(rad)+W*Math.cos(rad);
+    const x2=cx2+i*Math.cos(rad)+W*Math.sin(rad), y2=cy2+i*Math.sin(rad)-W*Math.cos(rad);
+    const mx=(x1+x2)/2, my=(y1+y2)/2;
+    const dist=Math.hypot(mx-lightX,my-lightY);
+    const shade=Math.min(1,dist/maxDist); // 0 = lit, 1 = deep shadow
+    const keepP=0.15+shade*0.8; // lit side: sparse. shadow side: near-solid.
+    if(rng()>keepP) continue;
+    const b = shade<0.4 ? 0 : shade<0.7 ? 1 : 2;
+    buckets[b]+=`M${x1.toFixed(1)},${y1.toFixed(1)}L${x2.toFixed(1)},${y2.toFixed(1)}`;
+  }
+  const opac=[baseOp*0.35, baseOp*0.85, Math.min(0.9,baseOp*1.4)];
+  const sw=[swBase*0.8, swBase, swBase*1.15];
+  let out='';
+  for(let b=0;b<3;b++) if(buckets[b]) out+=`<path d="${buckets[b]}" stroke="${ink}" stroke-width="${sw[b].toFixed(2)}" fill="none" opacity="${opac[b].toFixed(2)}"/>`;
+  return out;
+}
+
 // ---------- starburst eye (the signature trait) ----------
 // Wraps an eye's markup in SMIL motion matching its shape. animOpts carries
 // shared timing (blinkDur/Phase, pulseDur/Phase, spinDur/Dir) computed ONCE
@@ -217,7 +355,7 @@ function wrapEyeAnim(inner, style, cx, cy, animOpts) {
   if (style === 'spiral') {
     return `<g><animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="${(spinDir*360).toFixed(0)} ${cx} ${cy}" dur="${spinDur}s" repeatCount="indefinite"/>${inner}</g>`;
   }
-  if (style === 'round' || style === 'slit') {
+  if (style === 'round') {
     // Quick blink (vertical squeeze) with a long pause between — realistic
     // rhythm rather than a continuous flutter.
     return `<g transform="translate(${cx},${cy})"><animateTransform attributeName="transform" type="scale" additive="sum" values="1,1;1,1;1,0.08;1,1;1,1" keyTimes="0;0.44;0.5;0.56;1" dur="${blinkDur}s" begin="-${blinkPhase}s" repeatCount="indefinite"/><g transform="translate(${-cx},${-cy})">${inner}</g></g>`;
@@ -255,14 +393,6 @@ function starburstEye(cx,cy,r,spikes,eyeColor,eyeGlow,rng,hollow=false,style='st
     // makes the whole eye vanish, since fill alone was the only cue.
     out+=`<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${eyeColor}" stroke="${ink}" stroke-width="1.2"/>`;
     out+=`<circle cx="${cx}" cy="${cy}" r="${(r*0.32).toFixed(1)}" fill="#0a0a0a"/>`;
-    return wrapEyeAnim(out, style, cx, cy, animOpts);
-  }
-  if(style==='slit'){
-    // Cat-eye slit — lens-shaped almond with a dark vertical pupil bar, always
-    // outlined in ink so the silhouette reads even when eyeColor is black.
-    const w=r, h=r*0.62;
-    out+=`<path d="M${(cx-w).toFixed(1)},${cy} Q${cx},${(cy-h).toFixed(1)} ${(cx+w).toFixed(1)},${cy} Q${cx},${(cy+h).toFixed(1)} ${(cx-w).toFixed(1)},${cy} Z" fill="${eyeColor}" stroke="${ink}" stroke-width="1"/>`;
-    out+=`<rect x="${(cx-r*0.12).toFixed(1)}" y="${(cy-h*0.7).toFixed(1)}" width="${(r*0.24).toFixed(1)}" height="${(h*1.4).toFixed(1)}" rx="${(r*0.1).toFixed(1)}" fill="#0a0a0a"/>`;
     return wrapEyeAnim(out, style, cx, cy, animOpts);
   }
   if(style==='hollow_socket'){
@@ -434,12 +564,6 @@ function hairMarkup(style,cx,cy,headRx,headRy,ink,rng) {
       const r=headRx*(0.85+rng()*0.5);
       out+=`<path d="${roughLine(cx+Math.cos(a)*headRx*0.75,cy+Math.sin(a)*headRy*0.75,cx+Math.cos(a)*r,cy+Math.sin(a)*r-6,rng,3)}" stroke="${ink}" stroke-width="${(0.8+rng()*1).toFixed(1)}" fill="none"/>`;
     }
-  } else if(style==='cap'){
-    const brimW=headRx+14;
-    out+=`<path d="${roughRect(cx-brimW*0.8,cy-headRy-2,brimW*1.6,8,rng,2)}" fill="${ink}" stroke="${ink}" stroke-width="0.8"/>`;
-    out+=`<path d="${roughRect(cx-headRx*0.85,cy-headRy-22,headRx*1.7,24,rng,1.5)}" fill="${ink}" stroke="${ink}" stroke-width="0.8"/>`;
-    // brim extension
-    out+=`<path d="${roughLine(cx-brimW*0.8,cy-headRy+6,cx-brimW*1.2,cy-headRy+10,rng,1)}" stroke="${ink}" stroke-width="3" fill="none"/>`;
   } else if(style==='bandana'){
     out+=`<path d="M${(cx-headRx-2).toFixed(0)},${(cy-headRy*0.3).toFixed(0)} Q${cx},${(cy-headRy*1.2).toFixed(0)} ${(cx+headRx+2).toFixed(0)},${(cy-headRy*0.3).toFixed(0)}" stroke="${ink}" stroke-width="8" fill="none" stroke-linecap="round"/>`;
     // knot
@@ -478,49 +602,69 @@ function hairMarkup(style,cx,cy,headRx,headRy,ink,rng) {
 
 // ---------- clothing markup ----------
 function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng,bgHex) {
+  // A "_classic" suffix selects the original pre-rework straight-line
+  // primitives instead of the smoothed organic ones; the underlying shape
+  // logic per style is identical either way.
+  const classic = style.endsWith('_classic');
+  const baseStyle = classic ? style.slice(0, -'_classic'.length) : style;
+  const rp = classic ? roughPathClassic : roughPath;
+  const rl = classic ? roughLineClassic : roughLine;
+  const rr = classic ? roughRectClassic : roughRect;
   const neckX=cx, neckY=cy+headRy-4;
   const bw=140, bh=110, bx=cx-bw/2, by=neckY+30;
   let out='';
-  if(style==='none') {
-    out+=`<path d="${roughLine(cx-14,neckY,cx-14,neckY+28,rng,1)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
-    out+=`<path d="${roughLine(cx+14,neckY,cx+14,neckY+28,rng,1)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
+  if(baseStyle==='none') {
+    out+=`<path d="${rl(cx-14,neckY,cx-14,neckY+28,rng,1)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
+    out+=`<path d="${rl(cx+14,neckY,cx+14,neckY+28,rng,1)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
     return out;
   }
   // neck always
-  out+=`<path d="${roughRect(cx-14,neckY,28,32,rng,1)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
-  if(style==='tshirt'){
-    out+=`<path d="${roughPath([[bx-20,by],[bx+bw+20,by],[bx+bw,by+bh],[bx,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
+  out+=`<path d="${rr(cx-14,neckY,28,32,rng,1)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
+  if(baseStyle==='tshirt'){
+    out+=`<path d="${rp([[bx-20,by],[bx+bw+20,by],[bx+bw,by+bh],[bx,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
     // sleeves
     out+=`<path d="M${(bx-20).toFixed(0)},${by} L${(bx-50+(rng()-0.5)*4).toFixed(0)},${(by+40+(rng()-0.5)*4).toFixed(0)} L${(bx+10).toFixed(0)},${(by+50).toFixed(0)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
     out+=`<path d="M${(bx+bw+20).toFixed(0)},${by} L${(bx+bw+50+(rng()-0.5)*4).toFixed(0)},${(by+40+(rng()-0.5)*4).toFixed(0)} L${(bx+bw-10).toFixed(0)},${(by+50).toFixed(0)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
-  } else if(style==='collar'){
-    out+=`<path d="M${(cx-30).toFixed(0)},${(neckY+28).toFixed(0)} L${(cx-20).toFixed(0)},${(neckY+60).toFixed(0)} L${(cx+20).toFixed(0)},${(neckY+60).toFixed(0)} L${(cx+30).toFixed(0)},${(neckY+28).toFixed(0)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
-    out+=`<path d="${roughRect(cx-60,neckY+28,120,bh*0.8,rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
-  } else if(style==='scarf'){
+  } else if(baseStyle==='collar'){
+    // Was two independently-jittered shapes (a straight V-notch line drawn
+    // separately from the torso rect) whose edges were meant to meet at the
+    // same seam but never quite matched — the small mismatch crossed itself
+    // and read as a tangled knot at the shoulders. One continuous jittered
+    // outline (torso + V-neck cut in a single path) fixes that at the root.
+    // Applies to both the classic and organic variants — this was a logic
+    // bug, not a stylistic difference between the two renderers.
+    const cbx=cx-60, cbw=120, cby=neckY+28, cbh=bh*0.8;
+    out+=`<path d="${rp([
+      [cbx,cby],[cx-24,cby],[cx,cby+30],[cx+24,cby],[cbx+cbw,cby],
+      [cbx+cbw,cby+cbh],[cbx,cby+cbh]
+    ],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
+  } else if(baseStyle==='scarf'){
+    // Was band + tail only, with no torso beneath — every other clothing
+    // option draws a body outline first, so a scarf piece looked cut off at
+    // the neck (floating over nothing) instead of like a scarf worn over a
+    // body. Add a plain torso outline first, same footprint as the other
+    // styles, then layer the scarf on top of it as before. Applies to both
+    // variants — this was a missing-body bug, not a stylistic difference.
+    out+=`<path d="${rp([[bx-10,by],[bx+bw+10,by],[bx+bw,by+bh],[bx,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
     out+=`<path d="M${(cx-headRy*0.7).toFixed(0)},${(neckY+8).toFixed(0)} Q${cx},${(neckY+30).toFixed(0)} ${(cx+headRy*0.7).toFixed(0)},${(neckY+8).toFixed(0)}" stroke="${ink}" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.85"/>`;
-    // stripes
+    // stripes — always shaded darker/lighter than `ink` itself (never a fixed
+    // "white") so they stay visible whether the scarf is light or dark ink.
+    const stripeCol = shadeColor(ink, ink==='#e8e8e8' ? -35 : 35);
     for(let i=0;i<5;i++){
       const y2=neckY+8+i*3;
-      out+=`<path d="${roughLine(cx-headRy*0.65,y2,cx+headRy*0.65,y2,rng,1)}" stroke="white" stroke-width="1" fill="none" opacity="0.3"/>`;
+      out+=`<path d="${rl(cx-headRy*0.65,y2,cx+headRy*0.65,y2,rng,1)}" stroke="${stripeCol}" stroke-width="1" fill="none" opacity="0.4"/>`;
     }
     // tail
     out+=`<path d="M${(cx+headRy*0.6).toFixed(0)},${(neckY+8).toFixed(0)} Q${(cx+headRy+20+(rng()-0.5)*10).toFixed(0)},${(neckY+50).toFixed(0)} ${(cx+headRy+10+(rng()-0.5)*10).toFixed(0)},${(neckY+90).toFixed(0)}" stroke="${ink}" stroke-width="12" fill="none" stroke-linecap="round"/>`;
-  } else if(style==='suit'){
-    out+=`<path d="${roughPath([[bx,by],[bx+bw,by],[bx+bw+20,by+bh],[bx-20,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
-    out+=`<path d="${roughLine(cx-16,neckY+28,cx-30,by+bh,rng,3)}" stroke="${ink}" stroke-width="3" fill="none"/>`;
-    out+=`<path d="${roughLine(cx+16,neckY+28,cx+30,by+bh,rng,3)}" stroke="${ink}" stroke-width="3" fill="none"/>`;
+  } else if(baseStyle==='suit'){
+    out+=`<path d="${rp([[bx,by],[bx+bw,by],[bx+bw+20,by+bh],[bx-20,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
+    out+=`<path d="${rl(cx-16,neckY+28,cx-30,by+bh,rng,3)}" stroke="${ink}" stroke-width="3" fill="none"/>`;
+    out+=`<path d="${rl(cx+16,neckY+28,cx+30,by+bh,rng,3)}" stroke="${ink}" stroke-width="3" fill="none"/>`;
     // tie
     out+=`<path d="M${(cx-8).toFixed(0)},${(neckY+30).toFixed(0)} L${cx},${(neckY+70+(rng()-0.5)*6).toFixed(0)} L${(cx+8).toFixed(0)},${(neckY+30).toFixed(0)}" fill="${ink}"/>`;
-  } else if(style==='robe'){
-    out+=`<path d="${roughPath([[bx-30,by],[bx+bw+30,by],[bx+bw+50,by+bh],[bx-50,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2.5"/>`;
-    // center line
-    out+=`<path d="${roughLine(cx,neckY+30,cx+(rng()-0.5)*10,by+bh,rng,4)}" stroke="${ink}" stroke-width="1.5" fill="none"/>`;
-    // hatch texture
-    const rng2=mulberry32((rng()*99999)|0);
-    out+=`<path d="${hatchLines(bx-30,by,bw+60,bh,rng2,9,75)}" stroke="${ink}" stroke-width="0.5" fill="none" opacity="0.18"/>`;
-  } else if(style==='tank'){
-    out+=`<path d="${roughPath([[bx+20,by],[bx+bw-20,by],[bx+bw,by+bh],[bx,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
-  } else if(style==='chains'){
+  } else if(baseStyle==='tank'){
+    out+=`<path d="${rp([[bx+20,by],[bx+bw-20,by],[bx+bw,by+bh],[bx,by+bh]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
+  } else if(baseStyle==='chains'){
     // eyeHex gives the chain an accent tied to the character's eyes, but if
     // that color is too close in brightness to the background (e.g. black
     // eyeColor on a black background), the chain nearly vanishes. Fall back
@@ -528,19 +672,19 @@ function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng,bgHex) {
     const bgLuma = bgHex ? hexLuma(bgHex) : 0;
     const eyeLuma = hexLuma(eyeHex);
     const chainColor = Math.abs(bgLuma - eyeLuma) < 60 ? ink : eyeHex;
-    out+=`<path d="${roughRect(bx+10,by,bw-20,bh,rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
+    out+=`<path d="${rr(bx+10,by,bw-20,bh,rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
     for(let i=0;i<3;i++){
       const cy2=neckY+20+i*14;
-      out+=`<path d="${roughLine(cx-40,cy2,cx+40,cy2+(rng()-0.5)*4,rng,2)}" stroke="${chainColor}" stroke-width="2.5" fill="none" opacity="0.8"/>`;
+      out+=`<path d="${rl(cx-40,cy2,cx+40,cy2+(rng()-0.5)*4,rng,2)}" stroke="${chainColor}" stroke-width="2.5" fill="none" opacity="0.8"/>`;
       for(let j=-3;j<=3;j++){
         out+=`<circle cx="${(cx+j*13+(rng()-0.5)*2).toFixed(0)}" cy="${(cy2+(rng()-0.5)*2).toFixed(0)}" r="3" fill="none" stroke="${chainColor}" stroke-width="1.2"/>`;
       }
     }
-  } else if(style==='armor'){
-    out+=`<path d="${roughPath([[bx-10,by],[bx+bw+10,by],[bx+bw+20,by+bh],[bx-20,by+bh]],rng,1.5)}" fill="none" stroke="${ink}" stroke-width="2.5"/>`;
-    out+=`<path d="${roughPath([[bx+14,by+10],[bx+bw-14,by+10],[bx+bw-4,by+bh*0.6],[cx,by+bh*0.7],[bx+4,by+bh*0.6]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
+  } else if(baseStyle==='armor'){
+    out+=`<path d="${rp([[bx-10,by],[bx+bw+10,by],[bx+bw+20,by+bh],[bx-20,by+bh]],rng,1.5)}" fill="none" stroke="${ink}" stroke-width="2.5"/>`;
+    out+=`<path d="${rp([[bx+14,by+10],[bx+bw-14,by+10],[bx+bw-4,by+bh*0.6],[cx,by+bh*0.7],[bx+4,by+bh*0.6]],rng,2)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
     for(let i=0;i<4;i++){
-      out+=`<path d="${roughLine(bx+14,by+22+i*14,bx+bw-14,by+22+i*14,rng,2)}" stroke="${ink}" stroke-width="1" fill="none"/>`;
+      out+=`<path d="${rl(bx+14,by+22+i*14,bx+bw-14,by+22+i*14,rng,2)}" stroke="${ink}" stroke-width="1" fill="none"/>`;
     }
   }
   return out;
@@ -556,11 +700,6 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     out+=`<path d="${roughLine(eyeL+eyeR2+5,eyeY,eyeR-eyeR2-5,eyeY,rng,1)}" stroke="${ink}" stroke-width="1.8" fill="none"/>`;
     out+=`<path d="${roughLine(eyeL-eyeR2-5,eyeY,eyeL-eyeR2-20+(rng()-0.5)*4,eyeY+(rng()-0.5)*4,rng,1)}" stroke="${ink}" stroke-width="1.5" fill="none"/>`;
     out+=`<path d="${roughLine(eyeR+eyeR2+5,eyeY,eyeR+eyeR2+20+(rng()-0.5)*4,eyeY+(rng()-0.5)*4,rng,1)}" stroke="${ink}" stroke-width="1.5" fill="none"/>`;
-  } else if(style==='sunglasses'){
-    out+=`<path d="${roughRect(cx-55,eyeY-12,110,24,rng,1.5)}" fill="${ink}" stroke="${ink}" stroke-width="1"/>`;
-    out+=`<path d="${roughLine(cx-55,eyeY,cx-80+(rng()-0.5)*4,eyeY+2,rng,1)}" stroke="${ink}" stroke-width="2.5" fill="none"/>`;
-    out+=`<path d="${roughLine(cx+55,eyeY,cx+80+(rng()-0.5)*4,eyeY+2,rng,1)}" stroke="${ink}" stroke-width="2.5" fill="none"/>`;
-    out+=`<line x1="${(cx-2).toFixed(0)}" y1="${(eyeY-12).toFixed(0)}" x2="${(cx+2).toFixed(0)}" y2="${(eyeY+12).toFixed(0)}" stroke="white" stroke-width="3"/>`;
   } else if(style==='scar'){
     const sx=cx+(rng()-0.5)*40, sy=cy-10;
     out+=`<path d="${roughLine(sx,sy-16,sx+(rng()-0.5)*6,sy+18,rng,2)}" stroke="${ink}" stroke-width="2" fill="none" opacity="0.85"/>`;
@@ -622,7 +761,7 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
       tx=cx+(rng()-0.5)*8;
       // chains clothing draws its last decorative row at roughly cy+headRy+44,
       // right where COB used to land — push it lower to clear that row.
-      const clearance = clothingId==='chains' ? 78 : 46;
+      const clearance = (clothingId==='chains' || clothingId==='chains_classic') ? 78 : 46;
       ty=cy+(headRy||80)+clearance+(rng()-0.5)*8;
       rot=(rng()-0.5)*8;
     }
@@ -678,13 +817,6 @@ function mouthMarkup(style,cx,cy,ink,rng) {
   } else if(style==='grin'){
     out+=`<path d="M${(cx-24).toFixed(0)},${my} Q${cx},${(my+18).toFixed(0)} ${(cx+24).toFixed(0)},${my}" stroke="${ink}" stroke-width="2" fill="none"/>`;
     out+=`<path d="M${(cx-22).toFixed(0)},${my} L${(cx+22).toFixed(0)},${my}" stroke="${ink}" stroke-width="1" fill="none"/>`;
-  } else if(style==='teeth'){
-    out+=`<path d="${roughRect(cx-24,my,48,14,rng,1.5)}" fill="white" stroke="${ink}" stroke-width="1.5"/>`;
-    for(let i=0;i<5;i++) out+=`<line x1="${(cx-20+i*10).toFixed(0)}" y1="${my}" x2="${(cx-20+i*10).toFixed(0)}" y2="${(my+14).toFixed(0)}" stroke="${ink}" stroke-width="0.8"/>`;
-    out+=`<path d="M${(cx-24).toFixed(0)},${my} Q${cx},${(my-8).toFixed(0)} ${(cx+24).toFixed(0)},${my}" stroke="${ink}" stroke-width="1.5" fill="none"/>`;
-  } else if(style==='open'){
-    out+=`<path d="${roughEllipse(cx,my+8,18,12,rng,12,1.5)}" fill="${ink}"/>`;
-    out+=`<path d="${roughEllipse(cx,my+8,14,8,rng,12,1)}" fill="#1a1a1a"/>`;
   } else if(style==='stitched'){
     out+=`<path d="${roughLine(cx-24,my,cx+24,my,rng,1.5)}" stroke="${ink}" stroke-width="2" fill="none"/>`;
     for(let i=0;i<7;i++){
@@ -710,14 +842,27 @@ function headFillMarkup(style,headPath,cx,cy,headRx,headRy,ink,rng) {
   const clipId='hf_'+Math.abs((cx*cy+headRx)|0);
   out+=`<clipPath id="${clipId}"><path d="${headPath}"/></clipPath>`;
   out+=`<g clip-path="url(#${clipId})">`;
+  // Fixed key-light convention: light sits above-left of the head, so shading
+  // reads as one consistent lit side / shadow side across every piece —
+  // classic ink-illustration form shading rather than flat noise.
+  const lightX=cx-headRx*0.55, lightY=cy-headRy*0.85;
+  const maxDist=Math.hypot(headRx,headRy)*2.1;
   if(style==='light_shade'){
-    out+=`<path d="${hatchLines(cx-headRx,cy-headRy,headRx*2,headRy*2,rng,10,65)}" stroke="${ink}" stroke-width="0.6" fill="none" opacity="0.15"/>`;
+    out+=formHatch(cx-headRx,cy-headRy,headRx*2,headRy*2,rng,10,65,ink,lightX,lightY,maxDist,0.22,0.6);
   } else if(style==='hatch_shade'){
-    out+=`<path d="${hatchLines(cx-headRx,cy-headRy,headRx*2,headRy*2,rng,7,60)}" stroke="${ink}" stroke-width="0.7" fill="none" opacity="0.20"/>`;
-    out+=`<path d="${hatchLines(cx-headRx,cy-headRy,headRx*2,headRy*2,mulberry32((rng()*99999)|0),14,145)}" stroke="${ink}" stroke-width="0.5" fill="none" opacity="0.12"/>`;
+    out+=formHatch(cx-headRx,cy-headRy,headRx*2,headRy*2,rng,7,60,ink,lightX,lightY,maxDist,0.26,0.7);
+    out+=formHatch(cx-headRx,cy-headRy,headRx*2,headRy*2,mulberry32((rng()*99999)|0),16,148,ink,lightX,lightY,maxDist,0.15,0.5);
   } else if(style==='heavy_shade'){
-    out+=`<path d="${hatchLines(cx-headRx,cy-headRy,headRx*2,headRy*2,rng,5,60)}" stroke="${ink}" stroke-width="0.8" fill="none" opacity="0.28"/>`;
-    out+=`<path d="${hatchLines(cx-headRx,cy-headRy,headRx*2,headRy*2,mulberry32((rng()*99999)|0),5,150)}" stroke="${ink}" stroke-width="0.6" fill="none" opacity="0.18"/>`;
+    out+=formHatch(cx-headRx,cy-headRy,headRx*2,headRy*2,rng,5,60,ink,lightX,lightY,maxDist,0.34,0.85);
+    out+=formHatch(cx-headRx,cy-headRy,headRx*2,headRy*2,mulberry32((rng()*99999)|0),6,152,ink,lightX,lightY,maxDist,0.22,0.65);
+    // stippled ink-halftone core shadow, deep in the shaded (lower-right) zone
+    const shadowX=cx+headRx*0.5, shadowY=cy+headRy*0.7, coreR=headRx*0.95;
+    for(let i=0;i<40;i++){
+      const sx=cx+(rng()-0.5)*headRx*1.7, sy=cy+(rng()-0.5)*headRy*1.7;
+      const d=Math.hypot(sx-shadowX,sy-shadowY);
+      if(d>coreR) continue;
+      out+=`<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${(0.5+rng()*0.9).toFixed(1)}" fill="${ink}" opacity="${Math.max(0.05,(0.5-d/(coreR*2))).toFixed(2)}"/>`;
+    }
   } else if(style==='ink_black'){
     // Was filling with `ink` (the CONTRAST color) — on a dark background that's
     // near-white, making the head render light grey instead of black, and
@@ -814,6 +959,7 @@ function renderFromTraits(picks, index, seed, opts) {
   svg+=bgPattern(background.pattern, background.bg, rng, ink); // centre pattern may spill over the strips so there's no seam
   svg+=clothingMarkup(clothing.id, cx, cy, headRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5), background.bg);
   svg+=headFillMarkup(headFill.id, headPath, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+6));
+  svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${(sw*2.6).toFixed(1)}" stroke-linejoin="round" opacity="0.13"/>`;
   svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round"/>`;
   svg+=hairMarkup(hair.id, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+7));
   svg+=expressionMod(expression.id, cx, cy, eyeY, ink, mulberry32((seed??0)*100003+index+8));
@@ -1097,6 +1243,7 @@ const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea', robinhood: '#00c
 const api = { generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
   renderFromTraits,
   mulberry32, weightedPick, pickByRarity, shadeColor,
+  smoothPath, roughPath, roughLine, roughEllipse, roughRect, hatchLines, formHatch,
   ONE_OF_ONE_EXCLUDED, CHAIN_THEMES,
   ONE_OF_ONE_EYE_WEIGHTS, pickOneOfOneEyeColor,
   ONE_OF_ONE_BACKGROUND_WEIGHTS, pickOneOfOneBackground,
