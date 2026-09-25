@@ -207,6 +207,12 @@ const TRAITS = {
   ]
 };
 
+// Two-tone bots: headColor is either 'matching' (head uses the body colour) or its own colour
+// from the body palette. Built from bodyColor so the two lists never drift apart.
+TRAITS.headColor = [{ id: 'matching', weight: 36, rarity: 'common' }].concat(
+  TRAITS.bodyColor.filter((c) => c.id !== 'classic').map((c) => ({ id: c.id, hex: c.hex, weight: c.rarity === 'rare' ? 0.5 : c.rarity === 'uncommon' ? 1.6 : 3, rarity: c.rarity }))
+);
+
 const TIER_FALLBACK = {
   common:   ['common', 'uncommon', 'rare'],
   uncommon: ['uncommon', 'rare', 'common'],
@@ -664,13 +670,13 @@ function wobblyRect(x0, y0, x1, y1, rng, amt) {
 }
 
 // Paint for the body: flat colour, or a gradient for the rare metallic / holo finishes.
-function bodyPaint(bodyColor, bg, uid, dark) {
+function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const id = bodyColor ? bodyColor.id : 'classic';
   if (id === 'classic') {
     const f = dark ? '#262626' : bg.hex;
     return { fill: f, shade: dark ? '#000000' : shadeColor(bg.hex, -22), shoe: dark ? '#3a3a3a' : shadeColor(bg.hex, -12), defs: '', glow: '#ffffff', classic: true };
   }
-  const gid = 'bf' + uid;
+  const gid = 'bf' + (suffix || '') + uid;
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
   if (id === 'chrome') return { fill: 'url(#' + gid + ')', shade: '#6d7580', shoe: '#8e96a1', glow: '#dfe6ee', defs: grad(['#f4f6f9', '#aeb6c1', '#eef1f5', '#8f98a4', '#dde2e8']) };
@@ -779,6 +785,8 @@ function renderFromTraits(picks, index, seed) {
   const uid = (seed ?? 0) + '_' + index;
   const bodyColor = picks.bodyColor ? TRAITS.bodyColor.find((o) => o.id === picks.bodyColor.id) : null;
   const paint = bodyPaint(bodyColor, bg, uid, dark);
+  const headColor = picks.headColor && picks.headColor.id !== 'matching' ? TRAITS.headColor.find((o) => o.id === picks.headColor.id) : null;
+  const headPaint = headColor ? bodyPaint(headColor, bg, uid, dark, 'h') : paint;
 
   // ---- proportions: chunkier than v1 (bigger head + chest, shorter legs) ----
   const headSize = 164, headTop = 98, headCx = cx, headCy = headTop + headSize / 2;
@@ -916,22 +924,25 @@ function renderFromTraits(picks, index, seed) {
   defs += '<pattern id="ht' + uid + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="3.5" cy="3.5" r="1.7" fill="' + paint.shade + '"/></pattern>' +
     '<linearGradient id="hg' + uid + '" x1="0" y1="0" x2="1" y2="0.35"><stop offset="0.45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>' +
     '<mask id="hm' + uid + '" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#hg' + uid + ')"/></mask>';
-  const block = (pts, key) => {
+  if (headPaint !== paint) defs += headPaint.defs + '<pattern id="hth' + uid + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="3.5" cy="3.5" r="1.7" fill="' + headPaint.shade + '"/></pattern>';
+  const block = (pts, key, pp) => {
+    pp = pp || paint;
+    const pat = pp === paint ? 'ht' : 'hth';
     // colour plate slightly misregistered from the ink outline, then halftone, then (caller) outline
     const ox = 1.5 + rng() * 2, oy = 1.5 + rng() * 2;
     const moved = pts.map(([x, y]) => [x + ox, y + oy]);
-    let o = fillPath(chalkLine(closeLoop(moved), rng, 1.2), paint.fill);
+    let o = fillPath(chalkLine(closeLoop(moved), rng, 1.2), pp.fill);
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const [x, y] of moved) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
     const cid = 'sc' + key + uid;
     defs += '<clipPath id="' + cid + '"><path d="' + pathD(moved) + ' Z"/></clipPath>';
-    o += '<rect x="' + (x0 + 3).toFixed(1) + '" y="' + (y0 + 3).toFixed(1) + '" width="' + (x1 - x0 - 6).toFixed(1) + '" height="' + (y1 - y0 - 6).toFixed(1) + '" fill="url(#ht' + uid + ')" mask="url(#hm' + uid + ')" clip-path="url(#' + cid + ')" opacity="' + (paint.classic ? 0.35 : 0.55) + '"/>';
+    o += '<rect x="' + (x0 + 3).toFixed(1) + '" y="' + (y0 + 3).toFixed(1) + '" width="' + (x1 - x0 - 6).toFixed(1) + '" height="' + (y1 - y0 - 6).toFixed(1) + '" fill="url(#' + pat + uid + ')" mask="url(#hm' + uid + ')" clip-path="url(#' + cid + ')" opacity="' + (pp.classic ? 0.35 : 0.55) + '"/>';
     return o;
   };
 
   // ---- head ----
   body += renderHair(headCx, headTop, picks.hair.id, rng, (x) => { const t = topYAt(headPts, x); return Number.isFinite(t) ? t + 3 : headTop; });
-  body += block(headPts, 'h');
+  body += block(headPts, 'h', headPaint);
   const headOutline = closeLoop(headPts);
   body += doubleStroke(headOutline, rng, 2.5, 'strokeThick');
   body += chalkGrain(headOutline, rng, ink, 0.12);
@@ -943,8 +954,8 @@ function renderFromTraits(picks, index, seed) {
     body += doubleStroke([[headCx - hh + 6, headCy + hh * 0.35], [headCx + hh - 6, headCy + hh * 0.35]], rng, 1, 'strokeMid');
   }
   const earX = halfWidthAt(headPts, headCx, headCy) + 24;
-  body += renderEars(headCx - earX, headCy, picks.ears.id, rng, true, paint.fill);
-  body += renderEars(headCx + earX, headCy, picks.ears.id, rng, false, paint.fill);
+  body += renderEars(headCx - earX, headCy, picks.ears.id, rng, true, headPaint.fill);
+  body += renderEars(headCx + earX, headCy, picks.ears.id, rng, false, headPaint.fill);
   // cheek blush
   const blush = dark ? '#ff7aa8' : '#ff6f91';
   const bx = Math.min(50, halfWidthAt(headPts, headCx, headCy + 20) - 20);
@@ -1009,10 +1020,10 @@ const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
     background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
-    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken'
+    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor', 'headShape', 'bodyShape', 'arms'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor', 'headShape', 'bodyShape', 'arms', 'headColor'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -1056,6 +1067,7 @@ const ONE_OF_ONE_WEIGHTS = {
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
+  headColor: [{ id: 'matching', weight: 30 }, { id: 'gold', weight: 12 }, { id: 'chrome', weight: 12 }, { id: 'holo', weight: 10 }, { id: 'aurora', weight: 10 }, { id: 'obsidian', weight: 10 }, { id: 'charcoal', weight: 8 }, { id: 'snow', weight: 8 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
@@ -1082,6 +1094,21 @@ function pickOneOfOne(category, rng) {
 const ONE_OF_ONE_ONLY_CHESTMARK = ['emoji_broken_heart', 'emoji_blast'];
 const ONE_OF_ONE_ONLY_GRASSCOLOR = ['green'];
 const ONE_OF_ONE_ONLY_BY_CATEGORY = { chestMark: ONE_OF_ONE_ONLY_CHESTMARK, grassColor: ONE_OF_ONE_ONLY_GRASSCOLOR };
+
+function hexToLab(h) {
+  const c = [1, 3, 5].map((i) => { const v = parseInt(h.substr(i, 2), 16) / 255; return v > 0.04045 ? Math.pow((v + 0.055) / 1.055, 2.4) : v / 12.92; });
+  const X = (c[0] * 0.4124 + c[1] * 0.3576 + c[2] * 0.1805) / 0.95047, Y = c[0] * 0.2126 + c[1] * 0.7152 + c[2] * 0.0722, Z = (c[0] * 0.0193 + c[1] * 0.1192 + c[2] * 0.9505) / 1.08883;
+  const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))];
+}
+// head colour must read as clearly different from the body colour (classic bodies have no hex: anything goes)
+function tooClose(head, body) {
+  if (!head || !head.hex) return false;
+  if (!body || !body.hex) return false;
+  if (head.id === body.id) return true;
+  const a = hexToLab(head.hex), b = hexToLab(body.hex);
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) < 30;
+}
 
 function generatePiece(index, seed, tier, opts) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
@@ -1142,6 +1169,12 @@ function generatePiece(index, seed, tier, opts) {
   }
   // floating arms are the signature pincer look: pincer hands unless hands were explicitly locked
   if (picks.arms.id === 'floating' && !(locks.hands && locks.hands.length)) picks.hands = TRAITS.hands.find((o) => o.id === 'pincer');
+  // two-tone head: rerolled (unless locked) when it is the body colour or too close to it to read as two tones
+  picks.headColor = sigOverride && sigOverride.headColor ? sigOverride.headColor : pick('headColor');
+  if (!(locks.headColor && locks.headColor.length)) {
+    for (let k = 0; k < 8 && picks.headColor.id !== 'matching' && tooClose(picks.headColor, picks.bodyColor); k++) picks.headColor = pick('headColor');
+    if (picks.headColor.id !== 'matching' && tooClose(picks.headColor, picks.bodyColor)) picks.headColor = TRAITS.headColor[0];
+  }
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
 
   const svg = renderFromTraits(picks, index, seed);
