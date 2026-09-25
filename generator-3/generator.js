@@ -952,13 +952,36 @@ function renderFromTraits(picks, index, seed, opts) {
   // The centre pattern is drawn exactly as before (same rng stream); the side strips get
   // their own clipped copy of the pattern from a separate seeded rng.
   const SW=H, OX=(SW-W)/2, sid=`sq${(seed??0)}_${index}`;
-  let svg=`<svg width="${SW}" height="${H}" viewBox="${-OX} 0 ${SW} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  svg+=`<rect x="${-OX}" width="${SW}" height="${H}" fill="${background.bg}"/>`;
+  // v3 portrait crop: head-and-shoulders framing (the whole stage is still drawn; the viewBox zooms in)
+  const VB_X=20, VB_Y=58, VB=360;
+  const accent=eyeColor.hex, lightBg=!isDark;
+  // stark whites become warm paper; darks stay as they are
+  const paper = lightBg && background.bg !== '#888888' ? '#F1EBDF' : background.bg;
+  let svg=`<svg width="${SW}" height="${H}" viewBox="${VB_X} ${VB_Y} ${VB} ${VB}" xmlns="http://www.w3.org/2000/svg">`;
+  svg+=`<rect x="${-OX}" width="${SW}" height="${H}" fill="${paper}"/>`;
   const sidePat=bgPattern(background.pattern, background.bg, mulberry32((seed??0)*100003+index+31), ink);
   if(sidePat) svg+=`<clipPath id="${sid}"><rect x="${-OX}" width="${OX}" height="${H}"/><rect x="${W}" width="${OX}" height="${H}"/></clipPath><g clip-path="url(#${sid})"><g transform="translate(${-W+OX} 0)">${sidePat}</g><g transform="translate(${W-OX} 0)">${sidePat}</g></g>`;
   svg+=bgPattern(background.pattern, background.bg, rng, ink); // centre pattern may spill over the strips so there's no seam
+  // accent glow behind the figure (spot colour = eye colour) + paper grain on its own rng stream
+  svg+=`<defs><radialGradient id="ag${sid}" cx="50%" cy="46%" r="58%"><stop offset="0" stop-color="${accent}" stop-opacity="${lightBg?0.22:0.3}"/><stop offset="0.6" stop-color="${accent}" stop-opacity="${lightBg?0.07:0.1}"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient>`
+     + `<filter id="ds${sid}" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="${lightBg?6:0}" dy="${lightBg?8:0}" stdDeviation="${lightBg?5:9}" flood-color="${lightBg?'#3b2f22':accent}" flood-opacity="${lightBg?0.32:0.45}"/></filter></defs>`;
+  svg+=`<rect x="${-OX}" width="${SW}" height="${H}" fill="url(#ag${sid})"/>`;
+  { const g=mulberry32((seed??0)*100003+index+777); let d='';
+    for(let i=0;i<260;i++) d+=`M${(g()*SW-OX).toFixed(0)} ${(g()*H).toFixed(0)}h1.2v1.2h-1.2z`;
+    svg+=`<path d="${d}" fill="${lightBg?'#5a4a3a':'#ffffff'}" opacity="${lightBg?0.12:0.07}"/>`; }
+  const figStart=svg.length;
+  svg+=`<g filter="url(#ds${sid})">`;
   svg+=clothingMarkup(clothing.id, cx, cy, headRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5), background.bg);
+  // soft cast shadow of the head on the neck/collar
+  svg+=`<ellipse cx="${cx+6}" cy="${(cy+headRy+14).toFixed(1)}" rx="${(headRx*0.72).toFixed(1)}" ry="13" fill="${lightBg?'#2a2119':'#000'}" opacity="${lightBg?0.2:0.45}"/>`;
+  // accent rim light (only the outer edge shows: the head base fill covers the inner half)
+  svg+=`<path d="${headPath}" fill="none" stroke="${accent}" stroke-width="${(sw*3.2).toFixed(1)}" stroke-linejoin="round" opacity="0.75" transform="translate(-3.5 -2.5)"/>`;
+  svg+=`<path d="${headPath}" fill="${lightBg?'#FBF7EF':'#151515'}"/>`;
   svg+=headFillMarkup(headFill.id, headPath, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+6));
+  // ink-wash form shading: shadow on the lower-right, soft highlight upper-left (clipped to the head)
+  svg+=`<clipPath id="hw${sid}"><path d="${headPath}"/></clipPath><g clip-path="url(#hw${sid})">`
+     + `<ellipse cx="${(cx+headRx*0.62).toFixed(1)}" cy="${(cy+headRy*0.5).toFixed(1)}" rx="${(headRx*1.05).toFixed(1)}" ry="${(headRy*1.0).toFixed(1)}" fill="${lightBg?'#2b241d':'#000'}" opacity="${lightBg?0.15:0.4}"/>`
+     + `<ellipse cx="${(cx-headRx*0.38).toFixed(1)}" cy="${(cy-headRy*0.42).toFixed(1)}" rx="${(headRx*0.5).toFixed(1)}" ry="${(headRy*0.36).toFixed(1)}" fill="#ffffff" opacity="${lightBg?0.45:0.07}"/></g>`;
   svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${(sw*2.6).toFixed(1)}" stroke-linejoin="round" opacity="0.13"/>`;
   svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round"/>`;
   svg+=hairMarkup(hair.id, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+7));
@@ -1001,6 +1024,9 @@ function renderFromTraits(picks, index, seed, opts) {
   svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
   svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id);
+  svg+='</g>';
+  // brush-weight linework: thicken every stroke in the figure (the crop adds a further 1.33x)
+  svg=svg.slice(0,figStart)+svg.slice(figStart).replace(/stroke-width="([\d.]+)"/g,(m,w)=>`stroke-width="${(parseFloat(w)*1.25).toFixed(2)}"`);
   svg+='</svg>';
   return svg;
 }
