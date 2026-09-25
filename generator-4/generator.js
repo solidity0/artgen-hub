@@ -144,7 +144,38 @@ const TRAITS = {
     { id: 'mitten_bow',  weight: 45, rarity: 'common' },
     { id: 'claw',        weight: 28, rarity: 'uncommon' },
     { id: 'round_paw',   weight: 17, rarity: 'uncommon' },
-    { id: 'broken_stub', weight: 10, rarity: 'rare' }
+    { id: 'broken_stub', weight: 10, rarity: 'rare' },
+    { id: 'pincer',       weight: 22, rarity: 'uncommon' },
+    { id: 'three_finger', weight: 18, rarity: 'uncommon' },
+    { id: 'hook',         weight: 7,  rarity: 'rare' },
+    { id: 'magnet',       weight: 7,  rarity: 'rare' },
+    { id: 'plug',         weight: 6,  rarity: 'rare' }
+  ],
+  headShape: [
+    { id: 'box',     weight: 30, rarity: 'common' },
+    { id: 'round',   weight: 24, rarity: 'common' },
+    { id: 'tv',      weight: 14, rarity: 'uncommon' },
+    { id: 'dome',    weight: 12, rarity: 'uncommon' },
+    { id: 'capsule', weight: 10, rarity: 'uncommon' },
+    { id: 'hex',     weight: 6,  rarity: 'rare' },
+    { id: 'octagon', weight: 5,  rarity: 'rare' }
+  ],
+  bodyShape: [
+    { id: 'box',       weight: 30, rarity: 'common' },
+    { id: 'round',     weight: 22, rarity: 'common' },
+    { id: 'barrel',    weight: 16, rarity: 'uncommon' },
+    { id: 'trapezoid', weight: 12, rarity: 'uncommon' },
+    { id: 'bell',      weight: 8,  rarity: 'uncommon' },
+    { id: 'octagon',   weight: 6,  rarity: 'rare' },
+    { id: 'capsule',   weight: 6,  rarity: 'rare' }
+  ],
+  arms: [
+    { id: 'tube',     weight: 36, rarity: 'common' },
+    { id: 'jointed',  weight: 22, rarity: 'common' },
+    { id: 'spring',   weight: 14, rarity: 'uncommon' },
+    { id: 'floating', weight: 12, rarity: 'uncommon' },
+    { id: 'on_floor', weight: 8,  rarity: 'rare' },
+    { id: 'broken',   weight: 8,  rarity: 'rare' }
   ],
   feet: [
     { id: 'oval_shoes',   weight: 38, rarity: 'common' },
@@ -287,7 +318,7 @@ function renderStarfield(W, H, rng) {
   return out;
 }
 
-function renderHair(cx, top, style, rng) {
+function renderHair(cx, top, style, rng, topAt) {
   if (style === 'none') return '';
   const counts = { short_spike: 13, tall_spike: 15, wild_spike: 20, mohawk_spike: 10 };
   const lens = { short_spike: 20, tall_spike: 36, wild_spike: 30, mohawk_spike: 38 };
@@ -303,8 +334,9 @@ function renderHair(cx, top, style, rng) {
     // A slight mid-point kink instead of a dead-straight spike — real chalk
     // strands rarely travel in one perfectly straight line.
     const midX = x + wobble * 0.4 + rj(rng, 5);
-    const midY = top - l * 0.55;
-    out += doubleStroke([[x, top], [midX, midY], [x + wobble, top - l]], rng, 2.5, 'stroke');
+    const t0 = topAt ? topAt(x) : top;
+    const midY = t0 - l * 0.55;
+    out += doubleStroke([[x, t0], [midX, midY], [x + wobble, t0 - l]], rng, 2.5, 'stroke');
   }
   return out;
 }
@@ -392,9 +424,10 @@ function renderMouth(cx, cy, style, rng) {
   return out;
 }
 
-function renderChest(cx, cy, size, style, rng, ink) {
-  const half = size / 2;
-  const boxOutline = [[cx - half, cy - half], [cx + half, cy - half], [cx + half, cy + half], [cx - half, cy + half], [cx - half, cy - half]];
+function renderChest(cx, cy, size, style, rng, ink, outline) {
+  // non-box bodies draw their own outline and fit the chest mark inside it
+  const half = outline ? size / 2 * 0.64 : size / 2;
+  const boxOutline = outline || [[cx - half, cy - half], [cx + half, cy - half], [cx + half, cy + half], [cx - half, cy + half], [cx - half, cy - half]];
   let out = doubleStroke(boxOutline, rng, 2, 'stroke') + chalkGrain(boxOutline, rng, ink, 0.1);
   const emojiEntry = TRAITS.chestMark.find((o) => o.id === style && o.emoji);
   if (emojiEntry) {
@@ -443,9 +476,30 @@ function renderEars(x, y, style, rng, flip, fill) {
   return under(ellipsePtsAt(x, y, 10, 16)) + doubleStroke(ellipsePtsAt(x, y, 10, 16), rng, 1.5, 'stroke'); // round_oval (default)
 }
 
-function renderHand(x, y, style, rng, flip, fill) {
+function renderHand(x, y, style, rng, flip, fill, ink) {
   const f = flip ? -1 : 1;
   const fl = ' style="fill:' + (fill || 'none') + '"';
+  const col = fill || 'none', k = ink || '#1c1c1c';
+  const shape = (pts) => fillPath(pts, col) + doubleStroke(pts.concat([pts[0]]), rng, 0.6, 'strokeMid');
+  const knuckle = (r) => '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + col + '" stroke="' + k + '" stroke-width="3"/>';
+  if (style === 'pincer') {
+    let o = '';
+    for (const s of [-1, 1]) o += shape([[x + 2 * s, y + 2], [x + 13 * s, y + 9], [x + 12 * s, y + 21], [x + 6 * s, y + 18], [x + 7 * s, y + 11], [x + 1 * s, y + 8]]);
+    return o + knuckle(7);
+  } else if (style === 'three_finger') {
+    let o = '';
+    for (const [dx, dy] of [[-8, 16], [0, 19], [8, 16]]) o += tubeP([[x, y + 4], [x + dx, y + dy]], 7.5, k) + tubeP([[x, y + 4], [x + dx, y + dy]], 3.6, col);
+    return o + knuckle(9);
+  } else if (style === 'hook') {
+    const pts = [[x, y], [x, y + 11], [x - 1 * f, y + 17], [x - 6 * f, y + 21], [x - 12 * f, y + 18], [x - 13 * f, y + 13]];
+    return tubeP(pts, 8, k) + tubeP(pts, 3.8, '#C4CAD3') + knuckle(6);
+  } else if (style === 'magnet') {
+    const pts = [[x - 9, y + 5], [x - 9, y + 13], [x - 4, y + 20], [x + 4, y + 20], [x + 9, y + 13], [x + 9, y + 5]];
+    return tubeP(pts, 11, k) + tubeP(pts, 6, '#E8434F') + tubeP([[x - 9, y + 3], [x - 9, y + 7]], 6, '#D9DEE5') + tubeP([[x + 9, y + 3], [x + 9, y + 7]], 6, '#D9DEE5') + knuckle(5);
+  } else if (style === 'plug') {
+    return tubeP([[x - 4, y + 13], [x - 4, y + 21]], 3.4, k) + tubeP([[x + 4, y + 13], [x + 4, y + 21]], 3.4, k) +
+      shape([[x - 9, y - 1], [x + 9, y - 1], [x + 8, y + 14], [x - 8, y + 14]]);
+  }
   if (style === 'mitten_bow') {
     return '<circle cx="' + (x + 6 * f) + '" cy="' + y + '" r="9" class="stroke"' + fl + '/>' +
       '<circle cx="' + (x - 6 * f) + '" cy="' + (y + 4) + '" r="7" class="stroke"' + fl + '/>';
@@ -627,6 +681,89 @@ function bodyPaint(bodyColor, bg, uid, dark) {
   return { fill: bodyColor.hex, shade: shadeColor(bodyColor.hex, -34), shoe: shadeColor(bodyColor.hex, -22), glow: bodyColor.hex, defs: '' };
 }
 
+// ---------- v4 shape system: head/body outlines, arm styles ----------
+function tubeP(pts, w, col) {
+  return '<path d="' + pathD(pts) + '" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"/>';
+}
+function rrPts(cx, cy, hw, hh, r, n) {
+  n = n || 5;
+  const pts = [];
+  const corners = [[cx + hw - r, cy - hh + r, -Math.PI / 2], [cx + hw - r, cy + hh - r, 0], [cx - hw + r, cy + hh - r, Math.PI / 2], [cx - hw + r, cy - hh + r, Math.PI]];
+  for (const [x, y, a0] of corners) for (let i = 0; i <= n; i++) {
+    const a = a0 + (i / n) * (Math.PI / 2);
+    pts.push([x + Math.cos(a) * r, y + Math.sin(a) * r]);
+  }
+  return pts;
+}
+function octPts(cx, cy, hw, hh, c) {
+  return [[cx - hw + c, cy - hh], [cx + hw - c, cy - hh], [cx + hw, cy - hh + c], [cx + hw, cy + hh - c], [cx + hw - c, cy + hh], [cx - hw + c, cy + hh], [cx - hw, cy + hh - c], [cx - hw, cy - hh + c]];
+}
+function capsulePts(cx, cy, hw, hh) {
+  const pts = [];
+  for (let i = 0; i <= 10; i++) { const a = Math.PI + (i / 10) * Math.PI; pts.push([cx + Math.cos(a) * hw, cy - hh + hw + Math.sin(a) * hw]); }
+  for (let i = 0; i <= 10; i++) { const a = (i / 10) * Math.PI; pts.push([cx + Math.cos(a) * hw, cy + hh - hw + Math.sin(a) * hw]); }
+  return pts;
+}
+// Closed outline (no repeated first point) for a head or body shape of half-size s.
+function shapePts(kind, cx, cy, s) {
+  switch (kind) {
+    case 'round': return ellipsePtsAt(cx, cy, s * 1.03, s * 1.03, 28).slice(0, -1);
+    case 'tv': return rrPts(cx, cy, s * 1.2, s * 0.84, 22);
+    case 'dome': {
+      const pts = [];
+      for (let i = 0; i <= 14; i++) { const a = Math.PI + (i / 14) * Math.PI; pts.push([cx + Math.cos(a) * s, cy + s * 0.05 + Math.sin(a) * s]); }
+      pts.push([cx + s, cy + s], [cx - s, cy + s]);
+      return pts;
+    }
+    case 'capsule': return capsulePts(cx, cy, s * 0.82, s);
+    case 'hex': return [[cx - s * 0.52, cy - s], [cx + s * 0.52, cy - s], [cx + s * 1.06, cy], [cx + s * 0.52, cy + s], [cx - s * 0.52, cy + s], [cx - s * 1.06, cy]];
+    case 'octagon': return octPts(cx, cy, s, s, s * 0.38);
+    case 'barrel': return rrPts(cx, cy, s * 1.02, s, s * 0.48);
+    case 'trapezoid': return [[cx - s * 1.12, cy - s], [cx + s * 1.12, cy - s], [cx + s * 0.74, cy + s], [cx - s * 0.74, cy + s]];
+    case 'bell': return [[cx - s * 0.7, cy - s], [cx + s * 0.7, cy - s], [cx + s * 1.1, cy + s], [cx - s * 1.1, cy + s]];
+    default: return [[cx - s, cy - s], [cx + s, cy - s], [cx + s, cy + s], [cx - s, cy + s]]; // box
+  }
+}
+const closeLoop = (pts) => pts.concat([pts[0]]);
+// Horizontal half-width of a closed outline at height y (widest crossing).
+function halfWidthAt(pts, cx, y) {
+  let best = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % pts.length];
+    if ((y0 - y) * (y1 - y) > 0 || y0 === y1) continue;
+    const x = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
+    best = Math.max(best, Math.abs(x - cx));
+  }
+  return best;
+}
+// Topmost y of a closed outline at column x (where hair roots sit).
+function topYAt(pts, x) {
+  let best = Infinity;
+  for (let i = 0; i < pts.length; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % pts.length];
+    if ((x0 - x) * (x1 - x) > 0 || x0 === x1) continue;
+    best = Math.min(best, y0 + (y1 - y0) * (x - x0) / (x1 - x0));
+  }
+  return best;
+}
+// Zig-zag spring along a polyline.
+function coilPts(path, amp, step) {
+  const out = [];
+  let k = 0;
+  for (let i = 1; i < path.length; i++) {
+    const [x0, y0] = path[i - 1], [x1, y1] = path[i];
+    const len = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
+    const n = Math.max(2, Math.round(len / step));
+    for (let j = (i === 1 ? 0 : 1); j <= n; j++, k++) {
+      const t = j / n, o = (j === 0 && i === 1) || (i === path.length - 1 && j === n) ? 0 : (k % 2 ? amp : -amp);
+      out.push([x0 + (x1 - x0) * t + nx * o, y0 + (y1 - y0) * t + ny * o]);
+    }
+  }
+  return out;
+}
+// How far below the wrist point each hand shape reaches (for hands resting on the floor).
+const HAND_REACH = { mitten_bow: 11, round_paw: 10, claw: 12, broken_stub: 10, pincer: 21, three_finger: 20, hook: 21, magnet: 21, plug: 21 };
+
 function renderFromTraits(picks, index, seed) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const deco = mulberry32((seed ?? 0) * 100003 + index + 7777); // background texture only
@@ -650,13 +787,44 @@ function renderFromTraits(picks, index, seed) {
   const hipY = neckTop + neckLen + chestSize;
   const groundY = hipY + 92;
   const hh = headSize / 2, ch = chestSize / 2;
-  const shoulderY = chestCy - ch + 14;
-  const armL = [[headCx - ch, shoulderY], [headCx - ch - 48, shoulderY + 58], [headCx - ch - 58, shoulderY + 106]];
-  const armR = [[headCx + ch, shoulderY], [headCx + ch + 48, shoulderY + 58], [headCx + ch + 58, shoulderY + 106]];
+  const headKind = picks.headShape ? picks.headShape.id : 'box';
+  const bodyKind = picks.bodyShape ? picks.bodyShape.id : 'box';
+  const armStyle = picks.arms ? picks.arms.id : 'tube';
+  const headPts = shapePts(headKind, headCx, headCy, hh);
+  const bodyPts = shapePts(bodyKind, headCx, chestCy, ch);
+  const shoulderY = chestCy - ch + 16;
+  let bodyW = 0; for (const p of bodyPts) bodyW = Math.max(bodyW, Math.abs(p[0] - headCx));
+  const shoulderX = Math.max(8, halfWidthAt(bodyPts, headCx, shoulderY) - 10); // starts inside the body; hidden under it
+  const armPath = (side) => [[headCx + side * shoulderX, shoulderY], [headCx + side * (bodyW + 40), shoulderY + 58], [headCx + side * (bodyW + 50), shoulderY + 106]];
+  const floorArm = (side) => [[headCx + side * shoulderX, shoulderY], [headCx + side * (bodyW + 30), shoulderY + 84], [headCx + side * (bodyW + 38), groundY - (HAND_REACH[picks.hands.id] || 12) - 2]];
   const legX = 38, peg = picks.feet.id === 'peg_legs';
   const legEnd = peg ? groundY - 12 : groundY - 18;
-  const legL = [[headCx - legX, hipY - 4], [headCx - legX, legEnd]];
-  const legR = [[headCx + legX, hipY - 4], [headCx + legX, legEnd]];
+  const legTop = chestCy + ch * 0.55; // tucked under the body so no shape leaves a gap above the legs
+  const legL = [[headCx - legX, legTop], [headCx - legX, legEnd]];
+  const legR = [[headCx + legX, legTop], [headCx + legX, legEnd]];
+
+  // arms: which polylines are drawn as limbs, and where the hands go
+  const arms = [];   // { pts, kind: 'tube' | 'jointed' | 'spring' | 'stub' }
+  const hands = [];  // { x, y, flip, rot }
+  let sparks = null;
+  if (armStyle === 'floating') {
+    for (const side of [-1, 1]) hands.push({ x: headCx + side * (bodyW + 46), y: shoulderY + 92, flip: side < 0, float: true });
+  } else if (armStyle === 'on_floor') {
+    for (const side of [-1, 1]) { const p = floorArm(side); arms.push({ pts: p, kind: 'tube' }); hands.push({ x: p[2][0], y: p[2][1] + 2, flip: side < 0 }); }
+  } else if (armStyle === 'broken') {
+    const L = armPath(-1), R = armPath(1);
+    const mid = [L[0][0] + (L[1][0] - L[0][0]) * 0.9 - 4, L[0][1] + (L[1][1] - L[0][1]) * 0.9];
+    arms.push({ pts: [L[0], mid], kind: 'stub' });
+    sparks = mid;
+    arms.push({ pts: R, kind: 'tube' });
+    hands.push({ x: R[2][0], y: R[2][1] + 8, flip: false });
+    // the snapped-off forearm lying on the ground to the left
+    const gy = groundY - 8;
+    arms.push({ pts: [[headCx - 196, gy + 1], [headCx - 156, gy - 2], [headCx - 116, gy - 4]], kind: 'tube' });
+    hands.push({ x: headCx - 204, y: gy - 4, flip: true, rot: 90 });
+  } else {
+    for (const side of [-1, 1]) { const p = armPath(side); arms.push({ pts: p, kind: armStyle === 'jointed' ? 'jointed' : armStyle === 'spring' ? 'spring' : 'tube' }); hands.push({ x: p[2][0], y: p[2][1] + 8, flip: side < 0 }); }
+  }
 
   let defs = paint.defs;
   let back = '';
@@ -683,46 +851,93 @@ function renderFromTraits(picks, index, seed) {
   const shadowCol = dark ? '#000000' : '#1c1c1c';
   body += '<ellipse cx="' + cx + '" cy="' + (groundY + 1) + '" rx="128" ry="11" fill="' + shadowCol + '" opacity="' + (dark ? 0.55 : 0.13) + '"/>';
   const sdx = 9, sdy = 7, sOp = dark ? 0.45 : 0.12;
-  let sil = '';
-  sil += '<rect x="' + (headCx - hh) + '" y="' + headTop + '" width="' + headSize + '" height="' + headSize + '" rx="6"/>';
-  sil += '<rect x="' + (headCx - ch) + '" y="' + (chestCy - ch) + '" width="' + chestSize + '" height="' + chestSize + '" rx="6"/>';
   const tube = (pts, w, col, extra) => '<path d="' + pathD(pts) + '" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"' + (extra || '') + '/>';
-  sil += tube(armL, 14, shadowCol) + tube(armR, 14, shadowCol) + tube(legL, 14, shadowCol) + tube(legR, 14, shadowCol);
+  let sil = '<path d="' + pathD(headPts) + ' Z"/><path d="' + pathD(bodyPts) + ' Z"/>';
+  for (const a of arms) if (a.pts[0][1] < groundY - 20) sil += tube(a.pts, 14, shadowCol);
+  sil += tube(legL, 14, shadowCol) + tube(legR, 14, shadowCol);
   body += '<g transform="translate(' + sdx + ' ' + sdy + ')" fill="' + shadowCol + '" opacity="' + sOp + '">' + sil + '</g>';
 
-  // ---- limbs: outlined tubes (ink casing + colour core), drawn under head/chest ----
+  // ---- limbs, drawn under head/chest ----
   const limb = (pts, jit, thin) => {
     const p = chalkLine(pts, rng, jit);
     return tube(p, thin ? 11 : 15, ink) + tube(p, thin ? 5 : 8.5, paint.fill);
   };
-  body += limb(armL, 1.6) + limb(armR, 1.6) + limb(legL, 1.2, peg) + limb(legR, 1.2, peg);
-  body += renderHand(armL[2][0], armL[2][1] + 8, picks.hands.id, rng, true, paint.fill);
-  body += renderHand(armR[2][0], armR[2][1] + 8, picks.hands.id, rng, false, paint.fill);
+  const joint = (x, y, r) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r + '" fill="' + paint.shoe + '" stroke="' + ink + '" stroke-width="3.2"/>' +
+    '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * 0.32).toFixed(1) + '" fill="' + ink + '"/>';
+  for (const a of arms) {
+    if (a.kind === 'jointed') {
+      body += tube(a.pts, 12, ink) + tube(a.pts, 6.5, paint.fill);
+      body += joint(a.pts[1][0], a.pts[1][1], 8) + joint(a.pts[2][0], a.pts[2][1], 6);
+    } else if (a.kind === 'spring') {
+      const c = coilPts(a.pts, 7, 6);
+      body += tube(c, 6, ink) + tube(c, 2.6, paint.fill);
+    } else if (a.kind === 'stub') {
+      body += limb(a.pts, 1.2);
+      const [x, y] = a.pts[1];
+      body += fillPath([[x - 9, y - 6], [x + 3, y - 10], [x + 1, y - 2], [x + 8, y + 4], [x - 4, y + 8], [x - 2, y + 1]], paint.fill) +
+        doubleStroke([[x - 9, y - 6], [x + 3, y - 10], [x + 1, y - 2], [x + 8, y + 4], [x - 4, y + 8], [x - 2, y + 1], [x - 9, y - 6]], rng, 0.8, 'strokeMid');
+    } else {
+      body += limb(a.pts, 1.6);
+    }
+  }
+  if (sparks) {
+    const [sx, sy] = sparks;
+    for (let i = 0; i < 6; i++) {
+      const ang = -2.6 + i * 0.5 + rj(rng, 0.15), l1 = 10 + rng() * 3, l2 = l1 + 8 + rng() * 8;
+      body += '<path d="M ' + (sx + Math.cos(ang) * l1).toFixed(1) + ' ' + (sy + Math.sin(ang) * l1).toFixed(1) + ' L ' + (sx + Math.cos(ang) * l2).toFixed(1) + ' ' + (sy + Math.sin(ang) * l2).toFixed(1) + '" stroke="#FFC93C" stroke-width="3" stroke-linecap="round"/>';
+    }
+    body += '<circle cx="' + sx + '" cy="' + sy + '" r="4" fill="#FFE27A"/>';
+  }
+  body += limb(legL, 1.2, peg) + limb(legR, 1.2, peg);
+  for (const h of hands) {
+    let g = renderHand(h.x, h.y, picks.hands.id, rng, h.flip, paint.fill, ink);
+    if (h.rot) g = '<g transform="rotate(' + h.rot + ' ' + h.x + ' ' + h.y + ')">' + g + '</g>';
+    if (h.float) {
+      const d = h.flip ? 1 : -1; // motion marks point back toward the body
+      g += '<path d="M ' + (h.x + d * 18) + ' ' + (h.y - 6) + ' q ' + (d * 6) + ' 8 0 16 M ' + (h.x + d * 26) + ' ' + (h.y - 2) + ' q ' + (d * 4) + ' 6 0 10" stroke="' + ink + '" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".6"/>';
+      g += '<ellipse cx="' + h.x + '" cy="' + (groundY + 1) + '" rx="12" ry="3" fill="' + shadowCol + '" opacity="' + (dark ? 0.4 : 0.1) + '"/>';
+    }
+    body += g;
+  }
 
-  // ---- halftone shading (dots fading in toward the right/bottom edge) ----
+  // ---- halftone shading (dots fading in toward the right/bottom edge), clipped to each shape ----
   defs += '<pattern id="ht' + uid + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><circle cx="3.5" cy="3.5" r="1.7" fill="' + paint.shade + '"/></pattern>' +
     '<linearGradient id="hg' + uid + '" x1="0" y1="0" x2="1" y2="0.35"><stop offset="0.45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>' +
     '<mask id="hm' + uid + '" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#hg' + uid + ')"/></mask>';
-  const block = (x0, y0, size) => {
-    // colour plate slightly misregistered from the ink outline, then halftone, then outline
+  const block = (pts, key) => {
+    // colour plate slightly misregistered from the ink outline, then halftone, then (caller) outline
     const ox = 1.5 + rng() * 2, oy = 1.5 + rng() * 2;
-    let o = fillPath(wobblyRect(x0 + ox, y0 + oy, x0 + size + ox, y0 + size + oy, rng, 1.2), paint.fill);
-    o += '<rect x="' + (x0 + ox + 3) + '" y="' + (y0 + oy + 3) + '" width="' + (size - 6) + '" height="' + (size - 6) + '" fill="url(#ht' + uid + ')" mask="url(#hm' + uid + ')" opacity="' + (paint.classic ? 0.35 : 0.55) + '"/>';
+    const moved = pts.map(([x, y]) => [x + ox, y + oy]);
+    let o = fillPath(chalkLine(closeLoop(moved), rng, 1.2), paint.fill);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const [x, y] of moved) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    const cid = 'sc' + key + uid;
+    defs += '<clipPath id="' + cid + '"><path d="' + pathD(moved) + ' Z"/></clipPath>';
+    o += '<rect x="' + (x0 + 3).toFixed(1) + '" y="' + (y0 + 3).toFixed(1) + '" width="' + (x1 - x0 - 6).toFixed(1) + '" height="' + (y1 - y0 - 6).toFixed(1) + '" fill="url(#ht' + uid + ')" mask="url(#hm' + uid + ')" clip-path="url(#' + cid + ')" opacity="' + (paint.classic ? 0.35 : 0.55) + '"/>';
     return o;
   };
 
   // ---- head ----
-  body += renderHair(headCx, headTop, picks.hair.id, rng);
-  body += block(headCx - hh, headTop, headSize);
-  const headOutline = [[headCx - hh, headTop], [headCx + hh, headTop], [headCx + hh, headTop + headSize], [headCx - hh, headTop + headSize], [headCx - hh, headTop]];
+  body += renderHair(headCx, headTop, picks.hair.id, rng, (x) => { const t = topYAt(headPts, x); return Number.isFinite(t) ? t + 3 : headTop; });
+  body += block(headPts, 'h');
+  const headOutline = closeLoop(headPts);
   body += doubleStroke(headOutline, rng, 2.5, 'strokeThick');
   body += chalkGrain(headOutline, rng, ink, 0.12);
-  body += renderEars(headCx - hh - 24, headCy, picks.ears.id, rng, true, paint.fill);
-  body += renderEars(headCx + hh + 24, headCy, picks.ears.id, rng, false, paint.fill);
+  if (headKind === 'tv') {
+    // screen bezel + two little dials: reads instantly as a CRT head
+    body += doubleStroke(closeLoop(rrPts(headCx - 6, headCy, hh * 1.2 - 22, hh * 0.84 - 13, 14)), rng, 1, 'strokeMid');
+    body += joint(headCx + hh * 1.2 - 10, headCy - 18, 5) + joint(headCx + hh * 1.2 - 10, headCy + 6, 5);
+  } else if (headKind === 'dome') {
+    body += doubleStroke([[headCx - hh + 6, headCy + hh * 0.35], [headCx + hh - 6, headCy + hh * 0.35]], rng, 1, 'strokeMid');
+  }
+  const earX = halfWidthAt(headPts, headCx, headCy) + 24;
+  body += renderEars(headCx - earX, headCy, picks.ears.id, rng, true, paint.fill);
+  body += renderEars(headCx + earX, headCy, picks.ears.id, rng, false, paint.fill);
   // cheek blush
   const blush = dark ? '#ff7aa8' : '#ff6f91';
-  body += '<ellipse cx="' + (headCx - 50) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
-  body += '<ellipse cx="' + (headCx + 50) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
+  const bx = Math.min(50, halfWidthAt(headPts, headCx, headCy + 20) - 20);
+  body += '<ellipse cx="' + (headCx - bx) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
+  body += '<ellipse cx="' + (headCx + bx) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
   const eyeColorHex = picks.eyeColor.hex || null;
   if (eyeColorHex) {
     defs += '<radialGradient id="eg' + uid + '"><stop offset="0.35" stop-color="' + eyeColorHex + '" stop-opacity="0.9"/><stop offset="1" stop-color="' + eyeColorHex + '" stop-opacity="0"/></radialGradient>';
@@ -736,8 +951,14 @@ function renderFromTraits(picks, index, seed) {
   // ---- neck + chest ----
   const neck = chalkLine([[headCx, neckTop - 2], [headCx, neckTop + neckLen + 2]], rng, 0.8);
   body += tube(neck, 17, ink) + tube(neck, 10, paint.fill);
-  body += block(headCx - ch, chestCy - ch, chestSize);
-  body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink);
+  body += block(bodyPts, 'b');
+  body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink, bodyKind === 'box' ? null : closeLoop(bodyPts));
+  if (bodyKind === 'barrel' || bodyKind === 'capsule') {
+    // riveted belly band
+    const by = chestCy + ch * 0.62, bw = halfWidthAt(bodyPts, headCx, by) - 4;
+    body += doubleStroke([[headCx - bw, by], [headCx + bw, by]], rng, 0.8, 'strokeMid');
+    for (const rx of [-0.6, -0.2, 0.2, 0.6]) body += '<circle cx="' + (headCx + rx * bw).toFixed(1) + '" cy="' + (by + 7) + '" r="2.6" fill="' + ink + '" opacity=".7"/>';
+  }
 
   // ---- feet ----
   if (!peg) {
@@ -750,7 +971,7 @@ function renderFromTraits(picks, index, seed) {
 
   if (picks.companion.id !== 'none') {
     const cc = picks.companionColor && picks.companionColor.hex;
-    body += renderCompanion(headCx + 170, groundY, picks.companion.id, rng, cc, ink, dark);
+    body += renderCompanion(headCx + (armStyle === 'on_floor' ? 200 : 170), groundY, picks.companion.id, rng, cc, ink, dark);
   }
 
   // Scoped by #piece{uid} — class styles must not leak between the many inline SVGs on the page.
@@ -776,10 +997,10 @@ const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
     background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
-    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink'
+    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor', 'headShape', 'bodyShape', 'arms'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -820,7 +1041,10 @@ const ONE_OF_ONE_WEIGHTS = {
   eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }],
   mouth: [{ id: 'fangs_stitch', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'single_line', weight: 24 }, { id: 'stitches_uneven', weight: 20 }],
   chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'blank', weight: 12 }, { id: 'emoji_ghost', weight: 11 }, { id: 'emoji_skull', weight: 11 }, { id: 'emoji_100', weight: 9 }, { id: 'emoji_rainbow', weight: 9 }, { id: 'emoji_rocket', weight: 9 }, { id: 'emoji_broken_heart', weight: 9 }, { id: 'emoji_blast', weight: 9 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
-  hands: [{ id: 'broken_stub', weight: 34 }, { id: 'claw', weight: 30 }, { id: 'round_paw', weight: 22 }, { id: 'mitten_bow', weight: 14 }],
+  hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
+  headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
+  bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
+  arms: [{ id: 'broken', weight: 24 }, { id: 'floating', weight: 22 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
@@ -895,6 +1119,10 @@ function generatePiece(index, seed, tier, opts) {
         const c = pick('companionColor');
         return c.id === 'none' ? weightedPick(rng, TRAITS.companionColor.slice(1)) : c;
       })();
+  // v4 shape traits, picked last so every earlier roll is unchanged for a given seed
+  picks.headShape = sigOverride ? sigOverride.headShape : pick('headShape');
+  picks.bodyShape = sigOverride ? sigOverride.bodyShape : pick('bodyShape');
+  picks.arms = sigOverride ? sigOverride.arms : pick('arms');
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
 
   const svg = renderFromTraits(picks, index, seed);
