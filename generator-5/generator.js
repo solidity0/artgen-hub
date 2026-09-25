@@ -14,7 +14,8 @@
   const SIZE = WIDTH; // legacy alias
   const HX = 240;     // head centre
   const HY = 246;
-  const HEAD_SCALE = 1.5; // head-only composition: art scaled up, strokes stay thin
+  const HEAD_SCALE = 1.5; // head-only composition: art scaled up
+  const LINE_BOOST = 1.9; // head stroke weight multiplier (after head-scale compensation)
   const LW = 2.3;     // main line weight
 
   /* ---------------------------------------------------------------- RNG */
@@ -351,17 +352,26 @@
       const a = pts[0], b = pts[1] || pts[0];
       seq = pts.concat([a, [a[0] + (b[0] - a[0]) * 0.18, a[1] + (b[1] - a[1]) * 0.18]]); // slight overshoot
     }
-    let d = '';
+    const q = [];
     for (let i = 0; i < seq.length - 1; i++) {
       const a = seq[i], b = seq[i + 1];
       const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
       for (let k = 0; k < n; k++) {
         const t = k / n;
-        d += (d ? 'L' : 'M') + f(a[0] + (b[0] - a[0]) * t + jit(rng, amt)) + ',' + f(a[1] + (b[1] - a[1]) * t + jit(rng, amt));
+        q.push([a[0] + (b[0] - a[0]) * t + jit(rng, amt), a[1] + (b[1] - a[1]) * t + jit(rng, amt)]);
       }
     }
     const l = seq[seq.length - 1];
-    return d + 'L' + f(l[0] + jit(rng, amt * 0.5)) + ',' + f(l[1] + jit(rng, amt * 0.5));
+    q.push([l[0] + jit(rng, amt * 0.5), l[1] + jit(rng, amt * 0.5)]);
+    // smooth through the jittered vertices (quadratic curves via midpoints) so the wobble reads as a flowing pen line
+    let d = 'M' + f(q[0][0]) + ',' + f(q[0][1]);
+    if (q.length === 2) return d + 'L' + f(q[1][0]) + ',' + f(q[1][1]);
+    for (let i = 1; i < q.length - 1; i++) {
+      const a = q[i], b = q[i + 1];
+      d += 'Q' + f(a[0]) + ',' + f(a[1]) + ' ' + f((a[0] + b[0]) / 2) + ',' + f((a[1] + b[1]) / 2);
+    }
+    const e = q[q.length - 1];
+    return d + 'L' + f(e[0]) + ',' + f(e[1]);
   }
   // main line + faint ghost pass, like a pen going over it twice
   function sketch(rng, pts, closed, ink, o) {
@@ -543,9 +553,10 @@
 
     svg += featureMarkup(rng, t, P, ink, featInk, headFill, eyeHex, uid, animate);
     svg += `</g>`;
-    // keep line weights thin and crude after the head is scaled up
-    // compensate the head scale so strokes keep the authored weight, proportionally at every display size
-    svg = svg.slice(0, headStart) + svg.slice(headStart).replace(/ stroke-width="([\d.]+)"/g, (m, w) => ` stroke-width="${f(parseFloat(w) / HEAD_SCALE)}"`);
+    // compensate the head scale, then boost weights so lines read bold; a small seeded per-stroke
+    // variation mimics uneven pen pressure
+    const prng = mulberry32(hashSeed(piece.seed, 'pressure'));
+    svg = svg.slice(0, headStart) + svg.slice(headStart).replace(/ stroke-width="([\d.]+)"/g, (m, w) => ` stroke-width="${f(parseFloat(w) * LINE_BOOST * (0.88 + prng() * 0.24) / HEAD_SCALE)}"`);
     return svg + `</svg>`;
   }
 
