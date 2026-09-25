@@ -987,7 +987,7 @@ function renderFromTraits(picks, index, seed) {
 
   if (picks.companion.id !== 'none') {
     const cc = picks.companionColor && picks.companionColor.hex;
-    body += renderCompanion(headCx + (armStyle === 'on_floor' ? 200 : 170), groundY, picks.companion.id, rng, cc, ink, dark);
+    body += renderCompanion(headCx + 170, groundY, picks.companion.id, rng, cc, ink, dark);
   }
 
   // Scoped by #piece{uid} — class styles must not leak between the many inline SVGs on the page.
@@ -1139,6 +1139,11 @@ function generatePiece(index, seed, tier, opts) {
   picks.headShape = sigOverride ? sigOverride.headShape : pick('headShape');
   picks.bodyShape = sigOverride ? sigOverride.bodyShape : pick('bodyShape');
   picks.arms = sigOverride ? sigOverride.arms : pick('arms');
+  // hands-on-the-floor arms reach down where the companion stands: no companion (unless explicitly locked)
+  if (picks.arms.id === 'on_floor' && picks.companion.id !== 'none' && !(locks.companion && locks.companion.length)) {
+    picks.companion = TRAITS.companion.find((o) => o.id === 'none');
+    picks.companionColor = TRAITS.companionColor[0];
+  }
   // floating arms are the signature pincer look: pincer hands unless hands were explicitly locked
   if (picks.arms.id === 'floating' && !(locks.hands && locks.hands.length)) picks.hands = TRAITS.hands.find((o) => o.id === 'pincer');
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
