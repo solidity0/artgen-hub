@@ -15,7 +15,7 @@
   const HX = 240;     // head centre
   const HY = 246;
   const HEAD_SCALE = 1.5; // head-only composition: art scaled up
-  const LINE_BOOST = 2.033; // head stroke weight multiplier (after head-scale compensation)
+  const LINE_BOOST = 1.992; // head stroke weight multiplier (after head-scale compensation)
   const LW = 2.3;     // main line weight
 
   /* ---------------------------------------------------------------- RNG */

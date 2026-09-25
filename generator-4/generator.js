@@ -146,7 +146,7 @@ function shadeColor(hex, percent) {
   return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
 }
 
-const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea' };
+const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea', robinhood: '#00c805' };
 
 // ---------- drawing helpers ----------
 // Chalk strokes need three things clean vector lines don't have: waviness

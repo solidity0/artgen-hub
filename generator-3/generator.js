@@ -1086,7 +1086,7 @@ function pickOneOfOneHeadFill(rng) {
   }
   return TRAITS.headFill.find(h=>h.id===ONE_OF_ONE_HEADFILL_WEIGHTS[0].id);
 }
-const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea' };
+const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea', robinhood: '#00c805' };
 
 const api = { generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
   renderFromTraits,

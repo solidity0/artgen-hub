@@ -46,11 +46,14 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .btn-ghost:hover { color:var(--white); border-color:var(--white); }
 .status-row { display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px; flex-wrap:wrap; gap:8px; }
 .status-label { font-family:'Space Mono',monospace; font-size:11px; color:var(--mid); }
-.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:6px; overflow-anchor:none; }
-.tile { background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; aspect-ratio:500/620; }
+.grid { position:relative; overflow-anchor:none; }
+.grid-viewport { position:relative; overflow-anchor:none; }
+.tile { position:absolute; top:0; left:0; background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; display:flex; flex-direction:column; }
+.tile .art { flex:1; min-height:0; background:#0e0e0e; }
+.tile:focus-visible { outline:2px solid var(--acid); outline-offset:1px; }
 .tile:hover { border-color:var(--acid); }
-.tile svg { display:block; width:100%; height:auto; aspect-ratio:500/572; }
-.tile-label { padding:5px 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
+.tile svg { display:block; width:100%; height:100%; }
+.tile-label { height:24px; display:flex; align-items:center; padding:0 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
 .tile-label.is-1of1 { color:var(--acid); font-weight:700; }
 .lightbox { display:none; position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.88); align-items:center; justify-content:center; padding:20px; }
 .lightbox.open { display:flex; }
@@ -82,9 +85,11 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   .chip { font-size:9px; padding:5px 7px; }
   .run-row { padding:12px; gap:8px; }
   .run-row .field input { width:64px; }
-  .grid { grid-template-columns:repeat(3,1fr); gap:4px; }
-  .tile-label { font-size:9px; padding:4px 5px; }
 }
+.lb-preview { position:relative; }
+.lb-preview svg { height:auto; }
+.copy-hint { position:absolute; left:8px; right:8px; bottom:8px; background:rgba(0,0,0,.78); color:#fff; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.04em; padding:7px 9px; border-left:3px solid var(--acid); pointer-events:none; }
+@media(max-width:600px) { .tile-label { height:20px; font-size:9px; padding:0 5px; } }
 </style>
 </head>
 <body>
@@ -138,11 +143,13 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
     <button class="btn btn-ghost" id="csv-btn">Export trait sheet</button>
   </div>
   <div class="status-row"><span class="status-label" id="status-label"></span></div>
-  <div class="grid" id="grid"></div>
+  <div class="grid-viewport" id="grid-viewport">
+    <div class="grid" id="grid"></div>
+  </div>
 </main>
-<div class="lightbox" id="lightbox">
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lb-title">
   <div class="lb-inner">
-    <button class="lb-close" id="lb-close-btn">✕</button>
+    <button class="lb-close" id="lb-close-btn" aria-label="Close">✕</button>
     <div class="lb-preview" id="lb-preview"></div>
     <div class="lb-meta">
       <div class="lb-title" id="lb-title"></div>
@@ -150,6 +157,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
       <div class="lb-actions">
         <button class="btn btn-acid" id="lb-download-png">Download PNG</button>
         <button class="btn btn-ghost" id="lb-download">Download SVG</button>
+        <button class="btn btn-acid" id="lb-copy-img" title="Copy the image to your clipboard (shortcut: C)">Copy image</button>
         <button class="btn btn-ghost" id="lb-copy">Copy markup</button>
       </div>
     </div>
@@ -209,16 +217,11 @@ const TRAITS = {
     { id: 'jagged_broken',  weight: 6,  rarity: 'rare' }
   ],
   eyes: [
-    { id: 'ring_plain',       weight: 26, rarity: 'common' },
-    { id: 'spiral',           weight: 23, rarity: 'common' },
-    { id: 'ring_double',      weight: 15, rarity: 'uncommon' },
-    { id: 'asymmetric',       weight: 12, rarity: 'uncommon' },
-    { id: 'ring_plain_glow',  weight: 8,  rarity: 'uncommon' },
-    { id: 'spiral_glow',      weight: 7,  rarity: 'uncommon' },
-    { id: 'void',             weight: 7,  rarity: 'rare' },
-    { id: 'ring_double_glow', weight: 5,  rarity: 'rare' },
-    { id: 'asymmetric_glow',  weight: 4,  rarity: 'rare' },
-    { id: 'void_glow',        weight: 3,  rarity: 'rare' }
+    { id: 'ring_plain',  weight: 30, rarity: 'common' },
+    { id: 'spiral',      weight: 28, rarity: 'common' },
+    { id: 'ring_double', weight: 18, rarity: 'uncommon' },
+    { id: 'asymmetric',  weight: 14, rarity: 'uncommon' },
+    { id: 'void',        weight: 10, rarity: 'rare' }
   ],
   eyeColor: [
     { id: 'default', weight: 60, rarity: 'common' },
@@ -287,13 +290,6 @@ const TRAITS = {
     { id: 'bird',      weight: 7,  rarity: 'uncommon' },
     { id: 'cat_ghost', weight: 3,  rarity: 'rare' },
     { id: 'bunny',     weight: 2,  rarity: 'rare' }
-  ],
-  companionColor: [
-    { id: 'default', weight: 52, rarity: 'common' },
-    { id: 'orange',  hex: '#ff8c42', weight: 18, rarity: 'uncommon' },
-    { id: 'gray',    hex: '#9aa0ab', weight: 13, rarity: 'uncommon' },
-    { id: 'brown',   hex: '#8a5a34', weight: 8,  rarity: 'rare' },
-    { id: 'red',     hex: '#e6453c', weight: 9,  rarity: 'rare' }
   ]
 };
 
@@ -320,7 +316,7 @@ function shadeColor(hex, percent) {
   return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
 }
 
-const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea', robinhood: '#00C805' };
+const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea', robinhood: '#00c805' };
 
 // ---------- drawing helpers ----------
 // Chalk strokes need three things clean vector lines don't have: waviness
@@ -424,17 +420,10 @@ function renderHair(cx, top, style, rng) {
   return out;
 }
 
-function renderEyes(cx, cy, style, rng, ink, eyeColor, uid) {
+function renderEyes(cx, cy, style, rng, ink, eyeColor) {
   const spacing = 26;
   const lx = cx - spacing, rx = cx + spacing;
   const col = eyeColor || null;
-  // Every eye style has a "_glow" twin — same geometry, wrapped in a soft
-  // blurred halo behind the fully crisp original. Scoped filter (wraps only
-  // the eye shapes, not the whole figure) so it can't reintroduce the
-  // earlier whole-piece blur regression.
-  const isGlow = style.endsWith('_glow');
-  const baseStyle = isGlow ? style.slice(0, -5) : style;
-
   function ring(x, y, r) {
     return doubleStroke(
       Array.from({ length: 13 }, (_, i) => {
@@ -453,52 +442,15 @@ function renderEyes(cx, cy, style, rng, ink, eyeColor, uid) {
     return doubleStroke(pts, rng, 1, 'stroke', col);
   }
   let out = '';
-  if (baseStyle === 'ring_plain') out += ring(lx, cy, 13) + ring(rx, cy, 13);
-  else if (baseStyle === 'spiral') out += spiral(lx, cy, 13) + spiral(rx, cy, 13);
-  else if (baseStyle === 'ring_double') out += ring(lx, cy, 14) + ring(lx, cy, 7) + ring(rx, cy, 14) + ring(rx, cy, 7);
-  else if (baseStyle === 'asymmetric') out += ring(lx, cy, 13) + spiral(rx, cy, 13);
-  else if (baseStyle === 'void') {
+  if (style === 'ring_plain') out += ring(lx, cy, 13) + ring(rx, cy, 13);
+  else if (style === 'spiral') out += spiral(lx, cy, 13) + spiral(rx, cy, 13);
+  else if (style === 'ring_double') out += ring(lx, cy, 14) + ring(lx, cy, 7) + ring(rx, cy, 14) + ring(rx, cy, 7);
+  else if (style === 'asymmetric') out += ring(lx, cy, 13) + spiral(rx, cy, 13);
+  else if (style === 'void') {
     const fillCol = col || ink;
     out += '<circle cx="' + lx + '" cy="' + cy + '" r="14" fill="' + fillCol + '"/>';
     out += '<circle cx="' + rx + '" cy="' + cy + '" r="14" fill="' + fillCol + '"/>';
     out += ring(lx, cy, 15) + ring(rx, cy, 15);
-  }
-
-  if (isGlow && out) {
-    // Concentric radial-gradient glow, matching the reference exactly: a
-    // black pupil center, a bright core band, and a warm dark outer band
-    // fading to nothing — not a blur. Pure gradient fill stays perfectly
-    // crisp (gradients are just color transitions, no resampling), and it
-    // sits BEHIND the existing ring/spiral/void geometry, which still draws
-    // fully sharp on top.
-    const baseHex = col || '#e8b23a'; // warm gold default when no eyeColor picked
-    const core = shadeColor(baseHex, 30);
-    const outer = shadeColor(baseHex, -50);
-    const gradId = 'eyeglow' + uid;
-    // Tight transition zones (1-2% spans) between bands instead of a smooth
-    // continuous blend — that's what was reading as "blurry": a gradual
-    // interpolation over 10-38% of the radius looks soft no matter how
-    // crisp the underlying rendering is. Real ring separation needs each
-    // color to hold flat, then snap to the next.
-    const gradDef = '<radialGradient id="' + gradId + '" cx="50%" cy="50%" r="50%">' +
-      '<stop offset="0%" stop-color="#000"/>' +
-      '<stop offset="13%" stop-color="#000"/>' +
-      '<stop offset="15%" stop-color="' + core + '"/>' +
-      '<stop offset="44%" stop-color="' + core + '"/>' +
-      '<stop offset="46%" stop-color="' + outer + '"/>' +
-      '<stop offset="76%" stop-color="' + outer + '" stop-opacity="1"/>' +
-      '<stop offset="100%" stop-color="' + outer + '" stop-opacity="0"/>' +
-      '</radialGradient>';
-    const glowDiscs = '<circle cx="' + lx + '" cy="' + cy + '" r="23" fill="url(#' + gradId + ')"/>' +
-      '<circle cx="' + rx + '" cy="' + cy + '" r="23" fill="url(#' + gradId + ')"/>';
-    // void's own opaque fill+ring would just mask the gradient bands entirely
-    // (its solid circle is bigger than the gradient's bright core) — the
-    // gradient alone already reads as a complete glowing eye (it has its own
-    // black pupil built in), so skip drawing void's normal geometry on top.
-    // Line-based styles (rings/spiral) still draw over the glow, since an
-    // outline sitting on top of the glow reads as "a ring around a glowing iris."
-    if (baseStyle === 'void') return gradDef + glowDiscs;
-    return gradDef + glowDiscs + out;
   }
   return out;
 }
@@ -666,49 +618,49 @@ function renderGround(w, y, style, rng, grassColor) {
   return out;
 }
 
-function renderCompanion(x, y, style, rng, col) {
+function renderCompanion(x, y, style, rng) {
   const cls = style === 'cat_ghost' ? 'strokeGhost' : 'stroke';
   let out = '<g transform="translate(' + x + ',' + y + ')">';
 
   if (style === 'cat' || style === 'cat_ghost') {
-    out += doubleStroke([[-30, 20], [-20, -6], [10, -10], [30, 10], [30, 22]], rng, 2, cls, col);
-    for (const lx of [-22, -8, 8, 22]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls, col);
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [34 + Math.cos(a) * 16, -4 + Math.sin(a) * 13]; }), rng, 1.2, cls, col);
-    out += doubleStroke([[24, -14], [20, -30], [30, -18]], rng, 1.5, cls, col);
-    out += doubleStroke([[42, -14], [46, -30], [38, -18]], rng, 1.5, cls, col);
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [29 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls, col);
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [39 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls, col);
-    for (let i = 0; i < 3; i++) out += doubleStroke([[30 + i * 4, 3], [30 + i * 4, 7]], rng, 0.6, cls, col);
+    out += doubleStroke([[-30, 20], [-20, -6], [10, -10], [30, 10], [30, 22]], rng, 2, cls);
+    for (const lx of [-22, -8, 8, 22]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls);
+    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [34 + Math.cos(a) * 16, -4 + Math.sin(a) * 13]; }), rng, 1.2, cls);
+    out += doubleStroke([[24, -14], [20, -30], [30, -18]], rng, 1.5, cls);
+    out += doubleStroke([[42, -14], [46, -30], [38, -18]], rng, 1.5, cls);
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [29 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls);
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [39 + Math.cos(a) * 3.5, -5 + Math.sin(a) * 3.5]; }), rng, 0.8, cls);
+    for (let i = 0; i < 3; i++) out += doubleStroke([[30 + i * 4, 3], [30 + i * 4, 7]], rng, 0.6, cls);
   } else if (style === 'dog') {
     // Longer snout, floppy ears, wagging tail — same visual language, distinct silhouette.
-    out += doubleStroke([[-32, 20], [-22, -4], [12, -8], [34, 12], [34, 22]], rng, 2, cls, col);
-    for (const lx of [-24, -8, 10, 26]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls, col);
-    out += doubleStroke([[34, -6], [50, -2], [48, 8], [34, 6]], rng, 1.2, cls, col); // snout
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [30 + Math.cos(a) * 15, -10 + Math.sin(a) * 12]; }), rng, 1.2, cls, col); // head
-    out += doubleStroke([[20, -18], [12, -6], [22, -2]], rng, 1.5, cls, col); // floppy ear
-    out += doubleStroke([[42, -20], [50, -8], [40, -4]], rng, 1.5, cls, col); // floppy ear
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [26 + Math.cos(a) * 3, -12 + Math.sin(a) * 3]; }), rng, 0.7, cls, col);
-    out += doubleStroke([[44, 4], [46, 2], [46, 6], [44, 4]], rng, 0.5, cls, col); // nose
-    out += doubleStroke([[-32, 20], [-42, 8], [-46, -2]], rng, 1.5, cls, col); // tail
+    out += doubleStroke([[-32, 20], [-22, -4], [12, -8], [34, 12], [34, 22]], rng, 2, cls);
+    for (const lx of [-24, -8, 10, 26]) out += doubleStroke([[lx, 18], [lx, 34]], rng, 1.5, cls);
+    out += doubleStroke([[34, -6], [50, -2], [48, 8], [34, 6]], rng, 1.2, cls); // snout
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [30 + Math.cos(a) * 15, -10 + Math.sin(a) * 12]; }), rng, 1.2, cls); // head
+    out += doubleStroke([[20, -18], [12, -6], [22, -2]], rng, 1.5, cls); // floppy ear
+    out += doubleStroke([[42, -20], [50, -8], [40, -4]], rng, 1.5, cls); // floppy ear
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [26 + Math.cos(a) * 3, -12 + Math.sin(a) * 3]; }), rng, 0.7, cls);
+    out += doubleStroke([[44, 4], [46, 2], [46, 6], [44, 4]], rng, 0.5, cls); // nose
+    out += doubleStroke([[-32, 20], [-42, 8], [-46, -2]], rng, 1.5, cls); // tail
   } else if (style === 'bird') {
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 18, 0 + Math.sin(a) * 14]; }), rng, 1.3, cls, col); // body
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [22 + Math.cos(a) * 11, -14 + Math.sin(a) * 10]; }), rng, 1.1, cls, col); // head
-    out += doubleStroke([[32, -14], [44, -10], [32, -6]], rng, 1, cls, col); // beak
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 2.6, -16 + Math.sin(a) * 2.6]; }), rng, 0.6, cls, col); // eye
-    out += doubleStroke([[-6, 10], [-6, 26]], rng, 1.2, cls, col); // leg
-    out += doubleStroke([[8, 10], [8, 26]], rng, 1.2, cls, col); // leg
-    out += doubleStroke([[-10, 26], [-2, 26]], rng, 1, cls, col);
-    out += doubleStroke([[4, 26], [12, 26]], rng, 1, cls, col);
-    out += doubleStroke([[-16, 2], [-30, -6], [-16, -8]], rng, 1.3, cls, col); // wing
+    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 18, 0 + Math.sin(a) * 14]; }), rng, 1.3, cls); // body
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [22 + Math.cos(a) * 11, -14 + Math.sin(a) * 10]; }), rng, 1.1, cls); // head
+    out += doubleStroke([[32, -14], [44, -10], [32, -6]], rng, 1, cls); // beak
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 2.6, -16 + Math.sin(a) * 2.6]; }), rng, 0.6, cls); // eye
+    out += doubleStroke([[-6, 10], [-6, 26]], rng, 1.2, cls); // leg
+    out += doubleStroke([[8, 10], [8, 26]], rng, 1.2, cls); // leg
+    out += doubleStroke([[-10, 26], [-2, 26]], rng, 1, cls);
+    out += doubleStroke([[4, 26], [12, 26]], rng, 1, cls);
+    out += doubleStroke([[-16, 2], [-30, -6], [-16, -8]], rng, 1.3, cls); // wing
   } else if (style === 'bunny') {
-    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 20, 6 + Math.sin(a) * 15]; }), rng, 1.4, cls, col); // body
-    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [26 + Math.cos(a) * 13, -8 + Math.sin(a) * 11]; }), rng, 1.2, cls, col); // head
-    out += doubleStroke([[20, -18], [16, -42], [24, -20]], rng, 1.4, cls, col); // long ear
-    out += doubleStroke([[32, -18], [36, -42], [28, -20]], rng, 1.4, cls, col); // long ear
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls, col);
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [30 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls, col);
-    for (const lx of [-14, 0, 12, 24]) out += doubleStroke([[lx, 18], [lx, 30]], rng, 1.3, cls, col);
-    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [-18 + Math.cos(a) * 6, 12 + Math.sin(a) * 6]; }), rng, 1, cls, col); // tail puff
+    out += doubleStroke(Array.from({ length: 15 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [0 + Math.cos(a) * 20, 6 + Math.sin(a) * 15]; }), rng, 1.4, cls); // body
+    out += doubleStroke(Array.from({ length: 13 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return [26 + Math.cos(a) * 13, -8 + Math.sin(a) * 11]; }), rng, 1.2, cls); // head
+    out += doubleStroke([[20, -18], [16, -42], [24, -20]], rng, 1.4, cls); // long ear
+    out += doubleStroke([[32, -18], [36, -42], [28, -20]], rng, 1.4, cls); // long ear
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [22 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls);
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [30 + Math.cos(a) * 3, -9 + Math.sin(a) * 3]; }), rng, 0.7, cls);
+    for (const lx of [-14, 0, 12, 24]) out += doubleStroke([[lx, 18], [lx, 30]], rng, 1.3, cls);
+    out += doubleStroke(Array.from({ length: 11 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return [-18 + Math.cos(a) * 6, 12 + Math.sin(a) * 6]; }), rng, 1, cls); // tail puff
   }
 
   out += '</g>';
@@ -721,7 +673,6 @@ function renderFromTraits(picks, index, seed) {
   const bg = TRAITS.background.find((o) => o.id === picks.background.id);
   const ink = inkFor(bg.id);
   const cx = W / 2;
-  const uid = (seed ?? 0) + '_' + index;
 
   let body = '';
   if (bg.id === 'black' || bg.id === 'deep_black') body += renderStarfield(W, H, rng);
@@ -750,7 +701,7 @@ function renderFromTraits(picks, index, seed) {
   body += renderEars(headCx - headSize / 2 - 24, headCy, picks.ears.id, rng, true);
   body += renderEars(headCx + headSize / 2 + 24, headCy, picks.ears.id, rng, false);
   const eyeColorHex = picks.eyeColor.hex || null;
-  body += renderEyes(headCx, headCy - 10, picks.eyes.id, rng, ink, eyeColorHex, uid);
+  body += renderEyes(headCx, headCy - 10, picks.eyes.id, rng, ink, eyeColorHex);
   body += renderMouth(headCx, headCy + 45, picks.mouth.id, rng);
 
   const neckTop = headTop + headSize;
@@ -780,8 +731,7 @@ function renderFromTraits(picks, index, seed) {
     body += renderFoot(headCx + 34, groundY - 13, footStyle, rng, false);
   }
 
-  const companionColorHex = picks.companionColor.hex || null;
-  if (picks.companion.id !== 'none') body += renderCompanion(headCx + 110, groundY - 40, picks.companion.id, rng, companionColorHex);
+  if (picks.companion.id !== 'none') body += renderCompanion(headCx + 110, groundY - 40, picks.companion.id, rng);
 
   // Scoped by #piece{uid} — without this, identical class names (.stroke,
   // .strokeThick, etc.) across every tile on the gallery page are NOT scoped
@@ -789,6 +739,7 @@ function renderFromTraits(picks, index, seed) {
   // rendered on the page silently overrides every earlier piece's ink color.
   // That's what made black-background tiles look near-blank: their strokes
   // were secretly repainted in whatever ink the last tile on the page used.
+  const uid = (seed ?? 0) + '_' + index;
   const style =
     '<style>' +
     '#piece' + uid + ' .stroke{stroke:' + ink + ';stroke-width:4.2px;fill:none;}' +
@@ -813,11 +764,11 @@ function renderFromTraits(picks, index, seed) {
 const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
-    background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void_glow', eyeColor: 'red', mouth: 'fangs_stitch',
-    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', companionColor: 'gray'
+    background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
+    chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'companionColor'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'chestMark', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -852,7 +803,7 @@ const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'black', weight: 55 }, { id: 'deep_black', weight: 45 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
-  eyes: [{ id: 'void_glow', weight: 22 }, { id: 'asymmetric_glow', weight: 18 }, { id: 'ring_double_glow', weight: 16 }, { id: 'void', weight: 14 }, { id: 'spiral_glow', weight: 12 }, { id: 'ring_plain_glow', weight: 10 }, { id: 'asymmetric', weight: 4 }, { id: 'ring_double', weight: 4 }],
+  eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }],
   eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }],
   mouth: [{ id: 'fangs_stitch', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'single_line', weight: 24 }, { id: 'stitches_uneven', weight: 20 }],
   chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'blank', weight: 12 }, { id: 'emoji_ghost', weight: 11 }, { id: 'emoji_skull', weight: 11 }, { id: 'emoji_100', weight: 9 }, { id: 'emoji_rainbow', weight: 9 }, { id: 'emoji_rocket', weight: 9 }, { id: 'emoji_broken_heart', weight: 9 }, { id: 'emoji_blast', weight: 9 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
@@ -861,8 +812,7 @@ const ONE_OF_ONE_WEIGHTS = {
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
   grassColor: [{ id: 'white', weight: 46 }, { id: 'default', weight: 42 }, { id: 'green', weight: 12 }],
-  companion: [{ id: 'cat_ghost', weight: 22 }, { id: 'bunny', weight: 20 }, { id: 'cat', weight: 18 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 14 }, { id: 'none', weight: 10 }],
-  companionColor: [{ id: 'orange', weight: 30 }, { id: 'brown', weight: 26 }, { id: 'red', weight: 22 }, { id: 'gray', weight: 18 }, { id: 'default', weight: 8 }]
+  companion: [{ id: 'cat_ghost', weight: 22 }, { id: 'bunny', weight: 20 }, { id: 'cat', weight: 18 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 14 }, { id: 'none', weight: 10 }]
 };
 function pickOneOfOne(category, rng) {
   const weights = ONE_OF_ONE_WEIGHTS[category];
@@ -922,28 +872,9 @@ function generatePiece(index, seed, tier, opts) {
     sky: sigOverride ? sigOverride.sky : pick('sky'),
     ground: sigOverride ? sigOverride.ground : pick('ground'),
     grassColor: sigOverride ? sigOverride.grassColor : pick('grassColor'),
-    companion: sigOverride ? sigOverride.companion : pick('companion'),
-    companionColor: sigOverride ? sigOverride.companionColor : pick('companionColor')
+    companion: sigOverride ? sigOverride.companion : pick('companion')
   };
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
-
-  // Green grass is a guaranteed, sequential thing, not a random chance —
-  // every 1/1 numbered 1-25 gets it, no exceptions (this overrides even a
-  // fired signature combo), and it's never reachable past #25 or on any
-  // regular piece. Only an explicit user lock on grassColor can override this.
-  const grassLocked = !!(locks.grassColor && locks.grassColor.length);
-  if (!grassLocked) {
-    if (isOneOfOne && index <= 25) {
-      picks.grassColor = TRAITS.grassColor.find((o) => o.id === 'green');
-    } else if (picks.grassColor.id === 'green') {
-      const pool = ONE_OF_ONE_WEIGHTS.grassColor.filter((w) => w.id !== 'green');
-      const total = pool.reduce((s, w) => s + w.weight, 0);
-      let r = rng() * total;
-      let pickedId = pool[pool.length - 1].id;
-      for (const w of pool) { if (r < w.weight) { pickedId = w.id; break; } r -= w.weight; }
-      picks.grassColor = TRAITS.grassColor.find((o) => o.id === pickedId);
-    }
-  }
 
   const svg = renderFromTraits(picks, index, seed);
   const traits = {}, rarity = {};
@@ -1078,55 +1009,10 @@ function render() {
   }, 10);
 }
 
-let gridObserver = null;
 function renderGrid() {
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
   const oneOfOnes = currentPieces.filter(p => p.isOneOfOne).length;
   document.getElementById('status-label').textContent = currentPieces.length + ' pieces generated' + (oneOfOnes ? ' (' + oneOfOnes + ' marked 1/1)' : '');
-
-  // Each piece's SVG is ~150-200 elements — inserting all of them upfront for
-  // a large batch (the hub allows up to 10,000) means hundreds of thousands
-  // of DOM nodes and multi-minute freezes. Instead, tiles start as lightweight
-  // placeholders and only get their real SVG filled in once they scroll near
-  // the viewport (matching the lazy/virtualized grid pattern the other
-  // generators already use) — the lightbox still works on any tile
-  // immediately since it reads straight from the currentPieces array, not
-  // from whatever's currently in the DOM.
-  function loadTile(tile) {
-    const idx = parseInt(tile.dataset.idx, 10);
-    const p = currentPieces[idx];
-    if (tile.dataset.loaded) return;
-    tile.dataset.loaded = '1';
-    tile.innerHTML = p.svg + '<div class="tile-label' + (p.isOneOfOne ? ' is-1of1' : '') + '">#' + p.index + (p.isOneOfOne ? ' · 1/1' : '') + '</div>';
-    if (gridObserver) gridObserver.unobserve(tile);
-  }
-
-  if (gridObserver) gridObserver.disconnect();
-  gridObserver = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) loadTile(entry.target);
-    }
-  }, { root: null, rootMargin: '800px 0px', threshold: 0.01 });
-
-  const frag = document.createDocumentFragment();
-  currentPieces.forEach((p, idx) => {
-    const tile = document.createElement('div'); tile.className = 'tile'; tile.dataset.idx = idx;
-    frag.appendChild(tile);
-  });
-  grid.appendChild(frag);
-  const tiles = grid.querySelectorAll('.tile');
-  // Eagerly load the first screenful worth of tiles regardless of scroll
-  // position — relying purely on intersection meant the grid stayed
-  // completely blank on mobile, where the stacked trait panels push the
-  // grid thousands of pixels below the fold, far past any reasonable
-  // margin. A fixed first-batch guarantees something is visible immediately
-  // on any device, and the observer still handles everything past that.
-  const EAGER_COUNT = 16;
-  tiles.forEach((tile, i) => {
-    if (i < EAGER_COUNT) loadTile(tile);
-    else gridObserver.observe(tile);
-  });
+  VG.reset(currentPieces.length);
 }
 
 function showToast(msg) {
@@ -1203,7 +1089,7 @@ async function downloadBatchZip() {
       const attrs = Object.keys(p.traits).map(k => ({ trait_type: traitTypeLabel(k), value: p.traits[k], rarity: p.rarity[k] }));
       if (p.isOneOfOne) attrs.push({ trait_type: 'Tier', value: '1/1' });
       const meta = { name: getDisplayName() + ' #' + p.index, description: getDescription() || 'Generative chalk-line character from ' + getDisplayName() + '.', image: 'images/' + p.index + '.png', vector: 'vectors/' + p.index + '.svg', chain: currentChain, isOneOfOne: !!p.isOneOfOne, attributes: attrs };
-      const sym = getSymbol(); if (sym) meta.symbol = sym; if (currentChain === 'ethereum') meta.external_url = '';
+      const sym = getSymbol(); if (sym) meta.symbol = sym; if (currentChain !== 'bitcoin') meta.external_url = '';
       metadata.file(p.index + '.json', JSON.stringify(meta, null, 2));
     }
     if (currentPieces.length > 40) showToast('Rendered ' + (start + BATCH) + '/' + currentPieces.length + '…');
@@ -1220,16 +1106,146 @@ async function downloadBatchZip() {
 }
 
 function openLightbox(idx) {
+  lbIdx = idx;
   const p = currentPieces[idx];
   document.getElementById('lb-preview').innerHTML = getDisplaySVG(p);
-  const lt = document.getElementById('lb-title'); lt.textContent = getDisplayName() + ' #' + p.index; lt.classList.toggle('is-1of1', !!p.isOneOfOne);
+  const lt = document.getElementById('lb-title'); lt.textContent = getDisplayName() + ' #' + p.index + (p.isOneOfOne ? ' · 1/1' : ''); lt.classList.toggle('is-1of1', !!p.isOneOfOne);
   document.getElementById('lb-traits').innerHTML = Object.entries(p.traits).map(([k, v]) => '<div class="lb-trait"><div class="lb-trait-k">' + traitTypeLabel(k) + '</div><div class="lb-trait-v">' + String(v).replace(/_/g, ' ') + ' <span style="font-size:9px;color:' + rarityColor(p.rarity[k]) + ';text-transform:uppercase;">' + p.rarity[k] + '</span></div></div>').join('');
   document.getElementById('lb-download-png').onclick = () => downloadPNG(p);
   document.getElementById('lb-download').onclick = () => downloadSVG(p);
   document.getElementById('lb-copy').onclick = () => copySVG(p);
+  document.getElementById('lb-copy-img').onclick = () => copyImage(p);
   document.getElementById('lightbox').classList.add('open');
+  document.getElementById('lb-close-btn').focus();
 }
-function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); document.getElementById('lb-preview').innerHTML = ''; }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); document.getElementById('lb-preview').innerHTML = ''; lbIdx = -1; }
+
+// gallery hooks for the shared virtual grid / lightbox below
+const GALLERY_ASPECT = 572 / 500; // art height / width
+function galleryThumb(p) { return p.svg; }
+function galleryPng(p) { return svgToPngBlob(ensureSVG(p), 1000); }
+
+/* ---------- virtual grid (shared gallery view, same as Generator 5) ----------
+   Absolutely-positioned tiles against the page scroll; only tiles entering/leaving the
+   window are added/removed (existing tiles are never re-parsed), and new tiles fill
+   their SVG a few per animation frame after an instant sized placeholder. */
+const VG = (function(){
+  const grid = document.getElementById('grid');
+  const tileEls = new Map(), queue = [];
+  let count = 0, cols = 4, tile = 160, artH = 160, gap = 6, labelH = 24, rowH = 190, raf = 0, sched = 0, lastW = window.innerWidth;
+
+  function measure(){
+    const w = grid.clientWidth;
+    const mobile = window.innerWidth <= 600;
+    labelH = mobile ? 20 : 24;
+    cols = mobile ? 3 : Math.max(2, Math.floor((w + gap) / (160 + gap)));
+    tile = (w - gap * (cols - 1)) / cols;
+    artH = tile * GALLERY_ASPECT;
+    rowH = artH + labelH + gap;
+    grid.style.height = count ? (Math.ceil(count / cols) * rowH - gap) + 'px' : '0px';
+  }
+  function place(el, i){
+    el.style.transform = `translate(${(i % cols) * (tile + gap)}px,${Math.floor(i / cols) * rowH}px)`;
+    el.style.width = tile + 'px';
+    el.style.height = (artH + labelH) + 'px';
+  }
+  function makeTile(i){
+    const p = currentPieces[i];
+    const el = document.createElement('div');
+    el.className = 'tile'; el.dataset.idx = i; el.tabIndex = 0;
+    el.setAttribute('role', 'button'); el.setAttribute('aria-label', 'Open #' + p.index);
+    el.innerHTML = `<div class="art"></div><div class="${p.isOneOfOne ? 'tile-label is-1of1' : 'tile-label'}">#${p.index}${p.isOneOfOne ? ' · 1/1' : ''}</div>`;
+    place(el, i);
+    return el;
+  }
+  function pump(){
+    raf = 0;
+    let n = 8;
+    while (n-- > 0 && queue.length) {
+      const i = queue.shift(), el = tileEls.get(i);
+      if (!el || el.dataset.ready) continue;
+      el.firstChild.innerHTML = galleryThumb(currentPieces[i]); el.dataset.ready = '1';
+    }
+    if (queue.length) raf = requestAnimationFrame(pump);
+  }
+  function renderVisible(){
+    sched = 0;
+    if (!count) return;
+    const rect = grid.getBoundingClientRect(), winH = window.innerHeight || 800;
+    const into = -rect.top;
+    const r0 = Math.max(0, Math.floor(into / rowH) - 3);
+    const r1 = Math.max(0, Math.ceil((into + winH) / rowH) + 3);
+    const i0 = r0 * cols, i1 = Math.min(count, r1 * cols);
+    for (const [i, el] of tileEls) if (i < i0 || i >= i1) { el.remove(); tileEls.delete(i); }
+    const frag = document.createDocumentFragment();
+    for (let i = i0; i < i1; i++) {
+      if (tileEls.has(i)) continue;
+      const el = makeTile(i); tileEls.set(i, el); frag.appendChild(el);
+      queue.push(i);
+    }
+    grid.appendChild(frag);
+    for (let k = queue.length - 1; k >= 0; k--) if (!tileEls.has(queue[k])) queue.splice(k, 1);
+    if (queue.length && !raf) raf = requestAnimationFrame(pump);
+  }
+  const schedule = () => { if (!sched) sched = requestAnimationFrame(renderVisible); };
+  window.addEventListener('scroll', schedule, { passive: true });
+  // mobile address-bar collapse fires height-only resizes: only re-layout on width change
+  window.addEventListener('resize', () => {
+    if (window.innerWidth !== lastW) { lastW = window.innerWidth; measure(); for (const [i, el] of tileEls) place(el, i); }
+    schedule();
+  });
+  return {
+    reset(n){ count = n; tileEls.clear(); queue.length = 0; grid.innerHTML = ''; measure(); renderVisible(); },
+    // pieces generated so far (chunked generation grows the grid as it goes)
+    grow(n){ count = n; measure(); schedule(); }
+  };
+})();
+
+/* ---------- lightbox extras (same as Generator 5): copy image, keyboard nav ---------- */
+let lbIdx = -1;
+function blobToDataUrl(b){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
+// Copy the piece as a real PNG image (pastes into X, Discord, Telegram, Photoshop…).
+// The blob promise goes straight into ClipboardItem so Safari keeps the click's user-gesture.
+async function copyImage(p){
+  const pngPromise = galleryPng(p);
+  pngPromise.catch(() => {});
+  try {
+    if (!navigator.clipboard || typeof ClipboardItem === 'undefined') throw new Error('no clipboard');
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngPromise })]);
+    showToast('Image copied — paste it anywhere');
+    return;
+  } catch (e) {}
+  // Fallback 1: native share sheet (mobile) → Copy / Save image / send to an app
+  try {
+    const blob = await pngPromise;
+    const file = new File([blob], getFileSafeName() + '-' + p.index + '.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  // Fallback 2: clipboard is blocked here (e.g. an embedded preview). Swap the preview for a real PNG
+  // so the browser's own right-click / long-press "Copy image" works on it.
+  try {
+    const src = await blobToDataUrl(await pngPromise);
+    const prev = document.getElementById('lb-preview');
+    prev.innerHTML = '';
+    const img = new Image(); img.src = src; img.alt = getDisplayName() + ' #' + p.index;
+    img.style.cssText = 'display:block;width:100%;height:auto;';
+    prev.appendChild(img);
+    const hint = document.createElement('div');
+    hint.className = 'copy-hint';
+    hint.textContent = 'Right-click (or long-press) the image → Copy image';
+    prev.appendChild(hint);
+    showToast('Clipboard blocked here — right-click or long-press the image → Copy image', 5000);
+  } catch (e) { showToast('Could not render this piece to PNG'); }
+}
+document.addEventListener('keydown', e => {
+  if (lbIdx < 0) return;
+  const n = currentPieces.length;
+  if (e.key === 'Escape') closeLightbox();
+  else if (e.key === 'ArrowRight') { const j = (lbIdx + 1) % n; if (currentPieces[j]) openLightbox(j); }
+  else if (e.key === 'ArrowLeft') { const j = (lbIdx - 1 + n) % n; if (currentPieces[j]) openLightbox(j); }
+  else if ((e.key === 'c' || e.key === 'C') && !e.metaKey && !e.ctrlKey) copyImage(currentPieces[lbIdx]);
+});
+document.getElementById('grid').addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const t = e.target.closest('.tile'); if (!t) return; e.preventDefault(); openLightbox(parseInt(t.dataset.idx, 10)); });
 
 document.getElementById('chain-controls').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; currentChain = b.dataset.chain; document.querySelectorAll('#chain-controls .chip').forEach(c => c.classList.remove('active')); b.classList.add('active'); applyChainTheme(currentChain); });
 document.getElementById('collection-name-input').addEventListener('input', () => { const v = document.getElementById('collection-name-input').value.trim(); document.getElementById('h1-text').textContent = v || 'Chalkbots'; document.title = (v || 'Chalkbots') + ' — Generator'; });

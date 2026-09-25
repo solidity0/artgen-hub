@@ -46,11 +46,14 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .btn-ghost:hover { color:var(--white); border-color:var(--white); }
 .status-row { display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px; flex-wrap:wrap; gap:8px; }
 .status-label { font-family:'Space Mono',monospace; font-size:11px; color:var(--mid); }
-.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:6px; overflow-anchor:none; }
-.tile { background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; aspect-ratio:500/620; }
+.grid { position:relative; overflow-anchor:none; }
+.grid-viewport { position:relative; overflow-anchor:none; }
+.tile { position:absolute; top:0; left:0; background:var(--panel); border:1px solid var(--border); cursor:pointer; overflow:hidden; transition:border-color .15s; display:flex; flex-direction:column; }
+.tile .art { flex:1; min-height:0; background:#0e0e0e; }
+.tile:focus-visible { outline:2px solid var(--acid); outline-offset:1px; }
 .tile:hover { border-color:var(--acid); }
-.tile svg { display:block; width:100%; height:auto; aspect-ratio:500/572; }
-.tile-label { padding:5px 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
+.tile svg { display:block; width:100%; height:100%; }
+.tile-label { height:24px; display:flex; align-items:center; padding:0 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
 .tile-label.is-1of1 { color:var(--acid); font-weight:700; }
 .lightbox { display:none; position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.88); align-items:center; justify-content:center; padding:20px; }
 .lightbox.open { display:flex; }
@@ -82,9 +85,11 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   .chip { font-size:9px; padding:5px 7px; }
   .run-row { padding:12px; gap:8px; }
   .run-row .field input { width:64px; }
-  .grid { grid-template-columns:repeat(3,1fr); gap:4px; }
-  .tile-label { font-size:9px; padding:4px 5px; }
 }
+.lb-preview { position:relative; }
+.lb-preview svg { height:auto; }
+.copy-hint { position:absolute; left:8px; right:8px; bottom:8px; background:rgba(0,0,0,.78); color:#fff; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.04em; padding:7px 9px; border-left:3px solid var(--acid); pointer-events:none; }
+@media(max-width:600px) { .tile-label { height:20px; font-size:9px; padding:0 5px; } }
 </style>
 </head>
 <body>
@@ -138,11 +143,13 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
     <button class="btn btn-ghost" id="csv-btn">Export trait sheet</button>
   </div>
   <div class="status-row"><span class="status-label" id="status-label"></span></div>
-  <div class="grid" id="grid"></div>
+  <div class="grid-viewport" id="grid-viewport">
+    <div class="grid" id="grid"></div>
+  </div>
 </main>
-<div class="lightbox" id="lightbox">
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lb-title">
   <div class="lb-inner">
-    <button class="lb-close" id="lb-close-btn">✕</button>
+    <button class="lb-close" id="lb-close-btn" aria-label="Close">✕</button>
     <div class="lb-preview" id="lb-preview"></div>
     <div class="lb-meta">
       <div class="lb-title" id="lb-title"></div>
@@ -150,6 +157,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
       <div class="lb-actions">
         <button class="btn btn-acid" id="lb-download-png">Download PNG</button>
         <button class="btn btn-ghost" id="lb-download">Download SVG</button>
+        <button class="btn btn-acid" id="lb-copy-img" title="Copy the image to your clipboard (shortcut: C)">Copy image</button>
         <button class="btn btn-ghost" id="lb-copy">Copy markup</button>
       </div>
     </div>
@@ -258,55 +266,10 @@ function render() {
   }, 10);
 }
 
-let gridObserver = null;
 function renderGrid() {
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
   const oneOfOnes = currentPieces.filter(p => p.isOneOfOne).length;
   document.getElementById('status-label').textContent = currentPieces.length + ' pieces generated' + (oneOfOnes ? ' (' + oneOfOnes + ' marked 1/1)' : '');
-
-  // Each piece's SVG is ~150-200 elements — inserting all of them upfront for
-  // a large batch (the hub allows up to 10,000) means hundreds of thousands
-  // of DOM nodes and multi-minute freezes. Instead, tiles start as lightweight
-  // placeholders and only get their real SVG filled in once they scroll near
-  // the viewport (matching the lazy/virtualized grid pattern the other
-  // generators already use) — the lightbox still works on any tile
-  // immediately since it reads straight from the currentPieces array, not
-  // from whatever's currently in the DOM.
-  function loadTile(tile) {
-    const idx = parseInt(tile.dataset.idx, 10);
-    const p = currentPieces[idx];
-    if (tile.dataset.loaded) return;
-    tile.dataset.loaded = '1';
-    tile.innerHTML = p.svg + '<div class="tile-label' + (p.isOneOfOne ? ' is-1of1' : '') + '">#' + p.index + (p.isOneOfOne ? ' · 1/1' : '') + '</div>';
-    if (gridObserver) gridObserver.unobserve(tile);
-  }
-
-  if (gridObserver) gridObserver.disconnect();
-  gridObserver = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) loadTile(entry.target);
-    }
-  }, { root: null, rootMargin: '800px 0px', threshold: 0.01 });
-
-  const frag = document.createDocumentFragment();
-  currentPieces.forEach((p, idx) => {
-    const tile = document.createElement('div'); tile.className = 'tile'; tile.dataset.idx = idx;
-    frag.appendChild(tile);
-  });
-  grid.appendChild(frag);
-  const tiles = grid.querySelectorAll('.tile');
-  // Eagerly load the first screenful worth of tiles regardless of scroll
-  // position — relying purely on intersection meant the grid stayed
-  // completely blank on mobile, where the stacked trait panels push the
-  // grid thousands of pixels below the fold, far past any reasonable
-  // margin. A fixed first-batch guarantees something is visible immediately
-  // on any device, and the observer still handles everything past that.
-  const EAGER_COUNT = 16;
-  tiles.forEach((tile, i) => {
-    if (i < EAGER_COUNT) loadTile(tile);
-    else gridObserver.observe(tile);
-  });
+  VG.reset(currentPieces.length);
 }
 
 function showToast(msg) {
@@ -383,7 +346,7 @@ async function downloadBatchZip() {
       const attrs = Object.keys(p.traits).map(k => ({ trait_type: traitTypeLabel(k), value: p.traits[k], rarity: p.rarity[k] }));
       if (p.isOneOfOne) attrs.push({ trait_type: 'Tier', value: '1/1' });
       const meta = { name: getDisplayName() + ' #' + p.index, description: getDescription() || 'Generative chalk-line character from ' + getDisplayName() + '.', image: 'images/' + p.index + '.png', vector: 'vectors/' + p.index + '.svg', chain: currentChain, isOneOfOne: !!p.isOneOfOne, attributes: attrs };
-      const sym = getSymbol(); if (sym) meta.symbol = sym; if (currentChain === 'ethereum') meta.external_url = '';
+      const sym = getSymbol(); if (sym) meta.symbol = sym; if (currentChain !== 'bitcoin') meta.external_url = '';
       metadata.file(p.index + '.json', JSON.stringify(meta, null, 2));
     }
     if (currentPieces.length > 40) showToast('Rendered ' + (start + BATCH) + '/' + currentPieces.length + '…');
@@ -400,16 +363,146 @@ async function downloadBatchZip() {
 }
 
 function openLightbox(idx) {
+  lbIdx = idx;
   const p = currentPieces[idx];
   document.getElementById('lb-preview').innerHTML = getDisplaySVG(p);
-  const lt = document.getElementById('lb-title'); lt.textContent = getDisplayName() + ' #' + p.index; lt.classList.toggle('is-1of1', !!p.isOneOfOne);
+  const lt = document.getElementById('lb-title'); lt.textContent = getDisplayName() + ' #' + p.index + (p.isOneOfOne ? ' · 1/1' : ''); lt.classList.toggle('is-1of1', !!p.isOneOfOne);
   document.getElementById('lb-traits').innerHTML = Object.entries(p.traits).map(([k, v]) => '<div class="lb-trait"><div class="lb-trait-k">' + traitTypeLabel(k) + '</div><div class="lb-trait-v">' + String(v).replace(/_/g, ' ') + ' <span style="font-size:9px;color:' + rarityColor(p.rarity[k]) + ';text-transform:uppercase;">' + p.rarity[k] + '</span></div></div>').join('');
   document.getElementById('lb-download-png').onclick = () => downloadPNG(p);
   document.getElementById('lb-download').onclick = () => downloadSVG(p);
   document.getElementById('lb-copy').onclick = () => copySVG(p);
+  document.getElementById('lb-copy-img').onclick = () => copyImage(p);
   document.getElementById('lightbox').classList.add('open');
+  document.getElementById('lb-close-btn').focus();
 }
-function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); document.getElementById('lb-preview').innerHTML = ''; }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); document.getElementById('lb-preview').innerHTML = ''; lbIdx = -1; }
+
+// gallery hooks for the shared virtual grid / lightbox below
+const GALLERY_ASPECT = 572 / 500; // art height / width
+function galleryThumb(p) { return p.svg; }
+function galleryPng(p) { return svgToPngBlob(ensureSVG(p), 1000); }
+
+/* ---------- virtual grid (shared gallery view, same as Generator 5) ----------
+   Absolutely-positioned tiles against the page scroll; only tiles entering/leaving the
+   window are added/removed (existing tiles are never re-parsed), and new tiles fill
+   their SVG a few per animation frame after an instant sized placeholder. */
+const VG = (function(){
+  const grid = document.getElementById('grid');
+  const tileEls = new Map(), queue = [];
+  let count = 0, cols = 4, tile = 160, artH = 160, gap = 6, labelH = 24, rowH = 190, raf = 0, sched = 0, lastW = window.innerWidth;
+
+  function measure(){
+    const w = grid.clientWidth;
+    const mobile = window.innerWidth <= 600;
+    labelH = mobile ? 20 : 24;
+    cols = mobile ? 3 : Math.max(2, Math.floor((w + gap) / (160 + gap)));
+    tile = (w - gap * (cols - 1)) / cols;
+    artH = tile * GALLERY_ASPECT;
+    rowH = artH + labelH + gap;
+    grid.style.height = count ? (Math.ceil(count / cols) * rowH - gap) + 'px' : '0px';
+  }
+  function place(el, i){
+    el.style.transform = `translate(${(i % cols) * (tile + gap)}px,${Math.floor(i / cols) * rowH}px)`;
+    el.style.width = tile + 'px';
+    el.style.height = (artH + labelH) + 'px';
+  }
+  function makeTile(i){
+    const p = currentPieces[i];
+    const el = document.createElement('div');
+    el.className = 'tile'; el.dataset.idx = i; el.tabIndex = 0;
+    el.setAttribute('role', 'button'); el.setAttribute('aria-label', 'Open #' + p.index);
+    el.innerHTML = `<div class="art"></div><div class="${p.isOneOfOne ? 'tile-label is-1of1' : 'tile-label'}">#${p.index}${p.isOneOfOne ? ' · 1/1' : ''}</div>`;
+    place(el, i);
+    return el;
+  }
+  function pump(){
+    raf = 0;
+    let n = 8;
+    while (n-- > 0 && queue.length) {
+      const i = queue.shift(), el = tileEls.get(i);
+      if (!el || el.dataset.ready) continue;
+      el.firstChild.innerHTML = galleryThumb(currentPieces[i]); el.dataset.ready = '1';
+    }
+    if (queue.length) raf = requestAnimationFrame(pump);
+  }
+  function renderVisible(){
+    sched = 0;
+    if (!count) return;
+    const rect = grid.getBoundingClientRect(), winH = window.innerHeight || 800;
+    const into = -rect.top;
+    const r0 = Math.max(0, Math.floor(into / rowH) - 3);
+    const r1 = Math.max(0, Math.ceil((into + winH) / rowH) + 3);
+    const i0 = r0 * cols, i1 = Math.min(count, r1 * cols);
+    for (const [i, el] of tileEls) if (i < i0 || i >= i1) { el.remove(); tileEls.delete(i); }
+    const frag = document.createDocumentFragment();
+    for (let i = i0; i < i1; i++) {
+      if (tileEls.has(i)) continue;
+      const el = makeTile(i); tileEls.set(i, el); frag.appendChild(el);
+      queue.push(i);
+    }
+    grid.appendChild(frag);
+    for (let k = queue.length - 1; k >= 0; k--) if (!tileEls.has(queue[k])) queue.splice(k, 1);
+    if (queue.length && !raf) raf = requestAnimationFrame(pump);
+  }
+  const schedule = () => { if (!sched) sched = requestAnimationFrame(renderVisible); };
+  window.addEventListener('scroll', schedule, { passive: true });
+  // mobile address-bar collapse fires height-only resizes: only re-layout on width change
+  window.addEventListener('resize', () => {
+    if (window.innerWidth !== lastW) { lastW = window.innerWidth; measure(); for (const [i, el] of tileEls) place(el, i); }
+    schedule();
+  });
+  return {
+    reset(n){ count = n; tileEls.clear(); queue.length = 0; grid.innerHTML = ''; measure(); renderVisible(); },
+    // pieces generated so far (chunked generation grows the grid as it goes)
+    grow(n){ count = n; measure(); schedule(); }
+  };
+})();
+
+/* ---------- lightbox extras (same as Generator 5): copy image, keyboard nav ---------- */
+let lbIdx = -1;
+function blobToDataUrl(b){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); }); }
+// Copy the piece as a real PNG image (pastes into X, Discord, Telegram, Photoshop…).
+// The blob promise goes straight into ClipboardItem so Safari keeps the click's user-gesture.
+async function copyImage(p){
+  const pngPromise = galleryPng(p);
+  pngPromise.catch(() => {});
+  try {
+    if (!navigator.clipboard || typeof ClipboardItem === 'undefined') throw new Error('no clipboard');
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngPromise })]);
+    showToast('Image copied — paste it anywhere');
+    return;
+  } catch (e) {}
+  // Fallback 1: native share sheet (mobile) → Copy / Save image / send to an app
+  try {
+    const blob = await pngPromise;
+    const file = new File([blob], getFileSafeName() + '-' + p.index + '.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  // Fallback 2: clipboard is blocked here (e.g. an embedded preview). Swap the preview for a real PNG
+  // so the browser's own right-click / long-press "Copy image" works on it.
+  try {
+    const src = await blobToDataUrl(await pngPromise);
+    const prev = document.getElementById('lb-preview');
+    prev.innerHTML = '';
+    const img = new Image(); img.src = src; img.alt = getDisplayName() + ' #' + p.index;
+    img.style.cssText = 'display:block;width:100%;height:auto;';
+    prev.appendChild(img);
+    const hint = document.createElement('div');
+    hint.className = 'copy-hint';
+    hint.textContent = 'Right-click (or long-press) the image → Copy image';
+    prev.appendChild(hint);
+    showToast('Clipboard blocked here — right-click or long-press the image → Copy image', 5000);
+  } catch (e) { showToast('Could not render this piece to PNG'); }
+}
+document.addEventListener('keydown', e => {
+  if (lbIdx < 0) return;
+  const n = currentPieces.length;
+  if (e.key === 'Escape') closeLightbox();
+  else if (e.key === 'ArrowRight') { const j = (lbIdx + 1) % n; if (currentPieces[j]) openLightbox(j); }
+  else if (e.key === 'ArrowLeft') { const j = (lbIdx - 1 + n) % n; if (currentPieces[j]) openLightbox(j); }
+  else if ((e.key === 'c' || e.key === 'C') && !e.metaKey && !e.ctrlKey) copyImage(currentPieces[lbIdx]);
+});
+document.getElementById('grid').addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const t = e.target.closest('.tile'); if (!t) return; e.preventDefault(); openLightbox(parseInt(t.dataset.idx, 10)); });
 
 document.getElementById('chain-controls').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; currentChain = b.dataset.chain; document.querySelectorAll('#chain-controls .chip').forEach(c => c.classList.remove('active')); b.classList.add('active'); applyChainTheme(currentChain); });
 document.getElementById('collection-name-input').addEventListener('input', () => { const v = document.getElementById('collection-name-input').value.trim(); document.getElementById('h1-text').textContent = v || 'Chalkbots'; document.title = (v || 'Chalkbots') + ' — Generator'; });

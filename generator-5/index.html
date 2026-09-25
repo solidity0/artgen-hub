@@ -99,6 +99,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
         <div class="chip-row" id="chain-controls">
           <button class="chip" data-chain="bitcoin">bitcoin</button>
           <button class="chip active" data-chain="ethereum">ethereum</button>
+          <button class="chip" data-chain="robinhood">robinhood</button>
         </div>
       </div>
       <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata"></textarea></div>
@@ -173,7 +174,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   const HX = 240;     // head centre
   const HY = 246;
   const HEAD_SCALE = 1.5; // head-only composition: art scaled up
-  const LINE_BOOST = 2.033; // head stroke weight multiplier (after head-scale compensation)
+  const LINE_BOOST = 1.992; // head stroke weight multiplier (after head-scale compensation)
   const LW = 2.3;     // main line weight
 
   /* ---------------------------------------------------------------- RNG */
@@ -1044,7 +1045,7 @@ if (!G) {
   throw new Error('window.InkPupsGen is undefined');
 }
 const GTRAITS = G.TRAITS;
-const CHAIN_THEMES = { ethereum:'#627eea', bitcoin:'#f7931a' };
+const CHAIN_THEMES = { ethereum:'#627eea', bitcoin:'#f7931a', robinhood:'#00c805' };
 
 const locks = {};
 G.CATEGORY_ORDER.forEach(k => locks[k] = []);
@@ -1307,7 +1308,7 @@ async function downloadBatchZip(){
       const attrs=G.CATEGORY_ORDER.map(k=>({trait_type:G.CATEGORY_META[k],value:G.traitName(k,p.traits[k]),rarity:rarityOf(k,p.traits[k])}));
       if(p.isOneOfOne)attrs.push({trait_type:'Tier',value:'1/1'});
       const meta={name:getDisplayName()+' #'+p.index,description:getDescription()||'Scrawled ink dog head from '+getDisplayName()+'.',image:'images/'+p.index+'.png',vector:'vectors/'+p.index+'.svg',chain:currentChain,isOneOfOne:!!p.isOneOfOne,attributes:attrs};
-      const sym=getSymbol();if(sym)meta.symbol=sym;if(currentChain==='ethereum')meta.external_url='';
+      const sym=getSymbol();if(sym)meta.symbol=sym;if(currentChain!=='bitcoin')meta.external_url='';
       metadata.file(p.index+'.json',JSON.stringify(meta,null,2));
     }
     if(currentPieces.length>40)showToast('Rendered '+formatWithCommas(Math.min(start+BATCH,currentPieces.length))+'/'+formatWithCommas(currentPieces.length)+'…');
