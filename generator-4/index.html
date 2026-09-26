@@ -190,7 +190,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 // Chalkbots — Generative Trait Engine v2 "Riso Chalk"
 // Chalk-line bot + optional companion. v2 keeps the hand-drawn chalk line but
 // adds colour and depth: a bodyColor trait (riso-style offset fills with
-// halftone shading, rare chrome/gold/holo finishes), pastel and midnight
+// halftone shading, rare chrome/gold/sunset finishes), pastel and midnight
 // backgrounds with a soft halo, chunkier proportions, outlined tube limbs,
 // filled hands/feet, drop + ground shadows, blush and glowing coloured eyes.
 // Usage:
@@ -240,7 +240,7 @@ const TRAITS = {
     { id: 'sky',       hex: '#6EC1FF', weight: 7, rarity: 'common' },
     { id: 'cobalt',    hex: '#3F63F0', weight: 7, rarity: 'common' },
     { id: 'orchid',    hex: '#C05CE8', weight: 7, rarity: 'common' },
-    { id: 'snow',      hex: '#F3F2ED', weight: 6, rarity: 'common' },
+    { id: 'petrol',    hex: '#1F6F8B', weight: 6, rarity: 'common' },
     { id: 'charcoal',  hex: '#3B3E48', weight: 6, rarity: 'common' },
     { id: 'bubblegum', hex: '#FF8FC8', weight: 4, rarity: 'uncommon' },
     { id: 'magenta',   hex: '#D1348F', weight: 4, rarity: 'uncommon' },
@@ -253,7 +253,7 @@ const TRAITS = {
     { id: 'steel',     hex: '#9AA6B4', weight: 4, rarity: 'uncommon' },
     { id: 'chrome',    hex: '#C9CED6', weight: 1.5, rarity: 'rare' },
     { id: 'gold',      hex: '#F2C14E', weight: 1.5, rarity: 'rare' },
-    { id: 'holo',      hex: '#C7B8FF', weight: 1.2, rarity: 'rare' },
+    { id: 'sunset',    hex: '#F2704A', weight: 1.2, rarity: 'rare' },
     { id: 'rose_gold', hex: '#E8A598', weight: 1.2, rarity: 'rare' },
     { id: 'purple',    hex: '#6B3FD1', weight: 1.2, rarity: 'rare' },
     { id: 'obsidian',  hex: '#2B2640', weight: 1,   rarity: 'rare' },
@@ -650,25 +650,39 @@ function renderChest(cx, cy, size, style, rng, ink, outline) {
 
 // Ears are drawn per-side (x = ear's x position, flip mirrors shapes that
 // aren't symmetric like the pointed-ear triangle).
-function renderEars(x, y, style, rng, flip, fill) {
-  const f = flip ? -1 : 1;
+// v5 ears: connector to the head, filled shell, inner recessed shadow, highlight and a rivet / bulb
+function renderEars(x, y, style, rng, flip, fill, shade, ink) {
+  const f = flip ? -1 : 1, toHead = -f;
   if (style === 'none') return '';
+  const k = ink || '#1c1c1c', sh = shade || '#000';
   const under = (pts) => fill ? fillPath(pts, fill) : '';
+  const recess = (pts) => fillPath(pts, sh, 0.38);
+  const hi = (cx, cy, rx, ry) => '<ellipse cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" rx="' + rx + '" ry="' + ry + '" fill="#ffffff" opacity=".55"/>';
+  const rivet = (cx, cy) => '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="2.8" fill="' + (fill && !/^url/.test(fill) ? fill : '#c9ced6') + '" stroke="' + k + '" stroke-width="1.6"/>' +
+    '<path d="M ' + (cx - 1.6).toFixed(1) + ' ' + cy.toFixed(1) + ' L ' + (cx + 1.6).toFixed(1) + ' ' + cy.toFixed(1) + '" stroke="' + k + '" stroke-width="1.1"/>';
+  // stubby connector joining the ear to the head
+  let out = tubeP([[x + toHead * 6, y], [x + toHead * 26, y]], 9, k) + tubeP([[x + toHead * 6, y], [x + toHead * 26, y]], 4.2, fill && !/^url/.test(fill) ? fill : '#b9c0ca');
   if (style === 'pointed') {
     const pts = [[x - 8 * f, y + 12], [x + 14 * f, y - 2], [x - 6 * f, y - 14], [x - 8 * f, y + 12]];
-    return under(pts) + doubleStroke(pts, rng, 1.4, 'stroke');
+    const inner = [[x - 5 * f, y + 7], [x + 7 * f, y - 1], [x - 3 * f, y - 8]];
+    return out + under(pts) + recess(inner) + doubleStroke(pts, rng, 1.4, 'stroke') + rivet(x - 4 * f, y + 1);
   } else if (style === 'antenna_dish') {
-    let out = under(ellipsePtsAt(x, y, 9, 9)) + doubleStroke(ellipsePtsAt(x, y, 9, 9), rng, 1.2, 'stroke');
+    out += under(ellipsePtsAt(x, y, 10, 10)) + fillPath(ellipsePtsAt(x + 1.5 * f, y + 1.5, 6.5, 6.5), sh, 0.4) + doubleStroke(ellipsePtsAt(x, y, 10, 10), rng, 1.2, 'stroke');
     out += doubleStroke(ellipsePtsAt(x, y, 3.5, 3.5), rng, 1, 'stroke');
-    out += doubleStroke([[x, y - 9], [x, y - 16]], rng, 1, 'stroke'); // small antenna stalk
+    out += doubleStroke([[x, y - 10], [x, y - 20]], rng, 1, 'stroke');
+    out += '<circle cx="' + x + '" cy="' + (y - 23) + '" r="4" fill="#ff5a5a" stroke="' + k + '" stroke-width="1.6"/><circle cx="' + (x - 1.2) + '" cy="' + (y - 24.2) + '" r="1.3" fill="#fff" opacity=".8"/>';
     return out;
   } else if (style === 'large_round') {
-    return under(ellipsePtsAt(x, y, 14, 22)) + doubleStroke(ellipsePtsAt(x, y, 14, 22), rng, 1.6, 'stroke');
+    return out + under(ellipsePtsAt(x, y, 14, 22)) + recess(ellipsePtsAt(x + 2 * f, y + 2, 8, 14)) + hi(x - 5 * f, y - 10, 3.5, 5) +
+      doubleStroke(ellipsePtsAt(x, y, 14, 22), rng, 1.6, 'stroke') + rivet(x + 2 * f, y + 2);
   } else if (style === 'jagged_broken') {
     const pts = [[x - 9 * f, y - 16], [x + 6 * f, y - 10], [x - 4 * f, y - 2], [x + 8 * f, y + 6], [x - 8 * f, y + 15], [x - 9 * f, y - 16]];
-    return under(pts) + doubleStroke(pts, rng, 1.6, 'stroke');
+    return out + under(pts) + recess([[x - 7 * f, y - 10], [x + 1 * f, y - 6], [x - 5 * f, y + 1], [x + 2 * f, y + 7], [x - 6 * f, y + 10]]) +
+      doubleStroke(pts, rng, 1.6, 'stroke') + '<path d="M ' + (x - 6 * f) + ' ' + (y - 4) + ' L ' + (x - 2 * f) + ' ' + y + ' L ' + (x - 5 * f) + ' ' + (y + 4) + '" stroke="' + k + '" stroke-width="1.4" fill="none"/>';
   }
-  return under(ellipsePtsAt(x, y, 10, 16)) + doubleStroke(ellipsePtsAt(x, y, 10, 16), rng, 1.5, 'stroke'); // round_oval (default)
+  // round_oval (default)
+  return out + under(ellipsePtsAt(x, y, 10, 16)) + recess(ellipsePtsAt(x + 1.5 * f, y + 1.5, 5.5, 10)) + hi(x - 3.5 * f, y - 7, 2.5, 4) +
+    doubleStroke(ellipsePtsAt(x, y, 10, 16), rng, 1.5, 'stroke') + rivet(x + 1.5 * f, y + 1.5);
 }
 
 function renderHand(x, y, style, rng, flip, fill, ink) {
@@ -862,7 +876,7 @@ function wobblyRect(x0, y0, x1, y1, rng, amt) {
   return chalkLine([[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]], rng, amt);
 }
 
-// Paint for the body: flat colour, or a gradient for the rare metallic / holo finishes.
+// Paint for the body: flat colour, or a gradient for the rare metallic / sunset finishes.
 function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const id = bodyColor ? bodyColor.id : 'classic';
   if (id === 'classic') {
@@ -877,7 +891,7 @@ function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   if (id === 'rose_gold') return { fill: 'url(#' + gid + ')', shade: '#a8625a', shoe: '#c9837a', glow: '#ffc7bd', defs: grad(['#ffe1d8', '#e0a093', '#f7cbbf', '#c7867b', '#f2bfb2']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
   if (id === 'aurora') return { fill: 'url(#' + gid + ')', shade: '#2f7f8f', shoe: '#4aa3a0', glow: '#8ff5d9', defs: grad(['#7cf5c8', '#5ec8ff', '#9d8bff', '#6ff0b0', '#ffe28a']) };
-  if (id === 'holo') return { fill: 'url(#' + gid + ')', shade: '#7b6bd0', shoe: '#a996ff', glow: '#d9c9ff', defs: grad(['#ffd1ec', '#c7b8ff', '#a8e6ff', '#c2ffd9', '#fff3b0', '#ffc2e2']) };
+  if (id === 'sunset') return { fill: 'url(#' + gid + ')', shade: '#8a2350', shoe: '#c2415e', glow: '#ff9a6b', defs: grad(['#ffb347', '#f2704a', '#e0457b', '#9b3fb5', '#f58a5a']) };
   return { fill: bodyColor.hex, shade: shadeColor(bodyColor.hex, -34), shoe: shadeColor(bodyColor.hex, -22), glow: bodyColor.hex, defs: '' };
 }
 
@@ -1154,8 +1168,8 @@ function renderFromTraits(picks, index, seed, opts) {
     body += doubleStroke([[headCx - hh + 6, headCy + hh * 0.35], [headCx + hh - 6, headCy + hh * 0.35]], rng, 1, 'strokeMid');
   }
   const earX = halfWidthAt(headPts, headCx, headCy) + 24;
-  body += renderEars(headCx - earX, headCy, picks.ears.id, rng, true, headPaint.fill);
-  body += renderEars(headCx + earX, headCy, picks.ears.id, rng, false, headPaint.fill);
+  body += renderEars(headCx - earX, headCy, picks.ears.id, rng, true, headPaint.fill, headPaint.shade, ink);
+  body += renderEars(headCx + earX, headCy, picks.ears.id, rng, false, headPaint.fill, headPaint.shade, ink);
   // cheek blush
   const blush = dark ? '#ff7aa8' : '#ff6f91';
   const bx = Math.min(50, halfWidthAt(headPts, headCx, headCy + 20) - 20);
@@ -1256,7 +1270,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'sage', weight: 8 }, { id: 'blush', weight: 8 }, { id: 'powder', weight: 8 }, { id: 'lemon', weight: 8 }, { id: 'lavender', weight: 8 }],
-  bodyColor: [{ id: 'gold', weight: 7 }, { id: 'chrome', weight: 7 }, { id: 'holo', weight: 6 }, { id: 'rose_gold', weight: 6 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'aurora', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'magenta', weight: 4 }, { id: 'lime', weight: 4 }, { id: 'tangerine', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'butter', weight: 4 }, { id: 'orchid', weight: 4 }, { id: 'snow', weight: 4 }, { id: 'charcoal', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'sky', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'cocoa', weight: 3 }, { id: 'classic', weight: 3 }],
+  bodyColor: [{ id: 'gold', weight: 7 }, { id: 'chrome', weight: 7 }, { id: 'sunset', weight: 6 }, { id: 'rose_gold', weight: 6 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'aurora', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'magenta', weight: 4 }, { id: 'lime', weight: 4 }, { id: 'tangerine', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'butter', weight: 4 }, { id: 'orchid', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'charcoal', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'sky', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'cocoa', weight: 3 }, { id: 'classic', weight: 3 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
@@ -1267,9 +1281,9 @@ const ONE_OF_ONE_WEIGHTS = {
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
-  headColor: [{ id: 'matching', weight: 26 }, { id: 'gold', weight: 7 }, { id: 'chrome', weight: 6 }, { id: 'holo', weight: 5 }, { id: 'aurora', weight: 5 }, { id: 'obsidian', weight: 5 }, { id: 'rose_gold', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'snow', weight: 4 }, { id: 'charcoal', weight: 4 }, { id: 'butter', weight: 4 }, { id: 'sky', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'mint', weight: 4 }, { id: 'bubblegum', weight: 4 }, { id: 'navy', weight: 4 }],
-  legColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'charcoal', weight: 6 }, { id: 'snow', weight: 6 }, { id: 'tomato', weight: 5 }, { id: 'sky', weight: 5 }, { id: 'butter', weight: 5 }, { id: 'navy', weight: 5 }, { id: 'magenta', weight: 5 }],
-  handColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'charcoal', weight: 6 }, { id: 'snow', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'lime', weight: 5 }, { id: 'tangerine', weight: 5 }, { id: 'cobalt', weight: 5 }, { id: 'bubblegum', weight: 5 }],
+  headColor: [{ id: 'matching', weight: 26 }, { id: 'gold', weight: 7 }, { id: 'chrome', weight: 6 }, { id: 'sunset', weight: 5 }, { id: 'aurora', weight: 5 }, { id: 'obsidian', weight: 5 }, { id: 'rose_gold', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'petrol', weight: 4 }, { id: 'charcoal', weight: 4 }, { id: 'butter', weight: 4 }, { id: 'sky', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'mint', weight: 4 }, { id: 'bubblegum', weight: 4 }, { id: 'navy', weight: 4 }],
+  legColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'charcoal', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'tomato', weight: 5 }, { id: 'sky', weight: 5 }, { id: 'butter', weight: 5 }, { id: 'navy', weight: 5 }, { id: 'magenta', weight: 5 }],
+  handColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'charcoal', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'lime', weight: 5 }, { id: 'tangerine', weight: 5 }, { id: 'cobalt', weight: 5 }, { id: 'bubblegum', weight: 5 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
