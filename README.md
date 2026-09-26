@@ -13,7 +13,8 @@ in its own folder, with a hub landing page at the root linking between them.
 │   ├── index.src.html   ← website shell/template
 │   ├── build.js         ← splices generator.js into index.src.html → index.html
 │   └── index.html       ← generated output — do not hand-edit, run build.js instead
-├── generator-2/  … generator-7/   ← reserved for future collections, same pattern
+├── generator-2/  … generator-6/   ← same pattern, one collection each
+├── generator-7/, generator-8/     ← reserved for future collections
 ```
 
 ## Working on a generator
