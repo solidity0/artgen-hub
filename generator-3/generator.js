@@ -1013,15 +1013,16 @@ function renderFromTraits(picks, index, seed, opts) {
   // 'odd' / 'ODD' tag: small hand-lettered words scattered in the sky around the head (never on the figure)
   if ((picks.tag && picks.tag.id === 'odd') || accessory.id === 'graffiti_tag') {
     const tr = mulberry32((seed??0)*100003+index+98), word = isOneOfOne ? 'ODD' : 'odd';
-    const n = 3 + Math.floor(tr()*3), placed = [];
+    // 50/50: the word written once ('together'), or its three letters written separately around the sky ('apart')
+    const apart = tr() < 0.5, marks = apart ? word.split('') : [word], n = marks.length, placed = [];
     const hx = headRx + 34, hy = headRy + 48;
     for (let t = 0; t < 80 && placed.length < n; t++) {
       const x = VB_X + 26 + tr() * (VB - 52), y = VB_Y + 24 + tr() * (cy + headRy * 0.55 - VB_Y - 24);
       if (((x-cx)/hx)**2 + ((y-(cy-12))/hy)**2 < 1) continue;           // keep clear of head + hair
-      if (placed.some(([px,py]) => Math.hypot(px-x, py-y) < 62)) continue; // spread them out
+      if (placed.some(([px,py]) => Math.hypot(px-x, py-y) < (apart ? 48 : 62))) continue; // spread them out
       placed.push([x, y]);
       const col = tr() < 0.5 ? accent : ink;
-      svg += `<g opacity="${(0.55 + tr()*0.3).toFixed(2)}">` + handLettering(word, x, y, col, tr, (tr()-0.5)*34, 0.8 + tr()*0.25) + `</g>`;
+      svg += `<g opacity="${(0.6 + tr()*0.3).toFixed(2)}">` + handLettering(marks[placed.length-1], x, y, col, tr, (tr()-0.5)*(apart ? 50 : 30), apart ? 0.95 + tr()*0.3 : 0.9 + tr()*0.2) + `</g>`;
     }
   }
   const figStart=svg.length;
