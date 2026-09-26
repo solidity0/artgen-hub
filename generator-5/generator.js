@@ -461,8 +461,7 @@
     const rng = mulberry32(hashSeed(piece.seed, 'render'));
     const uid = (piece.seed >>> 0).toString(36);
     const bg = findTrait('background', t.background);
-    // v3: stark whites become warm paper
-    const bgBase = bg.id === 'paper' ? '#F2EBDD' : bg.id === 'static' ? '#EEE6D6' : bg.hex;
+    const bgBase = bg.hex;
     const darkBg = luma(bgBase) < 110;
     const ink = darkBg ? '#ecebe6' : '#141414';
     const solidFace = t.coat === 'solid_face';
@@ -487,25 +486,20 @@
       `<clipPath id="hc${uid}"><path d="${headD}"/></clipPath></defs>`;
 
     svg += backgroundMarkup(rng, t.background, bgBase, ink, uid);
-    // v3 finish (own rng stream, so trait art is unchanged): accent glow behind the head + paper grain
     const accent = eyeHex || (darkBg ? '#ff8a3d' : '#e0605a');
-    const fx = mulberry32(hashSeed(piece.seed, 'finish'));
-    svg += `<defs><radialGradient id="ag${uid}" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="${accent}" stop-opacity="${darkBg ? 0.3 : 0.2}"/><stop offset="0.6" stop-color="${accent}" stop-opacity="${darkBg ? 0.09 : 0.06}"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient></defs>`;
-    svg += `<rect width="${WIDTH}" height="${HEIGHT}" fill="url(#ag${uid})"/>`;
-    { let d = ''; for (let i = 0; i < 240; i++) d += `M${f(fx() * WIDTH)} ${f(fx() * HEIGHT)}h1.2v1.2h-1.2z`;
-      svg += `<path d="${d}" fill="${darkBg ? '#ffffff' : '#5a4a3a'}" opacity="${darkBg ? 0.07 : 0.12}"/>`; }
 
     const headStart = svg.length;
     svg += `<g transform="translate(${HX},${HY}) scale(${HEAD_SCALE}) rotate(${f(tilt)}) translate(${-HX},${-HY})">`;
-    // soft layered shadow (light bg) / accent glow (dark bg) behind the head, no SVG filters (stays sharp on mobile)
-    { const sc = darkBg ? accent : '#3b2f22', dx = darkBg ? 0 : 5, dy = darkBg ? 0 : 6;
-      for (const [w, o] of (darkBg ? [[18, 0.06], [11, 0.09], [5, 0.13]] : [[12, 0.05], [7, 0.07], [2, 0.1]]))
-        svg += `<path d="${headD}" fill="${sc}" stroke="${sc}" stroke-width="${w}" stroke-linejoin="round" opacity="${o}" transform="translate(${dx} ${dy})"/>`;
-      // accent rim light: only its outer edge shows past the head fill
-      svg += `<path d="${headD}" fill="none" stroke="${accent}" stroke-width="7" stroke-linejoin="round" opacity="0.8" transform="translate(-2.5 -2)"/>`; }
 
     /* ears */
     const earL = earPts(rng, t.ears, P, -1), earR = earPts(rng, t.ears, P, 1);
+    // Ink Pups look: die-cut vinyl sticker around head + ears (thick white border, thin ink edge) with a
+    // hard flat offset shadow (grey on light backgrounds, eye colour on dark). No filters.
+    { const shapes = [headD, closedD(earL), closedD(earR)];
+      const layer = (col, w, extra) => shapes.map(d => `<path d="${d}" fill="${col}" stroke="${col}" stroke-width="${w}" stroke-linejoin="round"${extra || ''}/>`).join('');
+      svg += layer(darkBg ? accent : '#141414', 22, ` opacity="${darkBg ? 0.75 : 0.28}" transform="translate(6 7)"`);
+      svg += layer('#141414', 22);
+      svg += layer(darkBg ? '#f4f1ea' : '#ffffff', 17); }
     const earFill = t.earTone === 'solid' ? ink : fillBase;
     const drawEar = (pts, side) => {
       let s = sketch(rng, pts, true, ink, { fill: earFill });
@@ -547,10 +541,7 @@
 
     /* head */
     svg += `<path d="${headD}" fill="${headFill}"/>`;
-    svg += `<g clip-path="url(#hc${uid})">` + coatMarkup(rng, t.coat, P, ink, uid) + (solidFace ? solidFaceDepth(rng, P, hp, featInk) : '') +
-      // ink-wash form shading: shadow lower-right, soft highlight upper-left
-      `<ellipse cx="${f(HX + P.rx * 0.6)}" cy="${f(HY + P.ry * 0.5)}" rx="${f(P.rx * 1.05)}" ry="${f(P.ry)}" fill="${solidFace || darkBg ? '#000' : '#2b241d'}" opacity="${solidFace ? 0.35 : darkBg ? 0.3 : 0.14}"/>` +
-      `<ellipse cx="${f(HX - P.rx * 0.4)}" cy="${f(HY - P.ry * 0.42)}" rx="${f(P.rx * 0.5)}" ry="${f(P.ry * 0.36)}" fill="#ffffff" opacity="${solidFace ? 0.1 : darkBg ? 0.06 : 0.4}"/>` + `</g>`;
+    svg += `<g clip-path="url(#hc${uid})">` + coatMarkup(rng, t.coat, P, ink, uid) + (solidFace ? solidFaceDepth(rng, P, hp, featInk) : '') + `</g>`;
     svg += sketch(rng, hp, true, ink, { step: 8 });
 
     if (EARS[t.ears].front) svg += drawEar(earL, -1) + drawEar(earR, 1);
