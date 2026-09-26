@@ -105,9 +105,9 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 <header>
   <a href="../index.html" class="hub-back">&larr; Hub</a>
   <div class="brand">AfterBots <span>//</span> Generator</div>
-  <div class="eyebrow">CHALK-LINE CHARACTER ENGINE</div>
+  <div class="eyebrow">GENERATIVE ROBOT ENGINE</div>
   <div class="h1" id="h1-text">AfterBots</div>
-  <div class="sub">Chalkboard-sketch bots, optionally paired with a small companion creature. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
+  <div class="sub">Colourful hand-inked robots with swappable heads, bodies, arms and colours, often joined by a little companion creature. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
 </header>
 <main>
   <div class="panel-section">
@@ -1657,7 +1657,7 @@ async function downloadBatchZip() {
       vectors.file(p.index + '.svg', getDisplaySVG(p));
       const attrs = Object.keys(p.traits).map(k => ({ trait_type: traitTypeLabel(k), value: p.traits[k], rarity: p.rarity[k] }));
       if (p.isOneOfOne) attrs.push({ trait_type: 'Tier', value: '1/1' });
-      const meta = { name: getDisplayName() + ' #' + p.index, description: getDescription() || 'Generative chalk-line character from ' + getDisplayName() + '.', image: 'images/' + p.index + '.png', vector: 'vectors/' + p.index + '.svg', chain: currentChain, isOneOfOne: !!p.isOneOfOne, attributes: attrs };
+      const meta = { name: getDisplayName() + ' #' + p.index, description: getDescription() || 'Generative robot from ' + getDisplayName() + '.', image: 'images/' + p.index + '.png', vector: 'vectors/' + p.index + '.svg', chain: currentChain, isOneOfOne: !!p.isOneOfOne, attributes: attrs };
       const sym = getSymbol(); if (sym) meta.symbol = sym; if (currentChain !== 'bitcoin') meta.external_url = '';
       launchItems.push({ index: p.index, attrs: attrs });
     }
