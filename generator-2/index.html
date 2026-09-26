@@ -123,7 +123,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   <a href="../index.html" class="hub-back">&larr; Hub</a>
   <div class="brand">Glyph <span>//</span> Generator</div>
   <div class="eyebrow">Firmware Glyph — Generative Trait Engine</div>
-  <div class="h1" id="h1-text">Build your collection</div>
+  <div class="h1" id="h1-text">Glyphs</div>
   <div class="sub">Abstract machine-interface glyphs — fragmented, glitched, cold. Pick an artifact type, lock specific traits per category (or leave on random), set supply — uncapped. Nothing regenerates until you hit Generate. Click a piece to download.</div>
 </header>
 <main>
@@ -1546,7 +1546,7 @@ document.getElementById('chain-controls').addEventListener('click', e => {
 });
 document.getElementById('collection-name-input').addEventListener('input', () => {
   const v = document.getElementById('collection-name-input').value.trim();
-  document.getElementById('h1-text').textContent = v ? 'Build ' + v : 'Build your collection';
+  document.getElementById('h1-text').textContent = v || 'Glyphs';
   document.title = (v || 'Glyphs') + ' — Generator';
 });
 document.getElementById('tier-controls').addEventListener('click', e => {

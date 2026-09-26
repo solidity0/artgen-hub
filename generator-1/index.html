@@ -136,7 +136,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   <a href="../index.html" class="hub-back">&larr; Hub</a>
   <div class="brand">Drifters <span>//</span> Generator</div>
   <div class="eyebrow">Generative Trait Engine</div>
-  <div class="h1" id="h1-text">Build your collection</div>
+  <div class="h1" id="h1-text">Drifters</div>
   <div class="sub">Pick a character type, select as many specific traits as you want per category (or leave on random), set the supply size — it's not capped. Nothing regenerates until you hit Generate. Click a piece to download the SVG or copy its markup.</div>
 </header>
 
@@ -2395,7 +2395,7 @@ document.getElementById('chain-controls').addEventListener('click', e => {
 });
 document.getElementById('collection-name-input').addEventListener('input', () => {
   const v = document.getElementById('collection-name-input').value.trim();
-  document.getElementById('h1-text').textContent = v ? 'Build ' + v : 'Build your collection';
+  document.getElementById('h1-text').textContent = v || 'Drifters';
   document.title = (v || 'Drifters') + ' — Generator';
 });
 document.getElementById('tier-controls').addEventListener('click', e => {
