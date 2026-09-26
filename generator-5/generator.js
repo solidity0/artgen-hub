@@ -271,6 +271,33 @@
     return { seed, traits, duplicate: true };
   }
 
+  // 1/1 variety (same as Generators 3 and 6): each 1/1 prefers trait values
+  // the batch's earlier 1/1s haven't used — best of up to 40 deterministic
+  // re-rolls (key categories count double). Exact duplicate combos are only
+  // taken once the attempt budget finds nothing else.
+  const VARY_KEY = ['headShape', 'ears', 'coat', 'eyes'];
+  function generateVariedOneOfOne(baseSeed, index, opts, usedCombos, usedValues, budget) {
+    let best = null, bestScore = -1, lastSeed, lastTraits;
+    const tries = Math.max(40, Math.min(budget, 200));
+    for (let attempt = 0; attempt < tries; attempt++) {
+      const seed = hashSeed(baseSeed, index, attempt, '1of1');
+      const traits = rollTraits(seed, opts);
+      lastSeed = seed; lastTraits = traits;
+      if (usedCombos.has(comboKey(traits))) continue;
+      let score = 0, max = 0;
+      for (const cat of CATEGORY_ORDER) {
+        const w = VARY_KEY.includes(cat) ? 2 : 1; max += w;
+        if (!(usedValues[cat] && usedValues[cat].has(traits[cat]))) score += w;
+      }
+      if (score > bestScore) { best = { seed, traits }; bestScore = score; }
+      if (score === max || (attempt >= 39 && best)) break;
+    }
+    const res = best ? { ...best, duplicate: false } : { seed: lastSeed, traits: lastTraits, duplicate: true };
+    usedCombos.add(comboKey(res.traits));
+    for (const cat of CATEGORY_ORDER) (usedValues[cat] = usedValues[cat] || new Set()).add(res.traits[cat]);
+    return res;
+  }
+
   function estimateComboSpace(opts) {
     const locks = opts.locks || {};
     let space = 1;
@@ -297,7 +324,7 @@
     const ones = Math.min(count, Math.max(0, Math.floor(Number(opts.oneOfOnes) || 0)));
     const baseSeed = opts.seed != null ? String(opts.seed) : String(Date.now());
     // 1/1s come first: #1..#N are the 1/1s, regular pieces follow
-    const usedCombos = new Set();
+    const usedCombos = new Set(), usedOneValues = {};
     const regSpace = estimateComboSpace({ locks: opts.locks, tier: opts.tier });
     const oneSpace = estimateComboSpace({ locks: opts.locks, oneOfOne: true });
     const budgetFor = (space, need) => Math.min(600, Math.max(40, Number.isFinite(space) && space < need * 4 ? 600 : 60));
@@ -315,7 +342,8 @@
       step() {
         const isOne = i < ones;
         const o = { locks: opts.locks, tier: isOne ? 'rare' : opts.tier, oneOfOne: isOne };
-        const res = generateUnique(baseSeed, i, o, usedCombos, isOne ? oneBudget : regBudget);
+        const res = isOne ? generateVariedOneOfOne(baseSeed, i, o, usedCombos, usedOneValues, oneBudget)
+          : generateUnique(baseSeed, i, o, usedCombos, regBudget);
         if (res.duplicate) out.dupes++;
         out.pieces[i] = { index: i + 1, seed: res.seed, isOneOfOne: isOne, traits: res.traits, duplicate: res.duplicate };
         i++;

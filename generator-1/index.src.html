@@ -569,19 +569,33 @@ function render() {
   // PREVIOUS batch; "unique" means unique within this batch, not across every
   // batch ever generated in the session.
   const usedOneOfOneCombos = new Set();
-  const MAX_REROLL_ATTEMPTS = 100;
+  // 1/1 variety (same as Generators 3 and 6): each 1/1 prefers trait values
+  // the batch's earlier 1/1s haven't used yet — best of up to 40
+  // deterministic re-rolls, key traits counting double. Exact duplicate
+  // combos are never picked while any alternative exists.
+  const usedOneOfOneValues = {};
+  const KEY_TRAITS = ['headShape', 'body', 'background'];
+  const MAX_REROLL_ATTEMPTS = 40;
   function generateOneOfOne(pieceIndex, seed) {
-    let piece = generateOne(pieceIndex, seed, { tierOverride: 'rare', isOneOfOne: true });
-    let attempt = 0;
-    while (usedOneOfOneCombos.has(JSON.stringify(piece.traits)) && attempt < MAX_REROLL_ATTEMPTS) {
-      attempt++;
-      // Large offset keeps this attempt's rng stream well clear of any real
-      // piece index in the batch (supply is capped in practice, nowhere near
-      // this range), so re-rolling never accidentally reproduces another
+    let best = null, bestScore = -1, last = null;
+    for (let attempt = 0; attempt < MAX_REROLL_ATTEMPTS; attempt++) {
+      // Large offset keeps each attempt's rng stream well clear of any real
+      // piece index in the batch, so re-rolling never reproduces another
       // piece's exact draw.
-      piece = generateOne(pieceIndex + attempt * 10000000, seed, { tierOverride: 'rare', isOneOfOne: true });
+      const p = generateOne(pieceIndex + attempt * 10000000, seed, { tierOverride: 'rare', isOneOfOne: true });
+      last = p;
+      if (usedOneOfOneCombos.has(JSON.stringify(p.traits))) continue;
+      let score = 0, max = 0;
+      for (const k of Object.keys(p.traits)) {
+        const w = KEY_TRAITS.includes(k) ? 2 : 1; max += w;
+        if (!(usedOneOfOneValues[k] && usedOneOfOneValues[k].has(p.traits[k]))) score += w;
+      }
+      if (score > bestScore) { best = p; bestScore = score; }
+      if (score === max) break;
     }
+    const piece = best || last;
     usedOneOfOneCombos.add(JSON.stringify(piece.traits));
+    for (const k of Object.keys(piece.traits)) (usedOneOfOneValues[k] = usedOneOfOneValues[k] || new Set()).add(piece.traits[k]);
     piece.index = pieceIndex; // the re-roll offset must never leak into the displayed piece number
     return piece;
   }

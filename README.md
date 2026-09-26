@@ -174,8 +174,13 @@ this folder is a synced copy — change it there and copy the four files here.
 - **Rarity tier** — any / common / uncommon / rare biases every unlocked trait.
 - **Trait locks** — pick one or more values per category, or leave on random.
 - **Seed, supply and 1/1 count** — supply is uncapped. Same seed + settings =
-  same collection, every time. In generators 3, 5 and 6 the 1/1 count
-  follows supply at 10% until you edit it.
+  same collection, every time. The 1/1 count follows supply at 10% until
+  you edit it.
+- **1/1 variety** — each 1/1 prefers trait values the batch's earlier 1/1s
+  haven't used yet (best of up to 40 deterministic re-rolls, key traits
+  counting double), and no two 1/1s share an exact trait combo. Generator 2
+  still gives each 1/1 its own core form first, and Generator 4 its own
+  body colour first; the variety spread breaks ties within those.
 - **Virtualized gallery** — only visible tiles are drawn, so thousands of
   pieces stay smooth, including on mobile.
 - **Lightbox** — full traits with rarity; download PNG (1200×1200) or SVG,
@@ -192,9 +197,6 @@ this folder is a synced copy — change it there and copy the four files here.
     metadata, SVGs and PNGs, and a README with inscription steps.
   - Batches over 1,000 pieces download as one metadata zip plus image zips
     of 1,000 each.
-
-Generators 3 and 6 also spread their 1/1s across the pool: each 1/1 prefers
-trait values the batch's earlier 1/1s haven't used yet.
 
 ---
 

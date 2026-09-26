@@ -278,7 +278,8 @@ function render() {
   const pieces = [];
   // 1/1s: re-roll (deterministically, via an index offset) so no two share a body colour while
   // colours remain, then no two share body colour + background — keeps a 1/1 set visually varied
-  const usedBody = new Set(), usedPair = new Set();
+  const usedBody = new Set(), usedPair = new Set(), usedCombos = new Set(), usedVals = {};
+  const VARY_KEY = ['headShape', 'bodyShape', 'companion'];
   const opts = { locks, render: false };
   let i = 1;
   genBtn.disabled = count > 5000;
@@ -288,16 +289,31 @@ function render() {
     for (; i <= end; i++) {
       const isOneOfOne = i <= oneOfOneCount;
       if (!isOneOfOne) { pieces.push(G.generatePiece(i, seed, currentTier, { ...opts, isOneOfOne })); continue; }
-      let pick = null, fallback = null, first = null;
-      for (let k = 0; k < 40 && !pick; k++) {
+      // body colour first (unused colour, then unused colour+background pair);
+      // within that, 1/1 variety (same as Generators 3 and 6) prefers the
+      // candidate whose other traits earlier 1/1s have used least
+      let best = null, bestScore = -1, first = null;
+      for (let k = 0; k < 40; k++) {
         const p = G.generatePiece(i + k * 10000000, seed, currentTier, { ...opts, isOneOfOne });
         if (!first) first = p;
+        const ck = JSON.stringify(p.traits);
+        if (usedCombos.has(ck)) continue;
         const pair = p.traits.bodyColor + '|' + p.traits.background;
-        if (!usedBody.has(p.traits.bodyColor)) pick = p;
-        else if (!fallback && !usedPair.has(pair)) fallback = p;
+        const tier = !usedBody.has(p.traits.bodyColor) ? 2 : !usedPair.has(pair) ? 1 : 0;
+        let v = 0, max = 0;
+        for (const key of Object.keys(p.traits)) {
+          if (key === 'bodyColor') continue;
+          const w = VARY_KEY.includes(key) ? 2 : 1; max += w;
+          if (!(usedVals[key] && usedVals[key].has(p.traits[key]))) v += w;
+        }
+        const score = tier * 1000 + v;
+        if (score > bestScore) { best = p; bestScore = score; }
+        if (tier === 2 && v === max) break;
       }
-      const p = pick || fallback || first;
+      const p = best || first;
       usedBody.add(p.traits.bodyColor); usedPair.add(p.traits.bodyColor + '|' + p.traits.background);
+      usedCombos.add(JSON.stringify(p.traits));
+      for (const key of Object.keys(p.traits)) (usedVals[key] = usedVals[key] || new Set()).add(p.traits[key]);
       p.index = i;
       pieces.push(p);
     }

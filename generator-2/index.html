@@ -1105,27 +1105,36 @@ function render() {
   // (1) a core no other 1/1 has used, then (2) an unused core+symmetry pair,
   // then (3) a unique full trait combo. Up to 12 1/1s every core is literally
   // one-of-a-kind; beyond that forms distribute evenly instead of repeating.
+  // Within each tier, 1/1 variety (same as Generators 3 and 6) breaks ties:
+  // the candidate whose other traits (palette, field, glitch, …) are least
+  // used by earlier 1/1s wins.
+  const usedOneOfOneValues = {};
+  function varietyScore(p) {
+    let score = 0;
+    for (const k of Object.keys(p.traits)) {
+      if (k === 'core' || k === 'symmetry') continue;
+      if (!(usedOneOfOneValues[k] && usedOneOfOneValues[k].has(p.traits[k]))) score++;
+    }
+    return score;
+  }
   function generateOneOfOne(pieceIndex, seed) {
-    let tier2 = null, tier3 = null, last = null;
+    const others = Object.keys(generateOne(pieceIndex, seed, { tierOverride: 'rare', isOneOfOne: true }).traits).length - 2;
+    let best = null, bestScore = -1, last = null;
     for (let attempt = 0; attempt < MAX_REROLL_ATTEMPTS; attempt++) {
       const p = generateOne(pieceIndex + attempt * 10000000, seed, { tierOverride: 'rare', isOneOfOne: true });
       last = p;
       if (usedOneOfOneCombos.has(JSON.stringify(p.traits))) continue;
       const cs = p.traits.core + '|' + p.traits.symmetry;
-      if (!usedOneOfOneCores.has(p.traits.core)) {
-        usedOneOfOneCores.add(p.traits.core);
-        usedOneOfOneCoreSym.add(cs);
-        usedOneOfOneCombos.add(JSON.stringify(p.traits));
-        p.index = pieceIndex;
-        return p;
-      }
-      if (!tier2 && !usedOneOfOneCoreSym.has(cs)) tier2 = p;
-      if (!tier3) tier3 = p;
+      const tier = !usedOneOfOneCores.has(p.traits.core) ? 2 : !usedOneOfOneCoreSym.has(cs) ? 1 : 0;
+      const v = varietyScore(p), score = tier * 1000 + v;
+      if (score > bestScore) { best = p; bestScore = score; }
+      if (tier === 2 && v === others) break; // unused core and every other trait fresh
     }
-    const piece = tier2 || tier3 || last;
+    const piece = best || last;
     usedOneOfOneCores.add(piece.traits.core);
     usedOneOfOneCoreSym.add(piece.traits.core + '|' + piece.traits.symmetry);
     usedOneOfOneCombos.add(JSON.stringify(piece.traits));
+    for (const k of Object.keys(piece.traits)) (usedOneOfOneValues[k] = usedOneOfOneValues[k] || new Set()).add(piece.traits[k]);
     piece.index = pieceIndex;
     return piece;
   }
