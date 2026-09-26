@@ -1648,6 +1648,26 @@ function pickTrait(rng, key, tierOverride) {
   return weightedPick(rng, pool);
 }
 
+// Lazy art: generation only picks traits (tiny, fast); each piece's SVG strings are built on first use
+// by re-running generateOne with render:true for the same rng index, then kept in a bounded cache so
+// memory stays flat at any supply size.
+const _artCache = new Map(), ART_CACHE_LIMIT = 500;
+function lazyPiece(base, rngIndex, seed, opts) {
+  const art = () => {
+    let a = _artCache.get(base);
+    if (!a) {
+      const full = generateOne(rngIndex, seed, Object.assign({}, opts, { render: true }));
+      a = ART_FIELDS.reduce((o, k) => (o[k] = full[k], o), {});
+      _artCache.set(base, a);
+      if (_artCache.size > ART_CACHE_LIMIT) _artCache.delete(_artCache.keys().next().value);
+    }
+    return a;
+  };
+  for (const k of ART_FIELDS) Object.defineProperty(base, k, { get: () => art()[k], enumerable: false, configurable: true });
+  return base;
+}
+const ART_FIELDS = ['svg', 'svgStatic'];
+
 function generateOne(index, seed, opts) {
   const tierOverride = opts && opts.tierOverride;
   const isOneOfOne = !!(opts && opts.isOneOfOne);
@@ -1697,6 +1717,11 @@ function generateOne(index, seed, opts) {
   let accessory = pickTrait(rng, 'accessory', tierOverride);
   accessory = rerollTraitIfClashing(rng, { headShape: headShape.id, size: size.id, eyeShape: eyeShape.id, mouth: mouth.id }, 'accessory', accessory, TRAITS.accessory, tierOverride || currentTier);
 
+  if (!(opts && opts.render)) return lazyPiece({
+    index, isOneOfOne,
+    traits: { background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id, headShape: headShape.id, headColor: headColor.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id, mouth: mouth.id, accessory: accessory.id },
+    rarity: { background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity, headShape: headShape.rarity, headColor: headColor.rarity, eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity, mouth: mouth.rarity, accessory: accessory.rarity }
+  }, index, seed, opts);
   // Build every non-eye layer exactly ONCE. These all consume rng internally
   // (cracked-head jitter, dot scatter, background texture) — calling them a
   // second time would draw different random numbers and the "static" and
@@ -1871,7 +1896,7 @@ function render() {
   currentPieces = pieces;
   _isRendering = true;
 
-  VG.reset(0);
+  VG.reset(0); _artCache.clear();
   const baseLabel = count + ' generated · seed ' + seed
     + (currentTier !== 'any' ? ' · ' + currentTier : '')
     + (oneOfOneCount > 0 ? ' · ' + oneOfOneCount + ' 1/1' : '');
@@ -1899,7 +1924,7 @@ function render() {
     return piece;
   }
 
-  const CHUNK = 500;
+  const CHUNK = 2000;
   let idx = 0;
   function processChunk() {
     if (myGen !== _renderGen) return; // superseded by a newer render() call
@@ -1999,11 +2024,11 @@ function svgToPngBlob(svgString, size) {
   });
 }
 
-async function downloadBatchZip() {
-  if (!currentPieces.length) return;
+async function downloadBatchZipOne(_zp) {
+  if (!_zp.length) return;
   if (_isRendering) { showToast('Still generating — try again in a moment'); return; }
   if (typeof JSZip === 'undefined') { showToast('JSZip failed to load — check your connection'); return; }
-  showToast('Rendering ' + currentPieces.length + ' PNGs…');
+  showToast('Rendering ' + _zp.length + ' PNGs…');
   const zip = new JSZip(); const launchItems = [];
   const images = zip.folder('images');
   const vectors = zip.folder('vectors');
@@ -2017,16 +2042,16 @@ async function downloadBatchZip() {
   // compression: they're already a compressed format, so re-deflating them
   // costs real time for effectively no size benefit.
   const BATCH = 12;
-  for (let start = 0; start < currentPieces.length; start += BATCH) {
-    const end = Math.min(start + BATCH, currentPieces.length);
-    const batch = currentPieces.slice(start, end);
-    const results = await Promise.all(batch.map(p =>
+  for (let start = 0; start < _zp.length; start += BATCH) {
+    const end = Math.min(start + BATCH, _zp.length);
+    const batch = _zp.slice(start, end);
+    const results = _zipMetaOnly ? batch.map(p => ({ p, b: null, blob: null })) : await Promise.all(batch.map(p =>
       svgToPngBlob(p.svg, 1200).then(blob => ({ p, blob })).catch(() => ({ p, blob: null }))
     ));
     for (const { p, blob } of results) {
       if (blob) images.file(p.index + '.png', blob, { compression: 'STORE' });
-      else showToast('PNG render failed on #' + p.index + ' — skipping its image');
-      vectors.file(p.index + '.svg', p.svg);
+      else if (!_zipMetaOnly) showToast('PNG render failed on #' + p.index + ' — skipping its image');
+      if (!_zipMetaOnly) vectors.file(p.index + '.svg', p.svg);
 
       const attributes = Object.keys(p.traits).map(k => ({
         trait_type: traitTypeLabel(k),
@@ -2049,17 +2074,17 @@ async function downloadBatchZip() {
       if (currentChain !== 'bitcoin') meta.external_url = '';
       launchItems.push({ index: p.index, attrs: attributes });
     }
-    if (currentPieces.length > 40) showToast('Rendered ' + end + ' / ' + currentPieces.length + '…');
+    if (_zp.length > 40) showToast('Rendered ' + end + ' / ' + _zp.length + '…');
   }
 
-  writeLaunchFiles(zip, launchItems);
+  if (!_zipImagesOnly) writeLaunchFiles(zip, launchItems);
 
   try {
     showToast('Zipping…');
     const blob = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = getFileSafeName() + '-batch.zip';
+    a.href = url; a.download = getFileSafeName() + (_zipSuffix || '-batch') + '.zip';
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     showToast('Batch downloaded — PNGs (for your gallery) + SVGs + metadata');
@@ -2067,6 +2092,28 @@ async function downloadBatchZip() {
     showToast('Zip failed — try a smaller batch');
   }
 }
+// Large batches are split so the browser never holds every PNG in memory at once:
+// one metadata zip (complete collection metadata + launch files) and image zips of ZIP_PART pieces each.
+const ZIP_PART = 1000;
+let _zipMetaOnly = false, _zipImagesOnly = false, _zipSuffix = '';
+async function downloadBatchZip() {
+  if (!currentPieces.length) return;
+  if (currentPieces.length <= ZIP_PART) return downloadBatchZipOne(currentPieces);
+  const all = currentPieces.slice(), parts = Math.ceil(all.length / ZIP_PART);
+  if (!confirm('This batch has ' + formatWithCommas(all.length) + ' pieces. It will download as 1 metadata zip + ' + parts + ' image zips of up to ' + formatWithCommas(ZIP_PART) + ' pieces each (your browser may ask to allow multiple downloads). Continue?')) return;
+  try {
+    _zipMetaOnly = true; _zipSuffix = '-metadata';
+    await downloadBatchZipOne(all);
+    _zipMetaOnly = false; _zipImagesOnly = true;
+    for (let k = 0; k < parts; k++) {
+      _zipSuffix = '-images-part-' + (k + 1) + '-of-' + parts;
+      showToast('Image zip ' + (k + 1) + ' / ' + parts + '…');
+      await downloadBatchZipOne(all.slice(k * ZIP_PART, (k + 1) * ZIP_PART));
+    }
+    showToast('All ' + (parts + 1) + ' zips downloaded');
+  } finally { _zipMetaOnly = false; _zipImagesOnly = false; _zipSuffix = ''; }
+}
+
 
 function openLightbox(idx) {
   lbIdx = idx;

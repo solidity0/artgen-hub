@@ -1407,29 +1407,51 @@ function exportCSV(){
   saveBlob(new Blob([[header,...rows].join('\n')],{type:'text/csv'}),getFileSafeName()+'-traits.csv');
   showToast('Trait sheet exported');
 }
-async function downloadBatchZip(){
-  if(!currentPieces.length)return;
+async function downloadBatchZipOne(_zp) {
+  if(!_zp.length)return;
   if(typeof JSZip==='undefined'){showToast('JSZip not loaded');return;}
-  showToast('Rendering '+formatWithCommas(currentPieces.length)+' PNGs…');
+  showToast('Rendering '+formatWithCommas(_zp.length)+' PNGs…');
   const zip=new JSZip(),images=zip.folder('images'),vectors=zip.folder('vectors'),metadata=zip.folder('metadata'); const launchItems = [];
   const BATCH=12;
-  for(let start=0;start<currentPieces.length;start+=BATCH){
-    const batch=currentPieces.slice(start,Math.min(start+BATCH,currentPieces.length));
-    const results=await Promise.all(batch.map(p=>svgToPngBlob(G.renderSVG(p),1200).then(b=>({p,b})).catch(()=>({p,b:null}))));
+  for(let start=0;start<_zp.length;start+=BATCH){
+    const batch=_zp.slice(start,Math.min(start+BATCH,_zp.length));
+    const results=_zipMetaOnly ? batch.map(p => ({ p, b: null, blob: null })) : await Promise.all(batch.map(p=>svgToPngBlob(G.renderSVG(p),1200).then(b=>({p,b})).catch(()=>({p,b:null}))));
     for(const {p,b} of results){
       if(b)images.file(p.index+'.png',b,{compression:'STORE'});
-      vectors.file(p.index+'.svg',getDisplaySVG(p));
+      if (!_zipMetaOnly) vectors.file(p.index+'.svg',getDisplaySVG(p));
       const attrs=G.CATEGORY_ORDER.map(k=>({trait_type:G.CATEGORY_META[k],value:G.traitName(k,p.traits[k]),rarity:rarityOf(k,p.traits[k])}));
       if(p.isOneOfOne)attrs.push({trait_type:'Tier',value:'1/1'});
       const meta={name:getDisplayName()+' #'+p.index,description:getDescription()||'Scrawled ink dog head from '+getDisplayName()+'.',image:'images/'+p.index+'.png',vector:'vectors/'+p.index+'.svg',chain:currentChain,isOneOfOne:!!p.isOneOfOne,attributes:attrs};
       const sym=getSymbol();if(sym)meta.symbol=sym;if(currentChain!=='bitcoin')meta.external_url='';
       launchItems.push({ index: p.index, attrs: attrs });
     }
-    if(currentPieces.length>40)showToast('Rendered '+formatWithCommas(Math.min(start+BATCH,currentPieces.length))+'/'+formatWithCommas(currentPieces.length)+'…');
+    if(_zp.length>40)showToast('Rendered '+formatWithCommas(Math.min(start+BATCH,_zp.length))+'/'+formatWithCommas(_zp.length)+'…');
   }
-  writeLaunchFiles(zip, launchItems);
-  try{showToast('Zipping…');const b=await zip.generateAsync({type:'blob'});saveBlob(b,getFileSafeName()+'-batch.zip');showToast('Batch downloaded');}catch(e){showToast('Zip failed');}
+  if (!_zipImagesOnly) writeLaunchFiles(zip, launchItems);
+  try{showToast('Zipping…');const b=await zip.generateAsync({type:'blob'});saveBlob(b,getFileSafeName()+(_zipSuffix || '-batch') + '.zip');showToast('Batch downloaded');}catch(e){showToast('Zip failed');}
 }
+// Large batches are split so the browser never holds every PNG in memory at once:
+// one metadata zip (complete collection metadata + launch files) and image zips of ZIP_PART pieces each.
+const ZIP_PART = 1000;
+let _zipMetaOnly = false, _zipImagesOnly = false, _zipSuffix = '';
+async function downloadBatchZip() {
+  if (!currentPieces.length) return;
+  if (currentPieces.length <= ZIP_PART) return downloadBatchZipOne(currentPieces);
+  const all = currentPieces.slice(), parts = Math.ceil(all.length / ZIP_PART);
+  if (!confirm('This batch has ' + formatWithCommas(all.length) + ' pieces. It will download as 1 metadata zip + ' + parts + ' image zips of up to ' + formatWithCommas(ZIP_PART) + ' pieces each (your browser may ask to allow multiple downloads). Continue?')) return;
+  try {
+    _zipMetaOnly = true; _zipSuffix = '-metadata';
+    await downloadBatchZipOne(all);
+    _zipMetaOnly = false; _zipImagesOnly = true;
+    for (let k = 0; k < parts; k++) {
+      _zipSuffix = '-images-part-' + (k + 1) + '-of-' + parts;
+      showToast('Image zip ' + (k + 1) + ' / ' + parts + '…');
+      await downloadBatchZipOne(all.slice(k * ZIP_PART, (k + 1) * ZIP_PART));
+    }
+    showToast('All ' + (parts + 1) + ' zips downloaded');
+  } finally { _zipMetaOnly = false; _zipImagesOnly = false; _zipSuffix = ''; }
+}
+
 
 /* ---------- lightbox ---------- */
 let lbIdx = -1;
