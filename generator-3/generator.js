@@ -966,14 +966,18 @@ function renderFromTraits(picks, index, seed, opts) {
   if(sidePat) svg+=`<clipPath id="${sid}"><rect x="${-OX}" width="${OX}" height="${H}"/><rect x="${W}" width="${OX}" height="${H}"/></clipPath><g clip-path="url(#${sid})"><g transform="translate(${-W+OX} 0)">${sidePat}</g><g transform="translate(${W-OX} 0)">${sidePat}</g></g>`;
   svg+=bgPattern(background.pattern, background.bg, rng, ink); // centre pattern may spill over the strips so there's no seam
   // accent glow behind the figure (spot colour = eye colour) + paper grain on its own rng stream
-  svg+=`<defs><radialGradient id="ag${sid}" cx="50%" cy="46%" r="58%"><stop offset="0" stop-color="${accent}" stop-opacity="${lightBg?0.22:0.3}"/><stop offset="0.6" stop-color="${accent}" stop-opacity="${lightBg?0.07:0.1}"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient>`
-     + `<filter id="ds${sid}" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="${lightBg?6:0}" dy="${lightBg?8:0}" stdDeviation="${lightBg?5:9}" flood-color="${lightBg?'#3b2f22':accent}" flood-opacity="${lightBg?0.32:0.45}"/></filter></defs>`;
+  svg+=`<defs><radialGradient id="ag${sid}" cx="50%" cy="46%" r="58%"><stop offset="0" stop-color="${accent}" stop-opacity="${lightBg?0.22:0.3}"/><stop offset="0.6" stop-color="${accent}" stop-opacity="${lightBg?0.07:0.1}"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient></defs>`;
   svg+=`<rect x="${-OX}" width="${SW}" height="${H}" fill="url(#ag${sid})"/>`;
   { const g=mulberry32((seed??0)*100003+index+777); let d='';
     for(let i=0;i<260;i++) d+=`M${(g()*SW-OX).toFixed(0)} ${(g()*H).toFixed(0)}h1.2v1.2h-1.2z`;
     svg+=`<path d="${d}" fill="${lightBg?'#5a4a3a':'#ffffff'}" opacity="${lightBg?0.12:0.07}"/>`; }
   const figStart=svg.length;
-  svg+=`<g filter="url(#ds${sid})">`;
+  // shadow / glow without SVG filters (filters render soft inside <img> on mobile Safari):
+  // stacked offset copies of the head silhouette with widening strokes read as a soft shadow
+  { const sc = lightBg ? '#3b2f22' : accent, dx = lightBg ? 7 : 0, dy = lightBg ? 9 : 0;
+    const layers = lightBg ? [[18,0.05],[10,0.07],[3,0.1]] : [[26,0.06],[16,0.09],[8,0.14]];
+    for (const [w,o] of layers) svg+=`<path d="${headPath}" fill="${sc}" stroke="${sc}" stroke-width="${w}" stroke-linejoin="round" opacity="${o}" transform="translate(${dx} ${dy})"/>`; }
+  svg+=`<g>`;
   svg+=clothingMarkup(clothing.id, cx, cy, headRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5), background.bg);
   // soft cast shadow of the head on the neck/collar
   svg+=`<ellipse cx="${cx+6}" cy="${(cy+headRy+14).toFixed(1)}" rx="${(headRx*0.72).toFixed(1)}" ry="13" fill="${lightBg?'#2a2119':'#000'}" opacity="${lightBg?0.2:0.45}"/>`;
