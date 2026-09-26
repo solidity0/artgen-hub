@@ -111,6 +111,11 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
         </div>
       </div>
       <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata"></textarea></div>
+      <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Launch settings (used in the batch zip)</div>
+        <input type="text" id="launch-base-uri" placeholder="Image base URI for ETH / Robinhood, e.g. ipfs://bafy.../ (optional)" style="margin-bottom:6px;">
+        <input type="text" id="launch-site-url" placeholder="Project website (optional)">
+        <div style="font-size:11px;color:var(--dim);margin-top:6px;">ETH / Robinhood: OpenSea-standard metadata + OpenSea Studio CSV. Bitcoin: Ordinals collection JSON. A README with launch steps is included.</div>
+      </div>
     </div>
   </div>
   <div class="panel-section">
@@ -436,7 +441,7 @@ async function downloadBatchZip(){
   if(!currentPieces.length)return;
   if(typeof JSZip==='undefined'){showToast('JSZip not loaded');return;}
   showToast('Rendering '+currentPieces.length+' PNGs…');
-  const zip=new JSZip(),images=zip.folder('images'),vectors=zip.folder('vectors'),metadata=zip.folder('metadata');
+  const zip=new JSZip(),images=zip.folder('images'),vectors=zip.folder('vectors'),metadata=zip.folder('metadata'); const launchItems = [];
   const BATCH=12;
   for(let start=0;start<currentPieces.length;start+=BATCH){
     const batch=currentPieces.slice(start,Math.min(start+BATCH,currentPieces.length));
@@ -448,11 +453,11 @@ async function downloadBatchZip(){
       if(p.isOneOfOne)attrs.push({trait_type:'Tier',value:'1/1'});
       const meta={name:getDisplayName()+' #'+p.index,description:getDescription()||'Generative ink character from '+getDisplayName()+'.',image:'images/'+p.index+'.png',vector:'vectors/'+p.index+'.svg',chain:currentChain,isOneOfOne:!!p.isOneOfOne,attributes:attrs};
       const sym=getSymbol();if(sym)meta.symbol=sym;if(currentChain!=='bitcoin')meta.external_url='';
-      metadata.file(p.index+'.json',JSON.stringify(meta,null,2));
+      launchItems.push({ index: p.index, attrs: attrs });
     }
     if(currentPieces.length>40)showToast('Rendered '+(start+BATCH)+'/'+currentPieces.length+'…');
   }
-  zip.file('collection.json',JSON.stringify({name:getDisplayName(),symbol:getSymbol()||undefined,description:getDescription()||undefined,chain:currentChain,supply:currentPieces.length,oneOfOneCount:currentPieces.filter(p=>p.isOneOfOne).length,seed:parseFormattedInt(document.getElementById('seed-input').value)||0,generatedAt:new Date().toISOString()},null,2));
+  writeLaunchFiles(zip, launchItems);
   try{showToast('Zipping…');const b=await zip.generateAsync({type:'blob'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=getFileSafeName()+'-batch.zip';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);showToast('Batch downloaded');}catch(e){showToast('Zip failed');}
 }
 
@@ -493,6 +498,89 @@ function setThumb(el, svg) {
   el.dataset.ready = '1';
 }
 function dropThumb(el) { if (el.dataset.url) { URL.revokeObjectURL(el.dataset.url); delete el.dataset.url; } }
+/* ---------- launch-ready export (shared by all generators) ----------
+   EVM (ethereum / robinhood): OpenSea metadata standard, per-token JSON (with and without .json),
+   an OpenSea Studio drop CSV and contract-level collection.json.
+   Bitcoin: Ordinals collection JSON (inscription ids filled in after inscribing) + inscribe order.
+   Every zip gets a README with the steps for the selected chain. */
+function launchBaseURI() {
+  let v = (document.getElementById('launch-base-uri') || {}).value || '';
+  v = v.trim();
+  if (v && !/\/$/.test(v)) v += '/';
+  return v;
+}
+function launchSite() { return ((document.getElementById('launch-site-url') || {}).value || '').trim(); }
+function cleanAttrs(attrs) { return attrs.map(a => ({ trait_type: String(a.trait_type), value: String(a.value).replace(/_/g, ' ') })); }
+function csvCell(v) { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function writeLaunchFiles(zip, items) {
+  items.sort((a, b) => a.index - b.index);
+  const name = getDisplayName(), symbol = getSymbol(), site = launchSite();
+  const desc = getDescription() || (name + ' — a generative collection.');
+  const evm = currentChain !== 'bitcoin';
+  const base = launchBaseURI() || 'ipfs://YOUR_IMAGES_CID/';
+  const seed = parseFormattedInt(document.getElementById('seed-input').value) || 0;
+  const md = zip.folder('metadata');
+  if (evm) {
+    const noExt = zip.folder('metadata-no-extension');
+    const traitTypes = [];
+    for (const it of items) for (const a of cleanAttrs(it.attrs)) if (!traitTypes.includes(a.trait_type)) traitTypes.push(a.trait_type);
+    let csv = ['tokenID', 'name', 'description', 'file_name', 'external_url'].concat(traitTypes.map(t => 'attributes[' + t + ']')).map(csvCell).join(',') + '\n';
+    for (const it of items) {
+      const attrs = cleanAttrs(it.attrs);
+      const meta = { name: name + ' #' + it.index, description: desc, image: base + it.index + '.png', attributes: attrs };
+      if (site) meta.external_url = site;
+      const j = JSON.stringify(meta, null, 2);
+      md.file(it.index + '.json', j);
+      noExt.file(String(it.index), j);
+      const byType = {}; for (const a of attrs) byType[a.trait_type] = a.value;
+      csv += [it.index, meta.name, desc, it.index + '.png', site].concat(traitTypes.map(t => byType[t] || '')).map(csvCell).join(',') + '\n';
+    }
+    zip.file('opensea-studio-metadata.csv', csv);
+    const coll = { name, description: desc, image: base + '1.png', external_link: site || undefined, symbol: symbol || undefined, chain: currentChain, supply: items.length, seed, generatedAt: new Date().toISOString() };
+    zip.file('collection.json', JSON.stringify(coll, null, 2));
+    zip.file('README.txt', [
+      name + ' — ' + items.length + ' pieces — ' + (currentChain === 'robinhood' ? 'Robinhood Chain (EVM)' : 'Ethereum') + ' launch pack', '',
+      'images/                 1200x1200 PNGs (what marketplaces display)',
+      'vectors/                original SVGs',
+      'metadata/               token metadata, OpenSea standard (1.json, 2.json, ...)',
+      'metadata-no-extension/  same files without .json, for contracts whose tokenURI is baseURI + tokenId',
+      'opensea-studio-metadata.csv  metadata sheet for an OpenSea Studio drop upload',
+      'collection.json         collection-level details', '',
+      'OPTION A — OpenSea Studio drop (no code):',
+      '  1. Create the drop in OpenSea Studio on ' + (currentChain === 'robinhood' ? 'the chain you deploy on' : 'Ethereum') + '.',
+      '  2. Upload the images/ folder as the media and opensea-studio-metadata.csv as the metadata.', '',
+      'OPTION B — your own contract:',
+      '  1. Upload images/ to IPFS (e.g. Pinata, NFT.Storage) and copy the folder CID.',
+      '  2. Put ipfs://<that CID>/ in "Image base URI" in the generator and download again',
+      '     (currently: ' + base + ').',
+      '  3. Upload metadata/ (or metadata-no-extension/) to IPFS and set your contract baseURI to ipfs://<metadata CID>/.',
+      '  Token N uses images/N.png and metadata/N.json.'
+    ].join('\n'));
+  } else {
+    const coll = [], order = ['index,png,svg'];
+    for (const it of items) {
+      const attrs = cleanAttrs(it.attrs);
+      md.file(it.index + '.json', JSON.stringify({ name: name + ' #' + it.index, attributes: attrs }, null, 2));
+      coll.push({ id: 'REPLACE_WITH_INSCRIPTION_ID_' + it.index, meta: { name: name + ' #' + it.index, attributes: attrs } });
+      order.push(it.index + ',images/' + it.index + '.png,vectors/' + it.index + '.svg');
+    }
+    zip.file('ordinals-collection.json', JSON.stringify(coll, null, 2));
+    zip.file('inscribe-order.csv', order.join('\n'));
+    zip.file('collection.json', JSON.stringify({ name, symbol: symbol || undefined, description: desc, website: site || undefined, chain: 'bitcoin', supply: items.length, seed, generatedAt: new Date().toISOString() }, null, 2));
+    zip.file('README.txt', [
+      name + ' — ' + items.length + ' pieces — Bitcoin Ordinals launch pack', '',
+      'vectors/                 SVGs — smallest files, cheapest to inscribe, sharp at any size',
+      'images/                  1200x1200 PNGs (use these if your launchpad requires raster images)',
+      'metadata/                per-piece name + traits',
+      'inscribe-order.csv       which file is piece #N',
+      'ordinals-collection.json collection metadata in the common Ordinals format', '',
+      'Steps:',
+      '  1. Inscribe the files in inscribe-order.csv order (SVG or PNG) with your launchpad or inscription tool.',
+      '  2. Replace each REPLACE_WITH_INSCRIPTION_ID_N in ordinals-collection.json with piece N\'s inscription id.',
+      '  3. Submit ordinals-collection.json (plus collection.json details) to the marketplace / launchpad.'
+    ].join('\n'));
+  }
+}
 const VG = (function(){
   const grid = document.getElementById('grid');
   const tileEls = new Map(), queue = [];
