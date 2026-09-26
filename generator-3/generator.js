@@ -978,6 +978,23 @@ function renderFromTraits(picks, index, seed, opts) {
     const layers = lightBg ? [[18,0.05],[10,0.07],[3,0.1]] : [[26,0.06],[16,0.09],[8,0.14]];
     for (const [w,o] of layers) svg+=`<path d="${headPath}" fill="${sc}" stroke="${sc}" stroke-width="${w}" stroke-linejoin="round" opacity="${o}" transform="translate(${dx} ${dy})"/>`; }
   svg+=`<g>`;
+  // v3.1 body: solid neck + rounded shoulders matching the head (same base fill, wash shading,
+  // accent rim and soft shadow), sized to the head; clothing linework is drawn on top of it
+  { const skin = lightBg ? '#FBF7EF' : '#151515', shade = lightBg ? '#2b241d' : '#000';
+    const neckY = cy + headRy - 4, sy = neckY + 26, Wb = Math.max(88, headRx * 1.38), r = 44, bot = H + 40;
+    const nw = Math.max(12, headRx * 0.2);
+    const bust = `M${(cx-Wb).toFixed(1)},${bot} L${(cx-Wb).toFixed(1)},${(sy+r).toFixed(1)} Q${(cx-Wb).toFixed(1)},${sy} ${(cx-Wb+r).toFixed(1)},${sy} L${(cx+Wb-r).toFixed(1)},${sy} Q${(cx+Wb).toFixed(1)},${sy} ${(cx+Wb).toFixed(1)},${(sy+r).toFixed(1)} L${(cx+Wb).toFixed(1)},${bot} Z`;
+    const neck = `M${(cx-nw).toFixed(1)},${(neckY-8).toFixed(1)} L${(cx+nw).toFixed(1)},${(neckY-8).toFixed(1)} L${(cx+nw+3).toFixed(1)},${(sy+6).toFixed(1)} L${(cx-nw-3).toFixed(1)},${(sy+6).toFixed(1)} Z`;
+    const sc = lightBg ? '#3b2f22' : accent, dx = lightBg ? 7 : 0, dy = lightBg ? 9 : 0;
+    for (const [w,o] of (lightBg ? [[18,0.05],[10,0.07],[3,0.1]] : [[26,0.05],[16,0.08],[8,0.12]])) svg+=`<path d="${bust}" fill="${sc}" stroke="${sc}" stroke-width="${w}" stroke-linejoin="round" opacity="${o}" transform="translate(${dx} ${dy})"/>`;
+    svg+=`<path d="${bust}" fill="none" stroke="${accent}" stroke-width="${(sw*3.2).toFixed(1)}" stroke-linejoin="round" opacity="0.75" transform="translate(-3.5 -2.5)"/>`;
+    svg+=`<path d="${bust}" fill="${skin}"/><path d="${neck}" fill="${skin}"/>`;
+    svg+=`<clipPath id="bw${sid}"><path d="${bust}"/><path d="${neck}"/></clipPath><g clip-path="url(#bw${sid})">`
+       + `<ellipse cx="${(cx+Wb*0.75).toFixed(1)}" cy="${(sy+90).toFixed(1)}" rx="${(Wb*1.0).toFixed(1)}" ry="130" fill="${shade}" opacity="${lightBg?0.16:0.45}"/>`
+       + `<ellipse cx="${(cx-Wb*0.45).toFixed(1)}" cy="${(sy+22).toFixed(1)}" rx="${(Wb*0.55).toFixed(1)}" ry="34" fill="#ffffff" opacity="${lightBg?0.4:0.06}"/>`
+       + `<rect x="${(cx-nw-4).toFixed(1)}" y="${(neckY-8).toFixed(1)}" width="${(nw*2+8).toFixed(1)}" height="${(sy-neckY+14).toFixed(1)}" fill="${shade}" opacity="${lightBg?0.12:0.3}"/></g>`;
+    svg+=`<path d="${roughPath([[cx-Wb,bot],[cx-Wb,sy+r],[cx-Wb+r*0.3,sy+r*0.3],[cx-Wb+r,sy],[cx+Wb-r,sy],[cx+Wb-r*0.3,sy+r*0.3],[cx+Wb,sy+r],[cx+Wb,bot]],mulberry32((seed??0)*100003+index+55),jit*0.6)}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round" opacity="0.9"/>`;
+  }
   svg+=clothingMarkup(clothing.id, cx, cy, headRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5), background.bg);
   // soft cast shadow of the head on the neck/collar
   svg+=`<ellipse cx="${cx+6}" cy="${(cy+headRy+14).toFixed(1)}" rx="${(headRx*0.72).toFixed(1)}" ry="13" fill="${lightBg?'#2a2119':'#000'}" opacity="${lightBg?0.2:0.45}"/>`;
