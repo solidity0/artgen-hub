@@ -936,12 +936,12 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     } else {
       tx=cx+(rng()-0.5)*8;
       // chains clothing draws its last decorative row at roughly cy+headRy+44,
-      // right where COB used to land — push it lower to clear that row.
+      // right where the tag used to land — push it lower to clear that row.
       const clearance = (clothingId==='chains' || clothingId==='chains_classic') ? 78 : 46;
       ty=cy+(headRy||80)+clearance+(rng()-0.5)*8;
       rot=(rng()-0.5)*8;
     }
-    out+=`<text x="${tx.toFixed(0)}" y="${ty.toFixed(0)}" font-size="15" fill="${textColor}" opacity="0.7" font-family="monospace" font-weight="bold" text-anchor="middle" transform="rotate(${rot.toFixed(0)} ${tx.toFixed(0)} ${ty.toFixed(0)})">COB</text>`;
+    out+=`<text x="${tx.toFixed(0)}" y="${ty.toFixed(0)}" font-size="15" fill="${textColor}" opacity="0.7" font-family="monospace" font-weight="bold" text-anchor="middle" transform="rotate(${rot.toFixed(0)} ${tx.toFixed(0)} ${ty.toFixed(0)})">${(r=>r<0.4?'ODD':r<0.8?'odd':'Odd')(rng())}</text>`;
   }
   return out;
 }
@@ -1422,19 +1422,23 @@ function pickOneOfOneEyeColor(rng) {
 // 1/1 background gets its own curated weighting too — matte_black_stars leads
 // heavily (70%), with the remaining 30% spread across the other true-black
 // and near-black options. Regular generation is untouched.
+// 75% dark (spread across every dark option), 25% grey / paper
 const ONE_OF_ONE_BACKGROUND_WEIGHTS = [
-  { id: 'matte_black_stars',     weight: 14 },
-  { id: 'matte_black_red_stars', weight: 8  },
-  { id: 'matte_black_wash',      weight: 8  },
-  { id: 'matte_black_splat',     weight: 7  },
-  { id: 'ink_wash',              weight: 7  },
-  { id: 'black_splat',           weight: 6  },
-  { id: 'grey_wash',             weight: 8  },
-  { id: 'white_clean',           weight: 9  },
-  { id: 'light_hatch',           weight: 9  },
-  { id: 'cross_hatch',           weight: 9  },
-  { id: 'scribble',              weight: 7  },
-  { id: 'chaos',                 weight: 8  }
+  { id: 'matte_black_stars',     weight: 11 },
+  { id: 'matte_black_red_stars', weight: 10  },
+  { id: 'matte_black_wash',      weight: 10  },
+  { id: 'matte_black_splat',     weight: 10  },
+  { id: 'matte_black',           weight: 9  },
+  { id: 'ink_wash',              weight: 9  },
+  { id: 'black_splat',           weight: 9  },
+  { id: 'black_clean',           weight: 7  },
+  { id: 'white_dots',            weight: 3  },
+  { id: 'grey_wash',             weight: 4  },
+  { id: 'white_clean',           weight: 4  },
+  { id: 'light_hatch',           weight: 4  },
+  { id: 'cross_hatch',           weight: 3  },
+  { id: 'scribble',              weight: 3  },
+  { id: 'chaos',                 weight: 4  }
 ];
 function pickOneOfOneBackground(rng) {
   const total = ONE_OF_ONE_BACKGROUND_WEIGHTS.reduce((s,w)=>s+w.weight,0);
