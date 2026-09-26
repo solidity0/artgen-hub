@@ -316,9 +316,10 @@ function generateOne(index,seed,opts) {
     expression=picks.expression;
   }
 
+  picks.tag=G.pickTag(seed,index,picks.accessory.id,locks.tag);
   return { index, picks, svg:null, isOneOfOne, seed,
-    traits:{background:picks.background.id,headShape:picks.headShape.id,headFill:picks.headFill.id,hair:picks.hair.id,eyeColor:picks.eyeColor.id,eyeStyle:picks.eyeStyle.id,mouth:picks.mouth.id,clothing:picks.clothing.id,accessory:picks.accessory.id,expression:picks.expression.id,inkStyle:picks.inkStyle.id},
-    rarity:{background:picks.background.rarity,headShape:picks.headShape.rarity,headFill:picks.headFill.rarity,hair:picks.hair.rarity,eyeColor:picks.eyeColor.rarity,eyeStyle:picks.eyeStyle.rarity,mouth:picks.mouth.rarity,clothing:picks.clothing.rarity,accessory:picks.accessory.rarity,expression:picks.expression.rarity,inkStyle:picks.inkStyle.rarity},
+    traits:{background:picks.background.id,headShape:picks.headShape.id,headFill:picks.headFill.id,hair:picks.hair.id,eyeColor:picks.eyeColor.id,eyeStyle:picks.eyeStyle.id,mouth:picks.mouth.id,clothing:picks.clothing.id,accessory:picks.accessory.id,expression:picks.expression.id,inkStyle:picks.inkStyle.id,tag:picks.tag.id},
+    rarity:{background:picks.background.rarity,headShape:picks.headShape.rarity,headFill:picks.headFill.rarity,hair:picks.hair.rarity,eyeColor:picks.eyeColor.rarity,eyeStyle:picks.eyeStyle.rarity,mouth:picks.mouth.rarity,clothing:picks.clothing.rarity,accessory:picks.accessory.rarity,expression:picks.expression.rarity,inkStyle:picks.inkStyle.rarity,tag:picks.tag.rarity},
     tier:tierOverride||currentTier };
 }
 
@@ -360,7 +361,7 @@ const CATEGORY_META=[
   {key:'headFill',label:'Head fill'},{key:'hair',label:'Hair'},
   {key:'eyeColor',label:'Eye color',swatch:'hex'},{key:'eyeStyle',label:'Eye style'},
   {key:'mouth',label:'Mouth'},{key:'clothing',label:'Clothing'},
-  {key:'accessory',label:'Accessory'},{key:'expression',label:'Expression'},
+  {key:'accessory',label:'Accessory'},{key:'expression',label:'Expression'},{key:'tag',label:'Tag'},
   {key:'inkStyle',label:'Ink style'}
 ];
 function rarityColor(r){return r==='rare'?'var(--acid)':r==='uncommon'?'var(--orange)':'var(--dim)';}

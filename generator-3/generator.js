@@ -189,6 +189,12 @@ const TRAITS = {
     { id: 'tattoo_face',  weight: 6,  rarity: 'rare' },
     { id: 'graffiti_tag', weight: 4,  rarity: 'rare' }
   ],
+  // 'odd' tag lettering: ~40% of all pieces (graffiti_tag accessories always carry it).
+  // Written ODD on 1/1s, odd on everything else.
+  tag: [
+    { id: 'none', weight: 63, rarity: 'common' },
+    { id: 'odd',  weight: 37, rarity: 'uncommon' }
+  ],
   expression: [
     { id: 'neutral',   weight: 28, rarity: 'common' },
     { id: 'menacing',  weight: 22, rarity: 'common' },
@@ -765,7 +771,7 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
       ty=cy+(headRy||80)+clearance+(rng()-0.5)*8;
       rot=(rng()-0.5)*8;
     }
-    out+=`<text x="${tx.toFixed(0)}" y="${ty.toFixed(0)}" font-size="15" fill="${textColor}" opacity="0.7" font-family="monospace" font-weight="bold" text-anchor="middle" transform="rotate(${rot.toFixed(0)} ${tx.toFixed(0)} ${ty.toFixed(0)})">${(r=>r<0.4?'ODD':r<0.8?'odd':'Odd')(rng())}</text>`;
+    out+=`<text x="${tx.toFixed(0)}" y="${ty.toFixed(0)}" font-size="15" fill="${textColor}" opacity="0.7" font-family="monospace" font-weight="bold" text-anchor="middle" transform="rotate(${rot.toFixed(0)} ${tx.toFixed(0)} ${ty.toFixed(0)})">${isOneOfOne?'ODD':'odd'}</text>`;
   }
   return out;
 }
@@ -1048,6 +1054,8 @@ function renderFromTraits(picks, index, seed, opts) {
   svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
   svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id);
+  if (picks.tag && picks.tag.id === 'odd' && accessory.id !== 'graffiti_tag')
+    svg+=accessoryMarkup('graffiti_tag', cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+98), headRy, hair.id, isOneOfOne, background.bg, clothing.id);
   svg+='</g>';
   // brush-weight linework: thicken every stroke in the figure (the crop adds a further 1.33x)
   svg=svg.slice(0,figStart)+svg.slice(figStart).replace(/stroke-width="([\d.]+)"/g,(m,w)=>`stroke-width="${(parseFloat(w)*1.25).toFixed(2)}"`);
@@ -1085,6 +1093,13 @@ function pickHairForPiece(rng, tier, isOneOfOne) {
   return choice;
 }
 
+// Tag trait uses its own rng stream so adding it never shifts any other pick.
+function pickTag(seed, index, accessoryId, lockIds) {
+  if (accessoryId === 'graffiti_tag') return TRAITS.tag[1];
+  const pool = lockIds && lockIds.length ? TRAITS.tag.filter(t => lockIds.includes(t.id)) : TRAITS.tag;
+  return weightedPick(mulberry32((seed ?? 0) * 100003 + index + 97), pool.length ? pool : TRAITS.tag);
+}
+
 function generatePiece(index, seed, tier, opts) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const t = tier || 'any';
@@ -1111,6 +1126,7 @@ function generatePiece(index, seed, tier, opts) {
   // Non-1/1 pieces can never exactly reproduce a signature combo — if the
   // natural picks happen to land on one, expression mutates to break it.
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, false);
+  picks.tag = pickTag(seed, index, picks.accessory.id);
 
   const svg = renderFromTraits(picks, index, seed, { isOneOfOne });
 
@@ -1119,12 +1135,12 @@ function generatePiece(index, seed, tier, opts) {
     traits: {
       background: picks.background.id, headShape: picks.headShape.id, headFill: picks.headFill.id, hair: picks.hair.id,
       eyeColor: picks.eyeColor.id, eyeStyle: picks.eyeStyle.id, mouth: picks.mouth.id, clothing: picks.clothing.id,
-      accessory: picks.accessory.id, expression: picks.expression.id, inkStyle: picks.inkStyle.id
+      accessory: picks.accessory.id, expression: picks.expression.id, inkStyle: picks.inkStyle.id, tag: picks.tag.id
     },
     rarity: {
       background: picks.background.rarity, headShape: picks.headShape.rarity, headFill: picks.headFill.rarity, hair: picks.hair.rarity,
       eyeColor: picks.eyeColor.rarity, eyeStyle: picks.eyeStyle.rarity, mouth: picks.mouth.rarity, clothing: picks.clothing.rarity,
-      accessory: picks.accessory.rarity, expression: picks.expression.rarity, inkStyle: picks.inkStyle.rarity
+      accessory: picks.accessory.rarity, expression: picks.expression.rarity, inkStyle: picks.inkStyle.rarity, tag: picks.tag.rarity
     }
   };
 }
@@ -1302,7 +1318,7 @@ const api = { generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
   renderFromTraits,
   mulberry32, weightedPick, pickByRarity, shadeColor,
   smoothPath, roughPath, roughLine, roughEllipse, roughRect, hatchLines, formHatch,
-  ONE_OF_ONE_EXCLUDED, CHAIN_THEMES,
+  ONE_OF_ONE_EXCLUDED, CHAIN_THEMES, pickTag,
   ONE_OF_ONE_EYE_WEIGHTS, pickOneOfOneEyeColor,
   ONE_OF_ONE_BACKGROUND_WEIGHTS, pickOneOfOneBackground,
   ONE_OF_ONE_HEADFILL_WEIGHTS, pickOneOfOneHeadFill,
