@@ -14,7 +14,7 @@
   const SIZE = WIDTH; // legacy alias
   const HX = 240;     // head centre
   const HY = 246;
-  const HEAD_SCALE = 1.7; // head-only composition: art scaled up
+  const HEAD_SCALE = 1.5; // head-only composition: art scaled up
   const LINE_BOOST = 1.992; // head stroke weight multiplier (after head-scale compensation)
   const LW = 2.3;     // main line weight
 
@@ -486,20 +486,12 @@
       `<clipPath id="hc${uid}"><path d="${headD}"/></clipPath></defs>`;
 
     svg += backgroundMarkup(rng, t.background, bgBase, ink, uid);
-    const accent = eyeHex || (darkBg ? '#ff8a3d' : '#e0605a');
 
     const headStart = svg.length;
     svg += `<g transform="translate(${HX},${HY}) scale(${HEAD_SCALE}) rotate(${f(tilt)}) translate(${-HX},${-HY})">`;
 
     /* ears */
     const earL = earPts(rng, t.ears, P, -1), earR = earPts(rng, t.ears, P, 1);
-    // Ink Pups look: die-cut vinyl sticker around head + ears (thick white border, thin ink edge) with a
-    // hard flat offset shadow (grey on light backgrounds, eye colour on dark). No filters.
-    { const shapes = [headD, closedD(earL), closedD(earR)];
-      const layer = (col, w, extra) => shapes.map(d => `<path d="${d}" fill="${col}" stroke="${col}" stroke-width="${w}" stroke-linejoin="round"${extra || ''}/>`).join('');
-      svg += layer(darkBg ? accent : '#141414', 22, ` opacity="${darkBg ? 0.75 : 0.28}" transform="translate(6 7)"`);
-      svg += layer('#141414', 22);
-      svg += layer(darkBg ? '#f4f1ea' : '#ffffff', 17); }
     const earFill = t.earTone === 'solid' ? ink : fillBase;
     const drawEar = (pts, side) => {
       let s = sketch(rng, pts, true, ink, { fill: earFill });
