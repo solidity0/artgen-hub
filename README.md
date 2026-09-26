@@ -1,6 +1,6 @@
 # ArtGen — generator hub
 
-Six generative art collections, each self-contained in its own folder, with a
+Seven generative art collections, each self-contained in its own folder, with a
 hub landing page at the root linking between them. Every generator runs
 entirely in the browser as a single HTML file — no server, no install — so it
 works on GitHub Pages and can be inscribed on-chain as-is.
@@ -15,8 +15,9 @@ works on GitHub Pages and can be inscribed on-chain as-is.
 | 4 | **AfterBots** | Colourful riso-chalk robots, often with a companion | 🤖 | [generator-4](https://solidity0.github.io/artgen-hub/generator-4/index.html) |
 | 5 | **Ink Pups** | Scrawled ink dog heads with glowing eyes | 🐶 | [generator-5](https://solidity0.github.io/artgen-hub/generator-5/index.html) |
 | 6 | **Hood Characters** | Shaded flat-vector chibi guys on brick city blocks | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
+| 7 | **Drowned Dockworkers** | Dockworkers in barnacled diving helmets with creature lanterns | 🤿 | [generator-7](https://solidity0.github.io/artgen-hub/generator-7/index.html) |
 
-Slots 7 and 8 are reserved on the hub for future collections.
+Slot 8 is reserved on the hub for the next collection.
 
 ---
 
@@ -31,7 +32,8 @@ Slots 7 and 8 are reserved on the hub for future collections.
 ├── generator-3/  Oddlings
 ├── generator-4/  AfterBots
 ├── generator-5/  Ink Pups
-└── generator-6/  Hood Characters
+├── generator-6/  Hood Characters
+└── generator-7/  Drowned Dockworkers
 ```
 
 Every generator folder holds the same four files:
@@ -165,6 +167,30 @@ background. The source of truth is
 [solidity0/hoodcharacters](https://github.com/solidity0/hoodcharacters);
 this folder is a synced copy — change it there and copy the four files here.
 
+### 7 — Drowned Dockworkers
+`generator-7/` · engine **v1** · `window.DrownedGen` · page ≈ 90 KB
+
+Old dockworkers in brass diving helmets, seen through the front porthole,
+each carrying a glowing creature in a jar through a sunken place. Bold ink
+outlines, glossy eyes and glass reflections, seeded barnacles, tarnish and
+marine snow; the lantern tints the whole scene with its glow.
+
+| Trait | Values |
+|-------|--------|
+| water | 5 — shallows, deep blue, emerald, twilight, abyss |
+| location | 4 — sunken city, sub dock, shipwreck, trench |
+| helmet | 5 — brass, copper, steel, verdigris, gold |
+| crust | 5 — barnacles, tarnish, kelp, polished, coral |
+| face | 5 — old salt, deckhand, fishfolk, skeleton, **ghost** (1/1-only empty helmet) |
+| skin · headwear · hatColor | 4 · 5 (knit cap, captain hat, sou'wester, bandana, none) · 4 |
+| facialHair · eyeColor | 5 (walrus, beard, stubble, none, braids) · 5 |
+| hitchhiker | 5 — none, crab, hermit crab, octopus, seahorse |
+| lantern | 4 — jellyfish, anglerfish, glow coral, pearl |
+
+1/1s use curated weights that lean toward the rare looks and are the only way
+to get the ghost helmet. Ghosts and skeletons drop hats/whiskers that would
+float in empty space. The suit's stencil number matches the piece number.
+
 ---
 
 ## Shared features (every generator page)
@@ -185,7 +211,7 @@ this folder is a synced copy — change it there and copy the four files here.
   pieces stay smooth, including on mobile.
 - **Lightbox** — full traits with rarity; download PNG (1200×1200) or SVG,
   copy image (shortcut **C**), copy markup; ← / → to browse, Esc to close.
-- **Animate** (generators 1, 2, 3, 5, 6) — seeded SVG animation in the
+- **Animate** (generators 1, 2, 3, 5, 6, 7) — seeded SVG animation in the
   lightbox and SVG exports.
 - **Export trait sheet** — CSV of every piece's traits and rarities.
 - **Download batch (.zip)** — a launch-ready pack:
@@ -223,7 +249,7 @@ console.log(piece.traits, piece.svg.length);
 ## Adding a new generator
 
 1. Copy an existing generator folder's `generator.js`, `index.src.html` and
-   `build.js` into the next empty slot (`generator-7/`).
+   `build.js` into the next empty slot (`generator-8/`).
 2. Run `node build.js` inside it to produce `index.html`.
 3. In the root `index.html`, set that slot's entry in the `GENERATORS` array
    to `active: true` and give it a name and description.
