@@ -275,7 +275,8 @@ function roughLine(x1,y1,x2,y2,rng,w=2) {
 
 // Hand-inked lettering for the 'odd' / 'ODD' tag: each letter is a wobbly brush stroke with a faint
 // second ink pass, drawn as vector paths (no font, so it looks identical on every device).
-function handLettering(word,cx,baseY,color,rng,rot){
+function handLettering(word,cx,baseY,color,rng,rot,sc){
+  sc = sc || 1.45;
   const j=(v)=>(rng()-0.5)*v;
   const glyphs=[]; let w=0;
   for(const ch of word){
@@ -299,7 +300,7 @@ function handLettering(word,cx,baseY,color,rng,rot){
       d+=`M${(ox+rx+0.3+j(0.6)).toFixed(1)},${(y-15.5).toFixed(1)} Q${(ox+rx+1.2+j(1)).toFixed(1)},${(y-7).toFixed(1)} ${(ox+rx+0.6).toFixed(1)},${(y+0.4).toFixed(1)} `;
     }
   }
-  const tr=`rotate(${(rot||0).toFixed(1)} ${cx.toFixed(1)} ${baseY.toFixed(1)}) translate(${cx.toFixed(1)} ${baseY.toFixed(1)}) scale(1.45) translate(${(-cx).toFixed(1)} ${(-baseY).toFixed(1)})`;
+  const tr=`rotate(${(rot||0).toFixed(1)} ${cx.toFixed(1)} ${baseY.toFixed(1)}) translate(${cx.toFixed(1)} ${baseY.toFixed(1)}) scale(${sc}) translate(${(-cx).toFixed(1)} ${(-baseY).toFixed(1)})`;
   return `<g transform="${tr}" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round">`
     + `<path d="${d}" stroke-width="2.5" opacity="0.85"/>`
     + `<path d="${d}" stroke-width="1" opacity="0.35" transform="translate(0.8 0.6)"/></g>`;
@@ -803,7 +804,7 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
       ty=cy+(headRy||80)+clearance+(rng()-0.5)*8;
       rot=(rng()-0.5)*8;
     }
-    out+=handLettering(isOneOfOne?'ODD':'odd', tx, ty, textColor, rng, rot);
+    // lettering itself is drawn scattered in the sky by renderFromTraits (see skyTags)
   }
   return out;
 }
@@ -1009,6 +1010,20 @@ function renderFromTraits(picks, index, seed, opts) {
   { const g=mulberry32((seed??0)*100003+index+777); let d='';
     for(let i=0;i<260;i++) d+=`M${(g()*SW-OX).toFixed(0)} ${(g()*H).toFixed(0)}h1.2v1.2h-1.2z`;
     svg+=`<path d="${d}" fill="${lightBg?'#5a4a3a':'#ffffff'}" opacity="${lightBg?0.12:0.07}"/>`; }
+  // 'odd' / 'ODD' tag: small hand-lettered words scattered in the sky around the head (never on the figure)
+  if ((picks.tag && picks.tag.id === 'odd') || accessory.id === 'graffiti_tag') {
+    const tr = mulberry32((seed??0)*100003+index+98), word = isOneOfOne ? 'ODD' : 'odd';
+    const n = 3 + Math.floor(tr()*3), placed = [];
+    const hx = headRx + 34, hy = headRy + 48;
+    for (let t = 0; t < 80 && placed.length < n; t++) {
+      const x = VB_X + 26 + tr() * (VB - 52), y = VB_Y + 24 + tr() * (cy + headRy * 0.55 - VB_Y - 24);
+      if (((x-cx)/hx)**2 + ((y-(cy-12))/hy)**2 < 1) continue;           // keep clear of head + hair
+      if (placed.some(([px,py]) => Math.hypot(px-x, py-y) < 62)) continue; // spread them out
+      placed.push([x, y]);
+      const col = tr() < 0.5 ? accent : ink;
+      svg += `<g opacity="${(0.55 + tr()*0.3).toFixed(2)}">` + handLettering(word, x, y, col, tr, (tr()-0.5)*34, 0.8 + tr()*0.25) + `</g>`;
+    }
+  }
   const figStart=svg.length;
   // shadow / glow without SVG filters (filters render soft inside <img> on mobile Safari):
   // stacked offset copies of the head silhouette with widening strokes read as a soft shadow
@@ -1086,8 +1101,6 @@ function renderFromTraits(picks, index, seed, opts) {
   svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
   svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id);
-  if (picks.tag && picks.tag.id === 'odd' && accessory.id !== 'graffiti_tag')
-    svg+=accessoryMarkup('graffiti_tag', cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+98), headRy, hair.id, isOneOfOne, background.bg, clothing.id);
   svg+='</g>';
   // brush-weight linework: thicken every stroke in the figure (the crop adds a further 1.33x)
   svg=svg.slice(0,figStart)+svg.slice(figStart).replace(/stroke-width="([\d.]+)"/g,(m,w)=>`stroke-width="${(parseFloat(w)*1.25).toFixed(2)}"`);
