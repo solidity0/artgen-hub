@@ -1,5 +1,5 @@
 // ============================================================
-// Chalkbots — Generative Trait Engine v2 "Riso Chalk"
+// AfterBots — Generative Trait Engine v2 "Riso Chalk"
 // Chalk-line bot + optional companion. v2 keeps the hand-drawn chalk line but
 // adds colour and depth: a bodyColor trait (riso-style offset fills with
 // halftone shading, rare chrome/gold/sunset finishes), pastel and midnight
@@ -7,7 +7,7 @@
 // filled hands/feet, drop + ground shadows, blush and glowing coloured eyes.
 // Usage:
 //   Node:    const { generatePiece, generateBatch } = require('./generator.js');
-//   Browser: inlined into index.html by build.js -> window.ChalkbotsGen
+//   Browser: inlined into index.html by build.js -> window.AfterBotsGen
 // ============================================================
 
 function mulberry32(seed) {
@@ -1241,10 +1241,10 @@ const api = {
 // Browser detection: check for a real DOM rather than inferring Node from
 // "no module var" — some sandboxed preview environments define a stray
 // `module` object for their own bundling, which would otherwise misdirect
-// this export to module.exports and silently skip window.ChalkbotsGen.
+// this export to module.exports and silently skip window.AfterBotsGen.
 const hasRealDOM = typeof document !== 'undefined' && typeof document.createElement === 'function';
 if (hasRealDOM && typeof window !== 'undefined') {
-  window.ChalkbotsGen = api;
+  window.AfterBotsGen = api;
 }
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = api;

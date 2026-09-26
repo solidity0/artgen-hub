@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chalkbots — Generator</title>
+<title>AfterBots — Generator</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2790%27%3E%F0%9F%A4%96%3C%2Ftext%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -104,9 +104,9 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 <body>
 <header>
   <a href="../index.html" class="hub-back">&larr; Hub</a>
-  <div class="brand">Chalkbots <span>//</span> Generator</div>
+  <div class="brand">AfterBots <span>//</span> Generator</div>
   <div class="eyebrow">CHALK-LINE CHARACTER ENGINE</div>
-  <div class="h1" id="h1-text">Chalkbots</div>
+  <div class="h1" id="h1-text">AfterBots</div>
   <div class="sub">Chalkboard-sketch bots, optionally paired with a small companion creature. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
 </header>
 <main>
@@ -186,16 +186,16 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 <!-- ENGINE:START -->
 <!-- ENGINE:END -->
 <script>
-const G = window.ChalkbotsGen;
+const G = window.AfterBotsGen;
 if (!G) {
   document.body.innerHTML = '<div style="padding:40px;font-family:monospace;color:#e63e3e;background:#0a0a0a;min-height:100vh;">' +
-    '<h2>Engine failed to load (window.ChalkbotsGen is undefined)</h2>' +
+    '<h2>Engine failed to load (window.AfterBotsGen is undefined)</h2>' +
     '<p style="color:#888;margin-top:12px;">The generator.js engine script did not attach to window. ' +
     'This usually means the inlined script errored before reaching its export line, or ran in an ' +
     'environment where a stray global `module` variable diverted the export away from the browser. ' +
     'Try opening this file directly in a browser tab (not a sandboxed preview) rather than downloading again.</p>' +
     '</div>';
-  throw new Error('window.ChalkbotsGen is undefined — engine did not attach. See on-page diagnostic.');
+  throw new Error('window.AfterBotsGen is undefined — engine did not attach. See on-page diagnostic.');
 }
 const GTRAITS = G.TRAITS;
 const gMulberry32 = G.mulberry32;
@@ -659,7 +659,7 @@ document.addEventListener('keydown', e => {
 document.getElementById('grid').addEventListener('keydown', e => { if (e.key !== 'Enter' && e.key !== ' ') return; const t = e.target.closest('.tile'); if (!t) return; e.preventDefault(); openLightbox(parseInt(t.dataset.idx, 10)); });
 
 document.getElementById('chain-controls').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; currentChain = b.dataset.chain; document.querySelectorAll('#chain-controls .chip').forEach(c => c.classList.remove('active')); b.classList.add('active'); applyChainTheme(currentChain); });
-document.getElementById('collection-name-input').addEventListener('input', () => { const v = document.getElementById('collection-name-input').value.trim(); document.getElementById('h1-text').textContent = v || 'Chalkbots'; document.title = (v || 'Chalkbots') + ' — Generator'; });
+document.getElementById('collection-name-input').addEventListener('input', () => { const v = document.getElementById('collection-name-input').value.trim(); document.getElementById('h1-text').textContent = v || 'AfterBots'; document.title = (v || 'AfterBots') + ' — Generator'; });
 document.getElementById('tier-controls').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; currentTier = b.dataset.tier; document.querySelectorAll('#tier-controls .chip').forEach(c => c.classList.remove('active')); b.classList.add('active'); });
 document.getElementById('controls').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if (!b) return;

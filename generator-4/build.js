@@ -49,7 +49,7 @@ function build() {
     throw new Error('ENGINE:END appears before ENGINE:START in index.src.html');
   }
 
-  // Wrap the engine in its own <script> so window.ChalkbotsGen is defined before the UI script runs.
+  // Wrap the engine in its own <script> so window.AfterBotsGen is defined before the UI script runs.
   const banner = '// ==== AUTO-GENERATED FROM generator.js — DO NOT EDIT HERE. Edit generator.js then run `node build.js`. ====';
   const block =
     START + '\n' +
