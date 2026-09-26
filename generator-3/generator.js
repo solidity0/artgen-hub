@@ -1230,7 +1230,8 @@ const ONE_OF_ONE_EYE_WEIGHTS = [
   { id: 'orange', weight: 22 },
   { id: 'black',  weight: 11 },
   { id: 'white',  weight: 8  },
-  { id: 'purple', weight: 5  }
+  { id: 'purple', weight: 12 },
+  { id: 'green',  weight: 14 }
 ];
 function pickOneOfOneEyeColor(rng) {
   const total = ONE_OF_ONE_EYE_WEIGHTS.reduce((s,w)=>s+w.weight,0);
@@ -1246,15 +1247,18 @@ function pickOneOfOneEyeColor(rng) {
 // heavily (70%), with the remaining 30% spread across the other true-black
 // and near-black options. Regular generation is untouched.
 const ONE_OF_ONE_BACKGROUND_WEIGHTS = [
-  { id: 'matte_black_stars',     weight: 70 },
-  { id: 'matte_black',           weight: 6  },
-  { id: 'matte_black_wash',      weight: 6  },
-  { id: 'matte_black_splat',     weight: 6  },
-  { id: 'matte_black_red_stars', weight: 5  },
-  { id: 'black_clean',           weight: 3  },
-  { id: 'black_splat',           weight: 2  },
-  { id: 'ink_wash',              weight: 1  },
-  { id: 'grey_wash',             weight: 1  }
+  { id: 'matte_black_stars',     weight: 14 },
+  { id: 'matte_black_red_stars', weight: 8  },
+  { id: 'matte_black_wash',      weight: 8  },
+  { id: 'matte_black_splat',     weight: 7  },
+  { id: 'ink_wash',              weight: 7  },
+  { id: 'black_splat',           weight: 6  },
+  { id: 'grey_wash',             weight: 8  },
+  { id: 'white_clean',           weight: 9  },
+  { id: 'light_hatch',           weight: 9  },
+  { id: 'cross_hatch',           weight: 9  },
+  { id: 'scribble',              weight: 7  },
+  { id: 'chaos',                 weight: 8  }
 ];
 function pickOneOfOneBackground(rng) {
   const total = ONE_OF_ONE_BACKGROUND_WEIGHTS.reduce((s,w)=>s+w.weight,0);
@@ -1272,12 +1276,12 @@ function pickOneOfOneBackground(rng) {
 // rare-tier forcing. It leads heavily here instead; the rest spread across
 // the shaded/solid options for variety.
 const ONE_OF_ONE_HEADFILL_WEIGHTS = [
-  { id: 'outline',     weight: 62 },
-  { id: 'hatch_shade', weight: 12 },
-  { id: 'light_shade', weight: 10 },
-  { id: 'heavy_shade', weight: 8  },
-  { id: 'ink_black',   weight: 5  },
-  { id: 'splatter',    weight: 3  }
+  { id: 'outline',     weight: 20 },
+  { id: 'hatch_shade', weight: 18 },
+  { id: 'light_shade', weight: 18 },
+  { id: 'heavy_shade', weight: 16 },
+  { id: 'ink_black',   weight: 14 },
+  { id: 'splatter',    weight: 14 }
 ];
 function pickOneOfOneHeadFill(rng) {
   const total = ONE_OF_ONE_HEADFILL_WEIGHTS.reduce((s,w)=>s+w.weight,0);

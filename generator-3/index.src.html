@@ -395,19 +395,23 @@ function render(){
   const baseLabel=count+' generated · seed '+seed+(currentTier!=='any'?' · '+currentTier:'')+(ooCount>0?' · '+ooCount+' 1/1':'');
   document.getElementById('status-label').textContent=baseLabel;
 
-  const usedCombos=new Set(), usedCores=new Set();
+  // 1/1 variety: every trait draws from its full pool (not forced to the rare tier), and each 1/1
+  // prefers values the batch's earlier 1/1s haven't used yet (best of up to 40 deterministic rerolls)
+  const usedCombos=new Set(), used={};
+  const VARY=['headShape','hair','clothing','eyeStyle','eyeColor','background','headFill','mouth','accessory'];
+  VARY.forEach(k=>used[k]=new Set());
   function generateOneOfOne(pi,seed){
-    let best=null,bestScore=0,last=null;
-    for(let attempt=0;attempt<300;attempt++){
-      const p=generateOne(pi+attempt*10000000,seed,{tierOverride:'rare',isOneOfOne:true});
+    let best=null,bestScore=-1,last=null;
+    for(let attempt=0;attempt<40;attempt++){
+      const p=generateOne(pi+attempt*10000000,seed,{tierOverride:null,isOneOfOne:true});
       last=p; const ck=JSON.stringify(p.traits);
       if(usedCombos.has(ck))continue;
-      const score=usedCores.has(p.traits.eyeColor)?1:3;
+      let score=0; for(const k of VARY) if(!used[k].has(p.traits[k])) score+=(k==='headShape'||k==='hair'||k==='clothing'?2:1);
       if(score>bestScore){best=p;bestScore=score;}
-      if(bestScore>=3)break;
+      if(score>=VARY.length+3)break;
     }
     const piece=best||last;
-    usedCombos.add(JSON.stringify(piece.traits)); usedCores.add(piece.traits.eyeColor);
+    usedCombos.add(JSON.stringify(piece.traits)); for(const k of VARY) used[k].add(piece.traits[k]);
     piece.index=pi; return piece;
   }
 
