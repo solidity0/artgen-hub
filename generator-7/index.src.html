@@ -94,7 +94,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   <div class="brand">Drowned Dockworkers <span>//</span> Generator</div>
   <div class="eyebrow">GENERATIVE DEEP-SEA ENGINE</div>
   <div class="h1" id="h1-text">Drowned Dockworkers</div>
-  <div class="sub">Old dockworkers in barnacled diving helmets, carrying creature lanterns through sunken places. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
+  <div class="sub">Cartoon scuba divers with real human proportions, swimming through reefs, wrecks, kelp and sunken cities. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
 </header>
 <main>
   <div class="panel-section">
@@ -110,7 +110,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
           <button class="chip" data-chain="robinhood">robinhood</button>
         </div>
       </div>
-      <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata">Drowned Dockworkers — the night shift that never clocked out. Brass helmets, barnacles and a creature in a jar to light the way.</textarea></div>
+      <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata">Drowned Dockworkers — the night shift clocked out and went diving. Masks on, regs in, fins kicking through reefs, wrecks and kelp.</textarea></div>
       <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Launch settings (used in the batch zip)</div>
         <input type="text" id="launch-base-uri" placeholder="Image base URI for ETH / Robinhood, e.g. ipfs://bafy.../ (optional)" style="margin-bottom:6px;">
         <input type="text" id="launch-site-url" placeholder="Project website (optional)">
@@ -137,7 +137,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
     <div class="field"><label>Seed</label><input type="text" inputmode="numeric" id="seed-input" value="7"></div>
     <div class="field"><label>Supply</label><input type="text" inputmode="numeric" id="count-input" value="24"></div>
     <div class="field"><label>1/1</label><input type="text" inputmode="numeric" id="oneofone-input" value="2"></div>
-    <button class="chip" id="animate-toggle" title="Adds seeded bubble and lantern motion. Grid thumbnails stay static for performance; the lightbox and SVG export show the animation.">animate: off</button>
+    <button class="chip" id="animate-toggle" title="Adds seeded rising-bubble motion. Grid thumbnails stay static for performance; the lightbox and SVG export show the animation.">animate: off</button>
     <button class="btn btn-acid" id="generate-btn">Generate</button>
     <button class="btn btn-ghost" id="reroll-btn">Reroll seed</button>
     <button class="btn btn-ghost" id="reset-btn">Reset traits</button>
@@ -278,12 +278,11 @@ function getDisplaySVG(p) {
 }
 
 const CATEGORY_META=[
-  {key:'water',label:'Water',swatch:'hex'},{key:'location',label:'Location'},
-  {key:'helmet',label:'Helmet',swatch:'hex'},{key:'crust',label:'Crust'},
-  {key:'face',label:'Face'},{key:'skin',label:'Skin',swatch:'hex'},
-  {key:'headwear',label:'Headwear'},{key:'hatColor',label:'Hat color',swatch:'hex'},
-  {key:'facialHair',label:'Facial hair'},{key:'eyeColor',label:'Eye color',swatch:'hex'},
-  {key:'hitchhiker',label:'Hitchhiker'},{key:'lantern',label:'Lantern',swatch:'hex'}
+  {key:'water',label:'Water',swatch:'hex'},{key:'location',label:'Location'},{key:'companion',label:'Companion'},
+  {key:'skin',label:'Skin',swatch:'hex'},{key:'eyes',label:'Eye type'},{key:'eyeColor',label:'Eye color',swatch:'hex'},
+  {key:'brows',label:'Eyebrows'},{key:'mustache',label:'Mustache'},{key:'hair',label:'Hair',swatch:'hex'},
+  {key:'maskColor',label:'Mask',swatch:'hex'},{key:'wetsuit',label:'Wetsuit',swatch:'hex'},{key:'cut',label:'Suit cut'},
+  {key:'fins',label:'Fins',swatch:'hex'},{key:'tank',label:'Tank',swatch:'hex'},{key:'held',label:'Held item'}
 ];
 function rarityColor(r){return r==='rare'?'var(--acid)':r==='uncommon'?'var(--orange)':'var(--dim)';}
 function buildControls(){
@@ -320,7 +319,7 @@ function render(){
   // 1/1 variety: every trait draws from its full pool (not forced to the rare tier), and each 1/1
   // prefers values the batch's earlier 1/1s haven't used yet (best of up to 40 deterministic rerolls)
   const usedCombos=new Set(), used={};
-  const VARY=['face','helmet','lantern','water','location','crust','hitchhiker','headwear','eyeColor'];
+  const VARY=['wetsuit','eyes','mustache','location','companion','water','brows','hair','held','fins'];
   VARY.forEach(k=>used[k]=new Set());
   function generateOneOfOne(pi,seed){
     let best=null,bestScore=-1,last=null;
@@ -328,7 +327,7 @@ function render(){
       const p=generateOne(pi+attempt*10000000,seed,{tierOverride:null,isOneOfOne:true});
       last=p; const ck=JSON.stringify(p.traits);
       if(usedCombos.has(ck))continue;
-      let score=0; for(const k of VARY) if(!used[k].has(p.traits[k])) score+=(k==='face'||k==='helmet'||k==='lantern'?2:1);
+      let score=0; for(const k of VARY) if(!used[k].has(p.traits[k])) score+=(k==='wetsuit'||k==='eyes'||k==='mustache'?2:1);
       if(score>bestScore){best=p;bestScore=score;}
       if(score>=VARY.length+3)break;
     }

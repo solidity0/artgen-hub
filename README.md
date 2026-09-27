@@ -168,28 +168,44 @@ background. The source of truth is
 this folder is a synced copy — change it there and copy the four files here.
 
 ### 7 — Drowned Dockworkers
-`generator-7/` · engine **v1** · `window.DrownedGen` · page ≈ 90 KB
+`generator-7/` · engine **v2 "Open Water"** · `window.DrownedGen` · page ≈ 83 KB
 
-Old dockworkers in brass diving helmets, seen through the front porthole,
-each carrying a glowing creature in a jar through a sunken place. Bold ink
-outlines, glossy eyes and glass reflections, seeded barnacles, tarnish and
-marine snow; the lantern tints the whole scene with its glow.
+Cartoon scuba divers with real human proportions, swimming diagonally through
+open water: wetsuit, BCD, weight belt, tank, gauge console and long fins, with
+the face showing through the dive mask and around the regulator. Bold ink
+outlines, glass reflections, rising bubbles and light shafts.
+
+**Head traits**
+
+| Trait | Values |
+|-------|--------|
+| skin | 5 — pale, tan, olive, brown, deep |
+| eyes | 5 — round, sleepy, squint, tiny, mismatched |
+| eyeColor | 5 — blue, green, amber, grey, violet |
+| brows | 5 — bushy, thin, angry, raised, unibrow |
+| mustache | 5 — none, walrus, chevron, pencil, handlebar |
+| hair | 6 — black, brown, blond, ginger, white, neoprene hood |
+| maskColor | 5 — black, yellow, blue, red, white |
+
+**Body traits**
+
+| Trait | Values |
+|-------|--------|
+| wetsuit | 6 — black/blue, black/red, navy/orange, yellow, camo, **abyss glow** (1/1-only) |
+| cut | 2 — full, shorty (bare forearms and calves) |
+| fins · tank | 4 (black, blue, yellow, red) · 3 (silver, yellow, red) |
+| held | 4 — torch (with beam), none, camera (with strobe), spear |
+
+**Scene traits**
 
 | Trait | Values |
 |-------|--------|
 | water | 5 — shallows, deep blue, emerald, twilight, abyss |
-| location | 4 — sunken city, sub dock, shipwreck, trench |
-| helmet | 5 — brass, copper, steel, verdigris, gold |
-| crust | 5 — barnacles, tarnish, kelp, polished, coral |
-| face | 5 — old salt, deckhand, fishfolk, skeleton, **ghost** (1/1-only empty helmet) |
-| skin · headwear · hatColor | 4 · 5 (knit cap, captain hat, sou'wester, bandana, none) · 4 |
-| facialHair · eyeColor | 5 (walrus, beard, stubble, none, braids) · 5 |
-| hitchhiker | 5 — none, crab, hermit crab, octopus, seahorse |
-| lantern | 4 — jellyfish, anglerfish, glow coral, pearl |
+| location | 4 — reef, kelp forest, shipwreck, sunken city |
+| companion | 5 — none, clownfish, turtle, octopus, manta |
 
 1/1s use curated weights that lean toward the rare looks and are the only way
-to get the ghost helmet. Ghosts and skeletons drop hats/whiskers that would
-float in empty space. The suit's stencil number matches the piece number.
+to get the glowing abyss wetsuit.
 
 ---
 
