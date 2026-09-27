@@ -1,6 +1,6 @@
 # ArtGen — generator hub
 
-Seven generative art collections, each self-contained in its own folder, with a
+Six generative art collections, each self-contained in its own folder, with a
 hub landing page at the root linking between them. Every generator runs
 entirely in the browser as a single HTML file — no server, no install — so it
 works on GitHub Pages and can be inscribed on-chain as-is.
@@ -15,9 +15,8 @@ works on GitHub Pages and can be inscribed on-chain as-is.
 | 4 | **AfterBots** | Colourful riso-chalk robots, often with a companion | 🤖 | [generator-4](https://solidity0.github.io/artgen-hub/generator-4/index.html) |
 | 5 | **Ink Pups** | Scrawled ink dog heads with glowing eyes | 🐶 | [generator-5](https://solidity0.github.io/artgen-hub/generator-5/index.html) |
 | 6 | **Hood Characters** | Shaded flat-vector chibi guys on brick city blocks | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
-| 7 | **Drowned Dockworkers** | Dockworkers in barnacled diving helmets with creature lanterns | 🤿 | [generator-7](https://solidity0.github.io/artgen-hub/generator-7/index.html) |
 
-Slot 8 is reserved on the hub for the next collection.
+Slots 7 and 8 are reserved on the hub for future collections.
 
 ---
 
@@ -32,8 +31,7 @@ Slot 8 is reserved on the hub for the next collection.
 ├── generator-3/  Oddlings
 ├── generator-4/  AfterBots
 ├── generator-5/  Ink Pups
-├── generator-6/  Hood Characters
-└── generator-7/  Drowned Dockworkers
+└── generator-6/  Hood Characters
 ```
 
 Every generator folder holds the same four files:
@@ -167,46 +165,6 @@ background. The source of truth is
 [solidity0/hoodcharacters](https://github.com/solidity0/hoodcharacters);
 this folder is a synced copy — change it there and copy the four files here.
 
-### 7 — Drowned Dockworkers
-`generator-7/` · engine **v2 "Open Water"** · `window.DrownedGen` · page ≈ 83 KB
-
-Cartoon scuba divers with real human proportions, swimming diagonally through
-open water: wetsuit, BCD, weight belt, tank, gauge console and long fins, with
-the face showing through the dive mask and around the regulator. Bold ink
-outlines, glass reflections, rising bubbles and light shafts.
-
-**Head traits**
-
-| Trait | Values |
-|-------|--------|
-| skin | 5 — pale, tan, olive, brown, deep |
-| eyes | 5 — round, sleepy, squint, tiny, mismatched |
-| eyeColor | 5 — blue, green, amber, grey, violet |
-| brows | 5 — bushy, thin, angry, raised, unibrow |
-| mustache | 5 — none, walrus, chevron, pencil, handlebar |
-| hair | 6 — black, brown, blond, ginger, white, neoprene hood |
-| maskColor | 5 — black, yellow, blue, red, white |
-
-**Body traits**
-
-| Trait | Values |
-|-------|--------|
-| wetsuit | 6 — black/blue, black/red, navy/orange, yellow, camo, **abyss glow** (1/1-only) |
-| cut | 2 — full, shorty (bare forearms and calves) |
-| fins · tank | 4 (black, blue, yellow, red) · 3 (silver, yellow, red) |
-| held | 4 — torch (with beam), none, camera (with strobe), spear |
-
-**Scene traits**
-
-| Trait | Values |
-|-------|--------|
-| water | 5 — shallows, deep blue, emerald, twilight, abyss |
-| location | 4 — reef, kelp forest, shipwreck, sunken city |
-| companion | 5 — none, clownfish, turtle, octopus, manta |
-
-1/1s use curated weights that lean toward the rare looks and are the only way
-to get the glowing abyss wetsuit.
-
 ---
 
 ## Shared features (every generator page)
@@ -227,7 +185,7 @@ to get the glowing abyss wetsuit.
   pieces stay smooth, including on mobile.
 - **Lightbox** — full traits with rarity; download PNG (1200×1200) or SVG,
   copy image (shortcut **C**), copy markup; ← / → to browse, Esc to close.
-- **Animate** (generators 1, 2, 3, 5, 6, 7) — seeded SVG animation in the
+- **Animate** (generators 1, 2, 3, 5, 6) — seeded SVG animation in the
   lightbox and SVG exports.
 - **Export trait sheet** — CSV of every piece's traits and rarities.
 - **Download batch (.zip)** — a launch-ready pack:
@@ -265,7 +223,7 @@ console.log(piece.traits, piece.svg.length);
 ## Adding a new generator
 
 1. Copy an existing generator folder's `generator.js`, `index.src.html` and
-   `build.js` into the next empty slot (`generator-8/`).
+   `build.js` into the next empty slot (`generator-7/`).
 2. Run `node build.js` inside it to produce `index.html`.
 3. In the root `index.html`, set that slot's entry in the `GENERATORS` array
    to `active: true` and give it a name and description.
