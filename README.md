@@ -150,7 +150,7 @@ piece gets a warm, saturated colour grade.
 
 | Trait | Values |
 |-------|--------|
-| skinTone | 7 — tan, brown, pale, light, onyx, red, blue |
+| skinTone | 7 — white, brown, pale, gray, onyx, red, blue |
 | hairColor | 10 — plus **rainbow**, 1/1-only |
 | hairStyle | 7 — buzz, crew, fade, afro, spiky, durag, mohawk |
 | facialHair | 5 — none, stubble, mustache, goatee, beard |
