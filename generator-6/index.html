@@ -95,7 +95,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   <div class="brand">Hood Characters <span>//</span> Generator</div>
   <div class="eyebrow">GENERATIVE CHARACTER ENGINE</div>
   <div class="h1" id="h1-text">Hood Characters</div>
-  <div class="sub">Undead chibi guys haunting the block after dark — glowing eyes, fangs, stitches and fog. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
+  <div class="sub">Chibi guys from the block — most are undead and haunting it after dark (glowing eyes, fangs, stitches, fog), about a third are sweet daytime kids. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
 </header>
 <main>
   <div class="panel-section">
@@ -214,27 +214,40 @@ const ONE_OF_ONE_BG_WEIGHTS = [
   { id: 'void',       hex: '#22083a', weight: 25 },
   { id: 'toxic',      hex: '#d0fa05', weight: 25 }
 ];
-function pickOneOfOneBgColor(rng) {
-  const total = ONE_OF_ONE_BG_WEIGHTS.reduce((s,w)=>s+w.weight,0);
+const ONE_OF_ONE_BG_WEIGHTS_CUTE = [
+  { id: 'eth_blue',    hex: '#627EEA', weight: 25 },
+  { id: 'red',         hex: '#FF0000', weight: 25 },
+  { id: 'punchy_blue', hex: '#3A2BE8', weight: 25 },
+  { id: 'rich_lime',   hex: '#B8EB00', weight: 25 }
+];
+function pickOneOfOneBgColor(rng, vibe) {
+  const W = vibe === 'cute' ? ONE_OF_ONE_BG_WEIGHTS_CUTE : ONE_OF_ONE_BG_WEIGHTS;
+  const total = W.reduce((s,w)=>s+w.weight,0);
   let r = rng() * total;
-  for (const w of ONE_OF_ONE_BG_WEIGHTS) {
+  for (const w of W) {
     if (r < w.weight) return { id: w.id, hex: w.hex, rarity: 'oneOfOne' };
     r -= w.weight;
   }
-  const w0 = ONE_OF_ONE_BG_WEIGHTS[0];
+  const w0 = W[0];
   return { id: w0.id, hex: w0.hex, rarity: 'oneOfOne' };
 }
 
 // ---------- trait pools ----------
 const TRAITS = {
   skinTone: [
-    { id: 'corpse',   weight: 26, hex: '#e6e6e6', rarity: 'common' },
-    { id: 'ghoul',    weight: 20, hex: '#8c8c8c', rarity: 'common' },
-    { id: 'zombie',   weight: 16, hex: '#8fae6a', rarity: 'uncommon' },
-    { id: 'ghost',    weight: 12, hex: '#b9d3de', rarity: 'uncommon' },
-    { id: 'bruised',  weight: 12, hex: '#8e6f9e', rarity: 'uncommon' },
-    { id: 'blood',    weight: 8,  hex: '#b8322f', rarity: 'rare' },
-    { id: 'shadow',   weight: 6,  hex: '#1a1a1a', rarity: 'rare' }
+    { id: 'corpse',   weight: 26, hex: '#e6e6e6', rarity: 'common', vibe: 'scary' },
+    { id: 'ghoul',    weight: 20, hex: '#8c8c8c', rarity: 'common', vibe: 'scary' },
+    { id: 'zombie',   weight: 16, hex: '#8fae6a', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'ghost',    weight: 12, hex: '#b9d3de', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'bruised',  weight: 12, hex: '#8e6f9e', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'blood',    weight: 8,  hex: '#b8322f', rarity: 'rare', vibe: 'scary' },
+    { id: 'shadow',   weight: 6,  hex: '#1a1a1a', rarity: 'rare', vibe: 'scary' },
+    { id: 'white',    weight: 30, hex: '#ffffff', rarity: 'common',   vibe: 'cute' },
+    { id: 'pale',     weight: 22, hex: '#f5e8dc', rarity: 'uncommon', vibe: 'cute' },
+    { id: 'gray',     weight: 16, hex: '#9a9a9a', rarity: 'uncommon', vibe: 'cute' },
+    { id: 'onyx',     weight: 6,  hex: '#1a1a1a', rarity: 'rare',     vibe: 'cute' },
+    { id: 'red',      weight: 11, hex: '#cc3f3f', rarity: 'rare',     vibe: 'cute' },
+    { id: 'blue',     weight: 11, hex: '#3f6fcc', rarity: 'rare',     vibe: 'cute' }
   ],
   hairColor: [
     { id: 'black',    weight: 20, hex: '#1a1a1a', rarity: 'common' },
@@ -266,22 +279,33 @@ const TRAITS = {
     { id: 'suit',     weight: 6,  rarity: 'rare' }
   ],
   outfitColor: [
-    { id: 'midnight', weight: 22, hex: '#2c3a80', rarity: 'common' },
-    { id: 'blood',    weight: 18, hex: '#9a1020', rarity: 'common' },
-    { id: 'rot',      weight: 16, hex: '#4f7a26', rarity: 'uncommon' },
-    { id: 'bruise',   weight: 14, hex: '#5a2a80', rarity: 'uncommon' },
-    { id: 'rust',     weight: 12, hex: '#a8481a', rarity: 'uncommon' },
-    { id: 'bone',     weight: 10, hex: '#d8d0bc', rarity: 'rare' },
-    { id: 'black',    weight: 8,  hex: '#1a1a1a', rarity: 'rare' }
+    { id: 'midnight', weight: 22, hex: '#2c3a80', rarity: 'common', vibe: 'scary' },
+    { id: 'blood',    weight: 18, hex: '#9a1020', rarity: 'common', vibe: 'scary' },
+    { id: 'rot',      weight: 16, hex: '#4f7a26', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'bruise',   weight: 14, hex: '#5a2a80', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'rust',     weight: 12, hex: '#a8481a', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'bone',     weight: 10, hex: '#d8d0bc', rarity: 'rare', vibe: 'scary' },
+    { id: 'black',    weight: 8,  hex: '#1a1a1a', rarity: 'rare' },
+    { id: 'blue',     weight: 22, hex: '#3c5ae8', rarity: 'common',   vibe: 'cute' },
+    { id: 'red',      weight: 18, hex: '#e83c5a', rarity: 'common',   vibe: 'cute' },
+    { id: 'green',    weight: 16, hex: '#3ce85a', rarity: 'uncommon', vibe: 'cute' },
+    { id: 'purple',   weight: 14, hex: '#8a3ce8', rarity: 'uncommon', vibe: 'cute' },
+    { id: 'amber',    weight: 12, hex: '#e8a01a', rarity: 'uncommon', vibe: 'cute' },
+    { id: 'white',    weight: 10, hex: '#e8e8e8', rarity: 'rare',     vibe: 'cute' }
   ],
   eyeStyle: [
-    { id: 'hollow',   weight: 30, rarity: 'common' },
-    { id: 'glowing',  weight: 24, rarity: 'common' },
-    { id: 'void',     weight: 16, rarity: 'uncommon' },
-    { id: 'bleeding', weight: 14, rarity: 'uncommon' },
-    { id: 'stitched', weight: 10, rarity: 'uncommon' },
-    { id: 'button',   weight: 6,  rarity: 'rare' },
-    { id: 'demon',    weight: 6,  rarity: 'rare' }
+    { id: 'hollow',   weight: 30, rarity: 'common', vibe: 'scary' },
+    { id: 'glowing',  weight: 24, rarity: 'common', vibe: 'scary' },
+    { id: 'void',     weight: 16, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'bleeding', weight: 14, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'stitched', weight: 10, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'button',   weight: 6,  rarity: 'rare', vibe: 'scary' },
+    { id: 'demon',    weight: 6,  rarity: 'rare', vibe: 'scary' },
+    { id: 'dot',      weight: 46, rarity: 'common',   vibe: 'cute' },
+    { id: 'wide',     weight: 22, rarity: 'common',   vibe: 'cute' },
+    { id: 'sleepy',   weight: 16, rarity: 'uncommon', vibe: 'cute' },
+    { id: 'wink',     weight: 10, rarity: 'uncommon', vibe: 'cute' },
+    { id: 'sparkle',  weight: 6,  rarity: 'rare',     vibe: 'cute' }
   ],
   accessory: [
     { id: 'none',      weight: 44, rarity: 'common' },
@@ -289,7 +313,7 @@ const TRAITS = {
     { id: 'glasses',   weight: 14, rarity: 'uncommon' },
     { id: 'earring',   weight: 8,  rarity: 'rare' },
     { id: 'chain',     weight: 8,  rarity: 'rare' },
-    { id: 'horns',     weight: 8,  rarity: 'rare' }
+    { id: 'horns',     weight: 8,  rarity: 'rare', vibe: 'scary' }
   ],
   facialHair: [
     { id: 'none',      weight: 50, rarity: 'common' },
@@ -306,34 +330,55 @@ const TRAITS = {
     { id: 'buildingsSmall',   weight: 22,  rarity: 'rare' },
     { id: 'buildingsTall',    weight: 22,  rarity: 'rare' },
     { id: 'buildingsSkyline', weight: 20,  rarity: 'rare' },
-    { id: 'graves',           weight: 26,  rarity: 'rare' },
-    { id: 'bats',             weight: 20,  rarity: 'rare' }
+    { id: 'graves',           weight: 26,  rarity: 'rare', vibe: 'scary' },
+    { id: 'bats',             weight: 20,  rarity: 'rare', vibe: 'scary' },
+    { id: 'birds',            weight: 20,  rarity: 'rare', vibe: 'cute' }
   ],
   background: [
-    { id: 'midnight',  hex: '#1d1838', weight: 26, rarity: 'common' },
-    { id: 'blood',     hex: '#5c0b12', weight: 22, rarity: 'common' },
-    { id: 'fog',       hex: '#3a4046', weight: 20, rarity: 'common' },
-    { id: 'toxic',     hex: '#d0fa05', weight: 14, rarity: 'common' },
-    { id: 'bruise',    hex: '#3a1648', weight: 12, rarity: 'uncommon' },
-    { id: 'ember',     hex: '#7a2406', weight: 6,  rarity: 'rare' }
+    { id: 'midnight',  hex: '#1d1838', weight: 26, rarity: 'common', vibe: 'scary' },
+    { id: 'blood',     hex: '#5c0b12', weight: 22, rarity: 'common', vibe: 'scary' },
+    { id: 'fog',       hex: '#3a4046', weight: 20, rarity: 'common', vibe: 'scary' },
+    { id: 'toxic',     hex: '#d0fa05', weight: 14, rarity: 'common', vibe: 'scary' },
+    { id: 'bruise',    hex: '#3a1648', weight: 12, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'ember',     hex: '#7a2406', weight: 6,  rarity: 'rare', vibe: 'scary' },
+    { id: 'warm_sand', hex: '#F4A259', weight: 25, rarity: 'common',   vibe: 'cute' },
+    { id: 'seafoam',   hex: '#4ECDC4', weight: 22, rarity: 'common',   vibe: 'cute' },
+    { id: 'cream',     hex: '#F5F0E8', weight: 20, rarity: 'common',   vibe: 'cute' },
+    { id: 'lime',      hex: '#d0fa05', weight: 18, rarity: 'common',   vibe: 'cute' },
+    { id: 'lavender',  hex: '#A78BFA', weight: 10, rarity: 'uncommon', vibe: 'cute' },
+    { id: 'sunflower', hex: '#FFD23F', weight: 5,  rarity: 'rare',     vibe: 'cute' }
+  ],
+  // Scary or cute: picks which half of the vibe-tagged pools a piece draws
+  // from (untagged values belong to both) and how the scene is lit. Rolled
+  // on its own RNG stream so the other traits keep their seed positions.
+  vibe: [
+    { id: 'scary', weight: 65, rarity: 'common' },
+    { id: 'cute',  weight: 35, rarity: 'common' }
   ],
   // Rolled after facialHair so earlier traits keep their seed positions.
   mouth: [
-    { id: 'stitched',  weight: 24, rarity: 'common' },
-    { id: 'fangs',     weight: 22, rarity: 'common' },
-    { id: 'grin',      weight: 18, rarity: 'uncommon' },
-    { id: 'gape',      weight: 14, rarity: 'uncommon' },
-    { id: 'bloody',    weight: 12, rarity: 'uncommon' },
-    { id: 'teeth',     weight: 10, rarity: 'rare' }
+    { id: 'stitched',  weight: 24, rarity: 'common', vibe: 'scary' },
+    { id: 'fangs',     weight: 22, rarity: 'common', vibe: 'scary' },
+    { id: 'grin',      weight: 18, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'gape',      weight: 14, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'bloody',    weight: 12, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'teeth',     weight: 10, rarity: 'rare', vibe: 'scary' },
+    { id: 'smile',     weight: 40, rarity: 'common',   vibe: 'cute' },
+    { id: 'beam',      weight: 30, rarity: 'common',   vibe: 'cute' },
+    { id: 'smirk',     weight: 30, rarity: 'uncommon', vibe: 'cute' }
   ],
   scars: [
     { id: 'none',      weight: 46, rarity: 'common' },
-    { id: 'scar',      weight: 18, rarity: 'common' },
-    { id: 'cracks',    weight: 12, rarity: 'uncommon' },
-    { id: 'splatter',  weight: 14, rarity: 'uncommon' },
-    { id: 'stitches',  weight: 10, rarity: 'rare' }
+    { id: 'scar',      weight: 18, rarity: 'common', vibe: 'scary' },
+    { id: 'cracks',    weight: 12, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'splatter',  weight: 14, rarity: 'uncommon', vibe: 'scary' },
+    { id: 'stitches',  weight: 10, rarity: 'rare', vibe: 'scary' }
   ]
 };
+
+// Values a piece of this vibe may use (untagged = both vibes).
+function vibePool(pool, vibe) { return vibe ? pool.filter(t => !t.vibe || t.vibe === vibe) : pool; }
+function vibeRng(seed, index) { return mulberry32((seed ?? 0) * 7907 + index * 53 + 3); }
 
 // ---------- rarity tier fallback ----------
 const TIER_FALLBACK = {
@@ -396,14 +441,23 @@ const ONE_OF_ONE_SKIN_TONE_WEIGHTS = [
   { id: 'bruised', weight: 14 },
   { id: 'corpse',  weight: 12 }
 ];
-function pickOneOfOneSkinTone(rng) {
-  const total = ONE_OF_ONE_SKIN_TONE_WEIGHTS.reduce((s,w)=>s+w.weight,0);
+const ONE_OF_ONE_SKIN_TONE_WEIGHTS_CUTE = [
+  { id: 'onyx',  weight: 20 },
+  { id: 'red',   weight: 20 },
+  { id: 'blue',  weight: 20 },
+  { id: 'pale',  weight: 16 },
+  { id: 'gray',  weight: 16 },
+  { id: 'white', weight: 14 }
+];
+function pickOneOfOneSkinTone(rng, vibe) {
+  const W = vibe === 'cute' ? ONE_OF_ONE_SKIN_TONE_WEIGHTS_CUTE : ONE_OF_ONE_SKIN_TONE_WEIGHTS;
+  const total = W.reduce((s,w)=>s+w.weight,0);
   let r = rng() * total;
-  for (const w of ONE_OF_ONE_SKIN_TONE_WEIGHTS) {
+  for (const w of W) {
     if (r < w.weight) return TRAITS.skinTone.find(s=>s.id===w.id);
     r -= w.weight;
   }
-  return TRAITS.skinTone.find(s=>s.id===ONE_OF_ONE_SKIN_TONE_WEIGHTS[0].id);
+  return TRAITS.skinTone.find(s=>s.id===W[0].id);
 }
 
 // ---------- 1/1-exclusive outfit type ----------
@@ -440,14 +494,22 @@ const ONE_OF_ONE_BACKDROP_WEIGHTS = [
   { id: 'bats',             weight: 16 },
   { id: 'none',             weight: 10 }
 ];
-function pickOneOfOneBackdrop(rng) {
-  const total = ONE_OF_ONE_BACKDROP_WEIGHTS.reduce((s,w)=>s+w.weight,0);
+const ONE_OF_ONE_BACKDROP_WEIGHTS_CUTE = [
+  { id: 'buildingsSmall',   weight: 25 },
+  { id: 'buildingsTall',    weight: 25 },
+  { id: 'buildingsSkyline', weight: 20 },
+  { id: 'birds',            weight: 20 },
+  { id: 'none',             weight: 10 }
+];
+function pickOneOfOneBackdrop(rng, vibe) {
+  const W = vibe === 'cute' ? ONE_OF_ONE_BACKDROP_WEIGHTS_CUTE : ONE_OF_ONE_BACKDROP_WEIGHTS;
+  const total = W.reduce((s,w)=>s+w.weight,0);
   let r = rng() * total;
-  for (const w of ONE_OF_ONE_BACKDROP_WEIGHTS) {
+  for (const w of W) {
     if (r < w.weight) return TRAITS.backdrop.find(b=>b.id===w.id);
     r -= w.weight;
   }
-  return TRAITS.backdrop.find(b=>b.id===ONE_OF_ONE_BACKDROP_WEIGHTS[0].id);
+  return TRAITS.backdrop.find(b=>b.id===W[0].id);
 }
 
 // ---------- vector canvas ----------
@@ -529,6 +591,8 @@ let _clipN = 0;
 // Lite mode (gallery thumbnails): skips detail invisible at thumbnail size —
 // fine hatching and paper-grain specks — so tiles rasterise much faster.
 let _lite = false;
+// true while rendering a cute-vibe piece: daylight scene, friendly face
+let _cute = false;
 function inked(d, fill, extra) {
   const base = fill.startsWith('url(') ? ((extra && extra.baseHex) || '#6a4a8a') : fill;
   return `<path${attrs({ d, fill: 'none', stroke: outlineOf(base), 'stroke-width': 11, 'stroke-linejoin': 'round', opacity: 0.16 })}/>` +
@@ -670,7 +734,7 @@ function drawHead(skinHex) {
 function drawBrows(eyeStyle, jx, skinHex) {
   const { ink } = faceInk(skinHex);
   const xs = [EYE_LX + jx*EYE_JITTER, EYE_RX + jx*EYE_JITTER];
-  const tilt = eyeStyle === 'void' ? -2 : 9; // inner ends lower = more determined look
+  const tilt = _cute ? (eyeStyle === 'sleepy' ? 0 : 4) : (eyeStyle === 'void' ? -2 : 9); // inner ends lower = more determined look
   return line(`M${xs[0]-15} ${EYE_Y-22} L${xs[0]+12} ${EYE_Y-22+tilt}`, ink, 6) +
     line(`M${xs[1]-12} ${EYE_Y-22+tilt} L${xs[1]+15} ${EYE_Y-22}`, ink, 6);
 }
@@ -685,7 +749,13 @@ function drawMouth(style, skinHex, rng) {
   const lip = luma(skinHex) < 60 ? shadePixel(skinHex, 40) : shadePixel(skinHex, -50);
   const rim = { stroke: luma(skinHex) < 60 ? '#6a6a6a' : outlineOf(skinHex), sw: 2.5 };
   let s = '';
-  if (style === 'stitched') {
+  if (style === 'smile') {
+    s += line(`M${x-10} 200 Q${x} 206 ${x+10} 200`, lip, 4);
+  } else if (style === 'beam') {
+    s += line(`M${x-15} 200 Q${x} 210 ${x+15} 200`, lip, 4);
+  } else if (style === 'smirk') {
+    s += line(`M${x-10} 202 Q${x} 205 ${x+10} 196`, lip, 4);
+  } else if (style === 'stitched') {
     s += line(`M${x-24} 202 Q${x} 206 ${x+24} 200`, lip, 4);
     for (let i = -18; i <= 18; i += 9) s += line(`M${x+i} 195 L${x+i+1} 210`, lip, 2.5);
   } else if (style === 'fangs') {
@@ -729,6 +799,7 @@ function glow(x, y, r, color) {
 
 // Dark, sunken sockets under every eye style so the whole face reads gaunt.
 function drawSunken(jx, skinHex) {
+  if (_cute) return '';
   const c = luma(skinHex) < 60 ? '#000000' : shadePixel(skinHex, -45);
   return [EYE_LX + jx*EYE_JITTER, EYE_RX + jx*EYE_JITTER].map(x =>
     ellipse(x, EYE_Y + 3, 20, 18, c, { stroke: false, opacity: 0.42 }) +
@@ -740,7 +811,30 @@ function drawEyes(style, jx, skinHex) {
   const xs = [EYE_LX + jx*EYE_JITTER, EYE_RX + jx*EYE_JITTER], y = EYE_Y;
   const socketRim = luma(skinHex) < 60 ? { stroke: '#5a5a5a', sw: 2 } : { stroke: false };
   let s = '';
-  if (style === 'hollow') {
+  const hl = faceInk(skinHex).hl;
+  const openEye = (x) => ellipse(x, y, 8, 10, ink, { stroke: false }) + circle(x + 3, y - 3, 2.5, hl, { stroke: false });
+  if (style === 'dot') {
+    xs.forEach(x => { s += openEye(x); });
+  } else if (style === 'wide') {
+    xs.forEach(x => {
+      s += ellipse(x, y, 13, 12, '#ffffff', { stroke: ink, sw: 3 });
+      s += circle(x, y + 1, 7, luma(skinHex) < 60 ? '#1a1a1a' : ink, { stroke: false });
+      s += circle(x + 2, y - 1, 2.5, '#ffffff', { stroke: false });
+    });
+  } else if (style === 'sleepy') {
+    xs.forEach(x => {
+      s += path(`M${x-10} ${y} L${x+10} ${y} Q${x+10} ${y+9} ${x} ${y+9} Q${x-10} ${y+9} ${x-10} ${y} Z`, ink, { stroke: false });
+      s += line(`M${x-12} ${y} L${x+12} ${y}`, ink, 4);
+    });
+  } else if (style === 'wink') {
+    s += openEye(xs[0]);
+    s += line(`M${xs[1]-10} ${y+1} L${xs[1]+10} ${y+1}`, ink, 4);
+  } else if (style === 'sparkle') {
+    xs.forEach(x => {
+      s += ellipse(x, y, 10, 12, ink, { stroke: false });
+      s += sparkleStar(x + 3, y - 3, 5, hl);
+    });
+  } else if (style === 'hollow') {
     xs.forEach(x => {
       s += ellipse(x, y, 14, 15, '#07070a', socketRim);
       s += glow(x, y + 1, 4, '#ffffff') + circle(x, y + 1, 2.6, '#ffffff', { stroke: false });
@@ -953,8 +1047,15 @@ function drawAccessory(style, jx, skinHex) {
 // Red-brick city blocks in the side margins: brownstones, walk-up tenements
 // with fire escapes and rooftop water towers, and a corner store. Right-side
 // buildings are mirror images of the left (x -> VB - x - w).
-const BRICK = '#5a2a24', BRICK_DARK = '#3e1c18', TRIM = '#8a7c6c', IRON = '#141414';
-const WIN_LIT = '#d8ff5a', WIN_DARK = '#10141c';
+// Two palettes: a derelict night block (scary) and the original sunny
+// red-brick block (cute). setScene() swaps them per piece.
+const SCENES = {
+  scary: { BRICK: '#5a2a24', BRICK_DARK: '#3e1c18', TRIM: '#8a7c6c', IRON: '#141414', WIN_LIT: '#d8ff5a', WIN_DARK: '#10141c', STONE: '#4e2620', AWN: ['#8a0a14', '#1a1a1a'] },
+  cute:  { BRICK: '#9c4a36', BRICK_DARK: '#7a3626', TRIM: '#e8d8c0', IRON: '#2a2a2a', WIN_LIT: '#f5e0a0', WIN_DARK: '#2d3748', STONE: '#8a4a38', AWN: ['#e83c3c', '#f5f5f5'] }
+};
+let BRICK, BRICK_DARK, TRIM, IRON, WIN_LIT, WIN_DARK, STONE, AWN;
+function setScene(cute) { ({ BRICK, BRICK_DARK, TRIM, IRON, WIN_LIT, WIN_DARK, STONE, AWN } = SCENES[cute ? 'cute' : 'scary']); }
+setScene(false);
 
 function mx(side, x, w) { return side === 'L' ? x : VB - x - w; }
 function brickBody(side, x, top, w, color) {
@@ -978,13 +1079,13 @@ function windowGrid(side, x, top, w, bottom, key) {
   for (let y = top + 16; y + 18 < bottom; y += 30, row++) {
     let col = 0;
     for (let wx = x + 8; wx + 14 <= x + w - 6; wx += 22, col++) {
-      s += windowAt(side, wx, y, 14, 18, (row * 3 + col * 5 + key) % 5 === 0);
+      s += windowAt(side, wx, y, 14, 18, _cute ? (row * 3 + col * 5 + key) % 4 !== 0 : (row * 3 + col * 5 + key) % 5 === 0);
     }
   }
   return s;
 }
 function brownstone(side, x, top, w) {
-  let s = brickBody(side, x, top, w, '#4e2620');
+  let s = brickBody(side, x, top, w, STONE);
   s += windowGrid(side, x, top, w, GROUND_Y - 44, 1);
   // stoop door + steps
   const dx = x + Math.round(w / 2) - 9;
@@ -1029,9 +1130,9 @@ function cornerStore(side, x, top, w) {
   const ay = top + 30, stripes = Math.max(2, Math.floor((w - 4) / 8));
   const sw = (w + 4) / stripes;
   for (let i = 0; i < stripes; i++) {
-    s += path(`M${X-2+i*sw} ${ay} L${X-2+(i+1)*sw} ${ay} L${X-2+(i+1)*sw} ${ay+12} Q${X-2+(i+0.5)*sw} ${ay+17} ${X-2+i*sw} ${ay+12} Z`, i % 2 ? '#1a1a1a' : '#8a0a14', { stroke: false });
+    s += path(`M${X-2+i*sw} ${ay} L${X-2+(i+1)*sw} ${ay} L${X-2+(i+1)*sw} ${ay+12} Q${X-2+(i+0.5)*sw} ${ay+17} ${X-2+i*sw} ${ay+12} Z`, i % 2 ? AWN[1] : AWN[0], { stroke: false });
   }
-  s += rrect(X + 6, ay + 20, w - 12, GROUND_Y - ay - 26, 2, WIN_DARK, { stroke: TRIM, sw: 2.5 });
+  s += rrect(X + 6, ay + 20, w - 12, GROUND_Y - ay - 26, 2, _cute ? WIN_LIT : WIN_DARK, { stroke: TRIM, sw: 2.5 });
   return s;
 }
 // Buildings sit on a far street line (FAR_Y) higher up the frame than the
@@ -1050,6 +1151,10 @@ function drawBackdrop(backdropId, bgHex) {
     if (backdropId === 'buildingsSkyline') return tenement(sd, 40, 128, 34) + cornerStore(sd, 72, 236, 40);
     return '';
   };
+  if (backdropId === 'birds') {
+    const bird = (x, y) => line(`M${x-12} ${y} Q${x-6} ${y-8} ${x} ${y} Q${x+6} ${y-8} ${x+12} ${y}`, '#2a2a2a', 3.5);
+    return `<g opacity="0.8">${bird(66, 62) + bird(100, 42) + bird(302, 44) + bird(336, 66)}</g>`;
+  }
   if (backdropId === 'bats') {
     const bat = (x, y, k) => path(`M${x} ${y+3} Q${x-3} ${y-3} ${x-4} ${y-1} Q${x-10} ${y-9*k} ${x-20*k} ${y-4} Q${x-15*k} ${y} ${x-16*k} ${y+5} Q${x-11*k} ${y+2} ${x-8*k} ${y+6} Q${x-5} ${y+3} ${x} ${y+7} Q${x+5} ${y+3} ${x+8*k} ${y+6} Q${x+11*k} ${y+2} ${x+16*k} ${y+5} Q${x+15*k} ${y} ${x+20*k} ${y-4} Q${x+10} ${y-9*k} ${x+4} ${y-1} Q${x+3} ${y-3} ${x} ${y+3} Z`, '#0a0a0e', { stroke: false });
     return `<g opacity="0.9">${bat(70, 60, 1) + bat(104, 36, 0.7) + bat(300, 40, 0.8) + bat(338, 70, 1.1) + bat(90, 96, 0.55)}</g>`;
@@ -1104,6 +1209,7 @@ function drawAtmosphere(bgHex, rng) {
 }
 // Pale moon (with a faint halo) in one top corner of the headroom, on most pieces.
 function drawMoon(bgHex, index, seed) {
+  if (_cute) return '';
   const r = mulberry32((seed ?? 0) * 7919 + index * 37 + 5);
   if (r() < 0.3) return '';
   const left = r() < 0.5, x = left ? 76 : 324, y = 50 + r() * 10;
@@ -1116,6 +1222,7 @@ function drawMoon(bgHex, index, seed) {
 }
 // Low fog banks rolling over the street and around the legs.
 function drawFog(rng) {
+  if (_cute) return '';
   let s = '';
   for (let i = 0; i < 4; i++) {
     const x = 40 + rng() * 320, y = GROUND_Y - 14 + rng() * 22;
@@ -1125,7 +1232,7 @@ function drawFog(rng) {
 }
 function drawVignette() {
   const id = `${_sid}vg`;
-  return `<defs><radialGradient id="${id}" cx="50%" cy="45%" r="70%"><stop offset="0.45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.6"/></radialGradient></defs>` +
+  return `<defs><radialGradient id="${id}" cx="50%" cy="45%" r="70%"><stop offset="${_cute ? 0.6 : 0.45}" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${_cute ? 0.28 : 0.6}"/></radialGradient></defs>` +
     `<rect x="${CROP.x}" y="${CROP.y}" width="${CROP.size}" height="${CROP.size}" fill="url(#${id})"/>`;
 }
 
@@ -1133,7 +1240,9 @@ function drawVignette() {
 function renderFromTraits(picks, index, seed, opts) {
   const animate = !!(opts && opts.animate);
   _lite = !!(opts && opts.lite);
-  const { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair, mouth, scars } = picks;
+  const { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair, mouth, scars, vibe } = picks;
+  _cute = !!(vibe && vibe.id === 'cute');
+  setScene(_cute);
   const bgHex = (bgColor && bgColor.hex) || BG_COLOR;
   // separate, deterministic RNG stream for cosmetic jitter (eye offset, mouth
   // shape) so it stays stable per index/seed without being coupled to
@@ -1158,7 +1267,7 @@ function renderFromTraits(picks, index, seed, opts) {
   if (backdrop) body += drawBackdrop(backdrop.id, bgHex);
   body += drawGround(bgHex, fxRng);
   // faint aura behind the figure, tinted by the outfit color
-  body += ellipse(CX, 200, 118, 150, shadePixel(outfitColor.hex, 20), { stroke: false, opacity: 0.1 });
+  body += ellipse(CX, 200, 118, 150, shadePixel(outfitColor.hex, _cute ? 55 : 20), { stroke: false, opacity: _cute ? 0.22 : 0.1 });
   // a cap sits over an afro's crown, so skip the big afro back layer then
   if (!(capped && hairStyle.id === 'afro')) body += drawHairBack(hairStyle.id, hairColor, gradId);
   body += drawBodyAndOutfit(skinTone.hex, outfitType.id, outfitColor.hex);
@@ -1169,7 +1278,7 @@ function renderFromTraits(picks, index, seed, opts) {
   body += drawFacialHair(facialHair && facialHair.id, hairColor, skinTone.hex);
   body += drawSunken(jx, skinTone.hex);
   body += drawEyes(eyeStyle.id, jx, skinTone.hex);
-  body += drawMouth((mouth && mouth.id) || 'stitched', skinTone.hex, jitterRng);
+  body += drawMouth((mouth && mouth.id) || (_cute ? 'smile' : 'stitched'), skinTone.hex, jitterRng);
   body += drawHairFront(hairStyle.id, hairColor, gradId, capped);
   body += drawBrows(eyeStyle.id, jx, skinTone.hex);
   body += drawScars(scars && scars.id, skinTone.hex, jx);
@@ -1190,9 +1299,11 @@ function renderFromTraits(picks, index, seed, opts) {
     blinkAnim = `<g opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.46;0.5;0.54;1" dur="${dur}s" begin="-${phase}s" repeatCount="indefinite"/>${lids}</g>`;
   }
 
-  // cold moonlight from the upper-left, over everything but the vignette
+  // cold moonlight (scary) or warm golden sun (cute) from the upper-left, over everything but the vignette
   const sunId = `${_sid}sun`;
-  const sun = `<defs><radialGradient id="${sunId}" cx="18%" cy="8%" r="95%"><stop offset="0" stop-color="#9fe0ff" stop-opacity="0.14"/><stop offset="1" stop-color="#4a7aff" stop-opacity="0"/></radialGradient></defs>` +
+  const sun = `<defs><radialGradient id="${sunId}" cx="18%" cy="8%" r="95%">` + (_cute
+    ? `<stop offset="0" stop-color="#ffb347" stop-opacity="0.12"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>`
+    : `<stop offset="0" stop-color="#9fe0ff" stop-opacity="0.14"/><stop offset="1" stop-color="#4a7aff" stop-opacity="0"/>`) + `</radialGradient></defs>` +
     `<rect x="${CROP.x}" y="${CROP.y}" width="${CROP.size}" height="${CROP.size}" fill="url(#${sunId})"/>`;
   // 1.2x crop into the 400x400 stage so the figure fills the frame
   const svg = `<svg width="${SIZE}" height="${SIZE}" viewBox="${CROP.x} ${CROP.y} ${CROP.size} ${CROP.size}" xmlns="http://www.w3.org/2000/svg">
@@ -1249,21 +1360,23 @@ function generatePiece(index, seed, tier, opts) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const t = tier || 'any';
   const isOneOfOne = !!(opts && opts.isOneOfOne);
+  const vibe = weightedPick(vibeRng(seed, index), TRAITS.vibe), V = vibe.id;
+  const P = (k) => vibePool(TRAITS[k], V);
 
-  const skinTone   = isOneOfOne ? pickOneOfOneSkinTone(rng) : pickByRarity(rng, TRAITS.skinTone, t);
-  const hairColor  = isOneOfOne ? pickOneOfOneHairColor(rng) : pickByRarity(rng, TRAITS.hairColor, t);
-  const hairStyle  = pickByRarity(rng, TRAITS.hairStyle, t);
-  const outfitType = isOneOfOne ? pickOneOfOneOutfitType(rng) : pickByRarity(rng, TRAITS.outfitType, t);
-  const outfitColor= pickByRarity(rng, TRAITS.outfitColor, t);
-  const eyeStyle   = pickByRarity(rng, TRAITS.eyeStyle, t);
-  const accessory  = pickByRarity(rng, TRAITS.accessory, t);
-  const backdrop   = isOneOfOne ? pickOneOfOneBackdrop(rng) : pickByRarity(rng, TRAITS.backdrop, t);
-  const bgColor    = isOneOfOne ? pickOneOfOneBgColor(rng) : pickByRarity(rng, TRAITS.background, t);
-  const facialHair = pickByRarity(rng, TRAITS.facialHair, t); // rolled after the originals so earlier traits stay seed-stable
-  const mouth      = pickByRarity(rng, TRAITS.mouth, t);
-  const scars      = pickByRarity(rng, TRAITS.scars, t);
+  const skinTone   = isOneOfOne ? pickOneOfOneSkinTone(rng, V) : pickByRarity(rng, P('skinTone'), t);
+  const hairColor  = isOneOfOne ? pickOneOfOneHairColor(rng) : pickByRarity(rng, P('hairColor'), t);
+  const hairStyle  = pickByRarity(rng, P('hairStyle'), t);
+  const outfitType = isOneOfOne ? pickOneOfOneOutfitType(rng) : pickByRarity(rng, P('outfitType'), t);
+  const outfitColor= pickByRarity(rng, P('outfitColor'), t);
+  const eyeStyle   = pickByRarity(rng, P('eyeStyle'), t);
+  const accessory  = pickByRarity(rng, P('accessory'), t);
+  const backdrop   = isOneOfOne ? pickOneOfOneBackdrop(rng, V) : pickByRarity(rng, P('backdrop'), t);
+  const bgColor    = isOneOfOne ? pickOneOfOneBgColor(rng, V) : pickByRarity(rng, P('background'), t);
+  const facialHair = pickByRarity(rng, P('facialHair'), t); // rolled after the originals so earlier traits stay seed-stable
+  const mouth      = pickByRarity(rng, P('mouth'), t);
+  const scars      = pickByRarity(rng, P('scars'), t);
 
-  const picks = { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair, mouth, scars };
+  const picks = { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair, mouth, scars, vibe };
   const svg = renderFromTraits(picks, index, seed, { animate: !!(opts && opts.animate) });
 
   return {
@@ -1271,12 +1384,12 @@ function generatePiece(index, seed, tier, opts) {
     traits: {
       skinTone: skinTone.id, hairColor: hairColor.id, hairStyle: hairStyle.id,
       outfitType: outfitType.id, outfitColor: outfitColor.id, eyeStyle: eyeStyle.id, accessory: accessory.id,
-      backdrop: backdrop.id, background: bgColor.id, facialHair: facialHair.id, mouth: mouth.id, scars: scars.id
+      backdrop: backdrop.id, background: bgColor.id, facialHair: facialHair.id, mouth: mouth.id, scars: scars.id, vibe: vibe.id
     },
     rarity: {
       skinTone: skinTone.rarity, hairColor: hairColor.rarity, hairStyle: hairStyle.rarity,
       outfitType: outfitType.rarity, outfitColor: outfitColor.rarity, eyeStyle: eyeStyle.rarity, accessory: accessory.rarity,
-      backdrop: backdrop.rarity, background: bgColor.rarity, facialHair: facialHair.rarity, mouth: mouth.rarity, scars: scars.rarity
+      backdrop: backdrop.rarity, background: bgColor.rarity, facialHair: facialHair.rarity, mouth: mouth.rarity, scars: scars.rarity, vibe: vibe.rarity
     }
   };
 }
@@ -1299,7 +1412,7 @@ const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea', robinhood: '#00c
 
 const api = {
   generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
-  mulberry32, weightedPick, pickByRarity, shadeColor,
+  mulberry32, weightedPick, pickByRarity, shadeColor, vibePool, vibeRng,
   renderFromTraits, BG_COLOR, CHAIN_THEMES,
   RAINBOW_HAIR, ONE_OF_ONE_HAIR_WEIGHTS, pickOneOfOneHairColor,
   ONE_OF_ONE_SKIN_TONE_WEIGHTS, pickOneOfOneSkinTone,
@@ -1366,9 +1479,11 @@ function applyChainTheme(chain) {
   document.documentElement.style.setProperty('--acid-hover',gShadeColor(c,18));
 }
 
-function pickTrait(rng,key,tierOverride) {
-  const sel=locks[key], pool=GTRAITS[key];
-  if(sel&&sel.length){const sub=pool.filter(p=>sel.includes(p.id));if(sub.length)return gWeightedPick(rng,sub);}
+// vibe: only values tagged for this piece's vibe (or untagged) are eligible;
+// an explicit lock on a value from the other vibe still wins.
+function pickTrait(rng,key,tierOverride,vibe) {
+  const sel=locks[key], full=GTRAITS[key], pool=G.vibePool(full,vibe);
+  if(sel&&sel.length){let sub=pool.filter(p=>sel.includes(p.id));if(!sub.length)sub=full.filter(p=>sel.includes(p.id));if(sub.length)return gWeightedPick(rng,sub);}
   const tier=tierOverride||currentTier;
   if(tier!=='any'){const order=gTierFallback[tier]||['common','uncommon','rare'];for(const t of order){const sub=pool.filter(p=>p.rarity===t);if(sub.length)return gWeightedPick(rng,sub);}}
   return gWeightedPick(rng,pool);
@@ -1381,21 +1496,23 @@ function generateOne(index,seed,opts) {
   const tierOverride=opts&&opts.tierOverride, isOneOfOne=!!(opts&&opts.isOneOfOne);
   const rng=gMulberry32((seed|0)*100003+index);
   const locked=k=>!!(locks[k]&&locks[k].length);
+  const vsel=locks.vibe||[], vpool=vsel.length?GTRAITS.vibe.filter(v=>vsel.includes(v.id)):GTRAITS.vibe;
+  const vibe=gWeightedPick(G.vibeRng(seed|0,index),vpool), V=vibe.id;
   // 1/1s use the engine's curated 1/1 pickers for these traits unless the
   // user locked that category — an explicit lock always wins.
-  const skinTone=(isOneOfOne&&!locked('skinTone'))?G.pickOneOfOneSkinTone(rng):pickTrait(rng,'skinTone',tierOverride);
-  const hairColor=(isOneOfOne&&!locked('hairColor'))?G.pickOneOfOneHairColor(rng):pickTrait(rng,'hairColor',tierOverride);
-  const hairStyle=pickTrait(rng,'hairStyle',tierOverride);
-  const outfitType=(isOneOfOne&&!locked('outfitType'))?G.pickOneOfOneOutfitType(rng):pickTrait(rng,'outfitType',tierOverride);
-  const outfitColor=pickTrait(rng,'outfitColor',tierOverride);
-  const eyeStyle=pickTrait(rng,'eyeStyle',tierOverride);
-  const accessory=pickTrait(rng,'accessory',tierOverride);
-  const backdrop=(isOneOfOne&&!locked('backdrop'))?G.pickOneOfOneBackdrop(rng):pickTrait(rng,'backdrop',tierOverride);
-  const bgColor=(isOneOfOne&&!locked('background'))?G.pickOneOfOneBgColor(rng):pickTrait(rng,'background',tierOverride);
-  const facialHair=pickTrait(rng,'facialHair',tierOverride);
-  const mouth=pickTrait(rng,'mouth',tierOverride);
-  const scars=pickTrait(rng,'scars',tierOverride);
-  const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair,mouth,scars};
+  const skinTone=(isOneOfOne&&!locked('skinTone'))?G.pickOneOfOneSkinTone(rng,V):pickTrait(rng,'skinTone',tierOverride,V);
+  const hairColor=(isOneOfOne&&!locked('hairColor'))?G.pickOneOfOneHairColor(rng):pickTrait(rng,'hairColor',tierOverride,V);
+  const hairStyle=pickTrait(rng,'hairStyle',tierOverride,V);
+  const outfitType=(isOneOfOne&&!locked('outfitType'))?G.pickOneOfOneOutfitType(rng):pickTrait(rng,'outfitType',tierOverride,V);
+  const outfitColor=pickTrait(rng,'outfitColor',tierOverride,V);
+  const eyeStyle=pickTrait(rng,'eyeStyle',tierOverride,V);
+  const accessory=pickTrait(rng,'accessory',tierOverride,V);
+  const backdrop=(isOneOfOne&&!locked('backdrop'))?G.pickOneOfOneBackdrop(rng,V):pickTrait(rng,'backdrop',tierOverride,V);
+  const bgColor=(isOneOfOne&&!locked('background'))?G.pickOneOfOneBgColor(rng,V):pickTrait(rng,'background',tierOverride,V);
+  const facialHair=pickTrait(rng,'facialHair',tierOverride,V);
+  const mouth=pickTrait(rng,'mouth',tierOverride,V);
+  const scars=pickTrait(rng,'scars',tierOverride,V);
+  const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair,mouth,scars,vibe};
   const traits={}, rarity={};
   for(const [k,v] of Object.entries(picks)){const key=k==='bgColor'?'background':k;traits[key]=v.id;rarity[key]=v.rarity;}
   return { index, picks, svg:null, isOneOfOne, seed, traits, rarity, tier:tierOverride||currentTier };
@@ -1435,6 +1552,7 @@ function getDisplaySVG(p) {
 }
 
 const CATEGORY_META=[
+  {key:'vibe',label:'Vibe'},
   {key:'skinTone',label:'Skin tone',swatch:'hex'},{key:'hairColor',label:'Hair color',swatch:'hex'},
   {key:'hairStyle',label:'Hair style'},{key:'facialHair',label:'Facial hair'},
   {key:'outfitType',label:'Outfit'},{key:'outfitColor',label:'Outfit color',swatch:'hex'},
@@ -1476,7 +1594,7 @@ function render(){
   // 1/1 variety: every trait draws from its full pool (not forced to the rare tier), and each 1/1
   // prefers values the batch's earlier 1/1s haven't used yet (best of up to 40 deterministic rerolls)
   const usedCombos=new Set(), used={};
-  const VARY=['hairStyle','outfitType','skinTone','hairColor','eyeStyle','mouth','scars','facialHair','background','backdrop','accessory'];
+  const VARY=['vibe','hairStyle','outfitType','skinTone','hairColor','eyeStyle','mouth','scars','facialHair','background','backdrop','accessory'];
   VARY.forEach(k=>used[k]=new Set());
   function generateOneOfOne(pi,seed){
     let best=null,bestScore=-1,last=null;

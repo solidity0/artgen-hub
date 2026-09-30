@@ -95,7 +95,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   <div class="brand">Hood Characters <span>//</span> Generator</div>
   <div class="eyebrow">GENERATIVE CHARACTER ENGINE</div>
   <div class="h1" id="h1-text">Hood Characters</div>
-  <div class="sub">Undead chibi guys haunting the block after dark — glowing eyes, fangs, stitches and fog. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
+  <div class="sub">Chibi guys from the block — most are undead and haunting it after dark (glowing eyes, fangs, stitches, fog), about a third are sweet daytime kids. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
 </header>
 <main>
   <div class="panel-section">
@@ -224,9 +224,11 @@ function applyChainTheme(chain) {
   document.documentElement.style.setProperty('--acid-hover',gShadeColor(c,18));
 }
 
-function pickTrait(rng,key,tierOverride) {
-  const sel=locks[key], pool=GTRAITS[key];
-  if(sel&&sel.length){const sub=pool.filter(p=>sel.includes(p.id));if(sub.length)return gWeightedPick(rng,sub);}
+// vibe: only values tagged for this piece's vibe (or untagged) are eligible;
+// an explicit lock on a value from the other vibe still wins.
+function pickTrait(rng,key,tierOverride,vibe) {
+  const sel=locks[key], full=GTRAITS[key], pool=G.vibePool(full,vibe);
+  if(sel&&sel.length){let sub=pool.filter(p=>sel.includes(p.id));if(!sub.length)sub=full.filter(p=>sel.includes(p.id));if(sub.length)return gWeightedPick(rng,sub);}
   const tier=tierOverride||currentTier;
   if(tier!=='any'){const order=gTierFallback[tier]||['common','uncommon','rare'];for(const t of order){const sub=pool.filter(p=>p.rarity===t);if(sub.length)return gWeightedPick(rng,sub);}}
   return gWeightedPick(rng,pool);
@@ -239,21 +241,23 @@ function generateOne(index,seed,opts) {
   const tierOverride=opts&&opts.tierOverride, isOneOfOne=!!(opts&&opts.isOneOfOne);
   const rng=gMulberry32((seed|0)*100003+index);
   const locked=k=>!!(locks[k]&&locks[k].length);
+  const vsel=locks.vibe||[], vpool=vsel.length?GTRAITS.vibe.filter(v=>vsel.includes(v.id)):GTRAITS.vibe;
+  const vibe=gWeightedPick(G.vibeRng(seed|0,index),vpool), V=vibe.id;
   // 1/1s use the engine's curated 1/1 pickers for these traits unless the
   // user locked that category — an explicit lock always wins.
-  const skinTone=(isOneOfOne&&!locked('skinTone'))?G.pickOneOfOneSkinTone(rng):pickTrait(rng,'skinTone',tierOverride);
-  const hairColor=(isOneOfOne&&!locked('hairColor'))?G.pickOneOfOneHairColor(rng):pickTrait(rng,'hairColor',tierOverride);
-  const hairStyle=pickTrait(rng,'hairStyle',tierOverride);
-  const outfitType=(isOneOfOne&&!locked('outfitType'))?G.pickOneOfOneOutfitType(rng):pickTrait(rng,'outfitType',tierOverride);
-  const outfitColor=pickTrait(rng,'outfitColor',tierOverride);
-  const eyeStyle=pickTrait(rng,'eyeStyle',tierOverride);
-  const accessory=pickTrait(rng,'accessory',tierOverride);
-  const backdrop=(isOneOfOne&&!locked('backdrop'))?G.pickOneOfOneBackdrop(rng):pickTrait(rng,'backdrop',tierOverride);
-  const bgColor=(isOneOfOne&&!locked('background'))?G.pickOneOfOneBgColor(rng):pickTrait(rng,'background',tierOverride);
-  const facialHair=pickTrait(rng,'facialHair',tierOverride);
-  const mouth=pickTrait(rng,'mouth',tierOverride);
-  const scars=pickTrait(rng,'scars',tierOverride);
-  const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair,mouth,scars};
+  const skinTone=(isOneOfOne&&!locked('skinTone'))?G.pickOneOfOneSkinTone(rng,V):pickTrait(rng,'skinTone',tierOverride,V);
+  const hairColor=(isOneOfOne&&!locked('hairColor'))?G.pickOneOfOneHairColor(rng):pickTrait(rng,'hairColor',tierOverride,V);
+  const hairStyle=pickTrait(rng,'hairStyle',tierOverride,V);
+  const outfitType=(isOneOfOne&&!locked('outfitType'))?G.pickOneOfOneOutfitType(rng):pickTrait(rng,'outfitType',tierOverride,V);
+  const outfitColor=pickTrait(rng,'outfitColor',tierOverride,V);
+  const eyeStyle=pickTrait(rng,'eyeStyle',tierOverride,V);
+  const accessory=pickTrait(rng,'accessory',tierOverride,V);
+  const backdrop=(isOneOfOne&&!locked('backdrop'))?G.pickOneOfOneBackdrop(rng,V):pickTrait(rng,'backdrop',tierOverride,V);
+  const bgColor=(isOneOfOne&&!locked('background'))?G.pickOneOfOneBgColor(rng,V):pickTrait(rng,'background',tierOverride,V);
+  const facialHair=pickTrait(rng,'facialHair',tierOverride,V);
+  const mouth=pickTrait(rng,'mouth',tierOverride,V);
+  const scars=pickTrait(rng,'scars',tierOverride,V);
+  const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair,mouth,scars,vibe};
   const traits={}, rarity={};
   for(const [k,v] of Object.entries(picks)){const key=k==='bgColor'?'background':k;traits[key]=v.id;rarity[key]=v.rarity;}
   return { index, picks, svg:null, isOneOfOne, seed, traits, rarity, tier:tierOverride||currentTier };
@@ -293,6 +297,7 @@ function getDisplaySVG(p) {
 }
 
 const CATEGORY_META=[
+  {key:'vibe',label:'Vibe'},
   {key:'skinTone',label:'Skin tone',swatch:'hex'},{key:'hairColor',label:'Hair color',swatch:'hex'},
   {key:'hairStyle',label:'Hair style'},{key:'facialHair',label:'Facial hair'},
   {key:'outfitType',label:'Outfit'},{key:'outfitColor',label:'Outfit color',swatch:'hex'},
@@ -334,7 +339,7 @@ function render(){
   // 1/1 variety: every trait draws from its full pool (not forced to the rare tier), and each 1/1
   // prefers values the batch's earlier 1/1s haven't used yet (best of up to 40 deterministic rerolls)
   const usedCombos=new Set(), used={};
-  const VARY=['hairStyle','outfitType','skinTone','hairColor','eyeStyle','mouth','scars','facialHair','background','backdrop','accessory'];
+  const VARY=['vibe','hairStyle','outfitType','skinTone','hairColor','eyeStyle','mouth','scars','facialHair','background','backdrop','accessory'];
   VARY.forEach(k=>used[k]=new Set());
   function generateOneOfOne(pi,seed){
     let best=null,bestScore=-1,last=null;

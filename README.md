@@ -151,17 +151,18 @@ street. Glows are stacked translucent shapes (no SVG filters).
 
 | Trait | Values |
 |-------|--------|
-| skinTone | 7 — corpse, ghoul, zombie, ghost, bruised, blood, shadow |
+| skinTone | 7 — corpse, ghoul, zombie, ghost, bruised, blood, shadow (cute: white, pale, gray, onyx, red, blue) |
 | hairColor | 10 — plus **rainbow**, 1/1-only |
 | hairStyle | 7 — buzz, crew, fade, afro, spiky, durag, mohawk |
 | facialHair | 5 — none, stubble, mustache, goatee, beard |
 | outfitType · outfitColor | 6 (tank, stripes, hoodie, overalls, sweater, suit) · 7 (midnight, blood, rot, bruise, rust, bone, black) |
-| eyeStyle | 7 — hollow, glowing, void, bleeding, stitched, button, demon |
-| mouth | 6 — stitched, fangs, grin, gape, bloody, teeth |
+| vibe | 2 — scary (65%), cute (35%): cute pieces get the daytime scene and friendly traits below in (brackets) |
+| eyeStyle | 7 — hollow, glowing, void, bleeding, stitched, button, demon (cute: dot, wide, sleepy, wink, sparkle) |
+| mouth | 6 — stitched, fangs, grin, gape, bloody, teeth (cute: smile, beam, smirk) |
 | scars | 5 — none, scar, cracks, splatter, stitches |
 | accessory | 6 — none, cap, glasses, earring, gold chain, horns |
 | backdrop | 6 — none, brownstones, tenements (fire escapes + water towers), tenement + corner store, graves, bats |
-| background | 6 — midnight, blood, fog, toxic, bruise, ember; 1/1s use pitch, blood moon (red moon), void, toxic |
+| background | 6 — midnight, blood, fog, toxic, bruise, ember; 1/1s use pitch, blood moon (red moon), void, toxic (cute: warm sand, seafoam, cream, lime, lavender, sunflower; 1/1s ETH blue, red, punchy blue, rich lime) |
 
 1/1s use curated pickers for skin, hair colour, outfit, backdrop and
 background. The source of truth is
