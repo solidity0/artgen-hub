@@ -522,7 +522,7 @@ const CX = 200;                 // character center line
 const HEAD = { cx: 200, cy: 150, rx: 85, ry: 78 };
 const EYE_Y = 165, EYE_LX = 165, EYE_RX = 235, EYE_JITTER = 8;
 const GROUND_Y = 332;
-const STROKE_W = 4;
+const STROKE_W = 4.6;
 const CROP = { x: 32, y: 12, size: 336 };
 
 // Darkens/lightens a hex color by percent — used for shading and for the
@@ -535,7 +535,7 @@ function shadePixel(hex, percent) {
   r=Math.round((t-r)*p)+r; g=Math.round((t-g)*p)+g; b=Math.round((t-b)*p)+b;
   return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
 }
-function outlineOf(hex) { return shadePixel(hex, -55); }
+function outlineOf(hex) { return shadePixel(hex, -68); }
 
 // Perceptual brightness of a hex color (0-255) — used to decide whether
 // face-feature ink (eyes/mouth/glasses) needs to flip to a light tone, so
@@ -595,8 +595,10 @@ let _lite = false;
 let _cute = false;
 function inked(d, fill, extra) {
   const base = fill.startsWith('url(') ? ((extra && extra.baseHex) || '#6a4a8a') : fill;
-  return `<path${attrs({ d, fill: 'none', stroke: outlineOf(base), 'stroke-width': 11, 'stroke-linejoin': 'round', opacity: 0.16 })}/>` +
-    path(d, fill, extra);
+  // (the old wide, faint "brush bleed" underlay read as blur at thumbnail size, so it's gone:
+  // shapes get a crisp outline only)
+  void base;
+  return path(d, fill, extra);
 }
 function formShade(d, fill, box, opts) {
   const o = opts || {};
@@ -1266,8 +1268,10 @@ function renderFromTraits(picks, index, seed, opts) {
   body += drawMoon(bgHex, index, seed);
   if (backdrop) body += drawBackdrop(backdrop.id, bgHex);
   body += drawGround(bgHex, fxRng);
+  // low fog rolls across the street behind the figure (drawn over him it hazed the legs)
+  body += drawFog(fxRng);
   // faint aura behind the figure, tinted by the outfit color
-  body += ellipse(CX, 200, 118, 150, shadePixel(outfitColor.hex, _cute ? 55 : 20), { stroke: false, opacity: _cute ? 0.22 : 0.1 });
+  body += ellipse(CX, 200, 118, 150, shadePixel(outfitColor.hex, _cute ? 40 : 20), { stroke: false, opacity: _cute ? 0.1 : 0.1 });
   // a cap sits over an afro's crown, so skip the big afro back layer then
   if (!(capped && hairStyle.id === 'afro')) body += drawHairBack(hairStyle.id, hairColor, gradId);
   body += drawBodyAndOutfit(skinTone.hex, outfitType.id, outfitColor.hex);
@@ -1283,7 +1287,6 @@ function renderFromTraits(picks, index, seed, opts) {
   body += drawBrows(eyeStyle.id, jx, skinTone.hex);
   body += drawScars(scars && scars.id, skinTone.hex, jx);
   body += drawAccessory(accessory.id, jx, skinTone.hex);
-  body += drawFog(fxRng);
 
   let blinkAnim = '';
   if (animate) {
@@ -1303,7 +1306,7 @@ function renderFromTraits(picks, index, seed, opts) {
   const sunId = `${_sid}sun`;
   const sun = `<defs><radialGradient id="${sunId}" cx="18%" cy="8%" r="95%">` + (_cute
     ? `<stop offset="0" stop-color="#ffb347" stop-opacity="0.12"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>`
-    : `<stop offset="0" stop-color="#9fe0ff" stop-opacity="0.14"/><stop offset="1" stop-color="#4a7aff" stop-opacity="0"/>`) + `</radialGradient></defs>` +
+    : `<stop offset="0" stop-color="#9fe0ff" stop-opacity="0.07"/><stop offset="1" stop-color="#4a7aff" stop-opacity="0"/>`) + `</radialGradient></defs>` +
     `<rect x="${CROP.x}" y="${CROP.y}" width="${CROP.size}" height="${CROP.size}" fill="url(#${sunId})"/>`;
   // 1.2x crop into the 400x400 stage so the figure fills the frame
   const svg = `<svg width="${SIZE}" height="${SIZE}" viewBox="${CROP.x} ${CROP.y} ${CROP.size} ${CROP.size}" xmlns="http://www.w3.org/2000/svg">
@@ -1716,7 +1719,12 @@ function galleryPng(p) { return svgToPngBlob(ensureSVG(p), 1200); }
 const THUMB_CACHE_LIMIT = 600, MAX_RASTER_IN_FLIGHT = 3;
 const _thumbCache = new Map(); // index -> { url, px }
 let _thumbGen = 0, _rasterInFlight = 0;
-function thumbPx(el) { return Math.ceil((parseFloat(el.style.width) || 200) * Math.min(3, window.devicePixelRatio || 1)); }
+// rasterise at the art box's exact device-pixel size, so the bitmap is shown 1:1 (any resampling
+// on screen softens thin lines)
+function thumbPx(el) {
+  const box = el.firstChild && el.firstChild.getBoundingClientRect ? el.firstChild.getBoundingClientRect().width : 0;
+  return Math.round((box || parseFloat(el.style.width) || 200) * Math.min(3, window.devicePixelRatio || 1));
+}
 function showThumb(el, url) {
   el.firstChild.innerHTML = '<img src="' + url + '" alt="" decoding="async" draggable="false">';
   el.dataset.ready = '1';

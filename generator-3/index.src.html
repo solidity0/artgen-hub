@@ -521,7 +521,12 @@ function galleryPng(p) { return svgToPngBlob(ensureSVG(p), 1200); }
 const THUMB_CACHE_LIMIT = 600, MAX_RASTER_IN_FLIGHT = 3;
 const _thumbCache = new Map(); // grid index -> { url, px }
 let _thumbGen = 0, _rasterInFlight = 0;
-function thumbPx(el) { return Math.ceil((parseFloat(el.style.width) || 200) * Math.min(3, window.devicePixelRatio || 1)); }
+// rasterise at the art box's exact device-pixel size, so the bitmap is shown 1:1 (any resampling
+// on screen softens thin lines)
+function thumbPx(el) {
+  const box = el.firstChild && el.firstChild.getBoundingClientRect ? el.firstChild.getBoundingClientRect().width : 0;
+  return Math.round((box || parseFloat(el.style.width) || 200) * Math.min(3, window.devicePixelRatio || 1));
+}
 function showThumb(el, url) {
   el.firstChild.innerHTML = '<img src="' + url + '" alt="" decoding="async" draggable="false">';
   el.dataset.ready = '1';
