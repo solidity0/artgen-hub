@@ -672,7 +672,7 @@ function renderChest(cx, cy, size, style, rng, ink, outline) {
     // Real emoji glyph, not a vector drawing — browsers render these in their
     // own native color regardless of the chalk ink color, which is the point:
     // a genuine splash of color against an otherwise monochrome chalk figure.
-    out += '<text x="' + cx + '" y="' + (cy + 26) + '" font-size="86" text-anchor="middle" style="font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',sans-serif;">' + emojiEntry.emoji + '</text>';
+    out += '<text x="' + cx + '" y="' + (cy + 24.7) + '" font-size="81.7" text-anchor="middle" style="font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',sans-serif;">' + emojiEntry.emoji + '</text>';
     return out;
   }
   if (style === 'x_cross') {
