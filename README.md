@@ -157,7 +157,7 @@ street. Glows are stacked translucent shapes (no SVG filters).
 | hairStyle | 7 — buzz, crew, fade, afro, spiky, durag, mohawk |
 | facialHair | 5 — none, stubble, mustache, goatee, beard |
 | outfitType · outfitColor | 6 (tank, stripes, hoodie, overalls, sweater, suit) · 7 (midnight, blood, rot, bruise, rust, bone, black) |
-| vibe | 2 — scary (65%), cute (35%): cute pieces get the daytime scene and friendly traits below in (brackets) |
+| vibe | 2 — scary (75%), cute (25%): cute pieces get the daytime scene and friendly traits below in (brackets) |
 | eyeStyle | 7 — hollow, glowing, void, bleeding, stitched, button, demon (cute: dot, wide, sleepy, wink, sparkle) |
 | mouth | 6 — stitched, fangs, grin, gape, bloody, teeth (cute: smile, beam, smirk) |
 | scars | 5 — none, scar, cracks, splatter, stitches |

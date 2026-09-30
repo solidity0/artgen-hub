@@ -175,8 +175,8 @@ const TRAITS = {
   // from (untagged values belong to both) and how the scene is lit. Rolled
   // on its own RNG stream so the other traits keep their seed positions.
   vibe: [
-    { id: 'scary', weight: 65, rarity: 'common' },
-    { id: 'cute',  weight: 35, rarity: 'common' }
+    { id: 'scary', weight: 75, rarity: 'common' },
+    { id: 'cute',  weight: 25, rarity: 'common' }
   ],
   // Rolled after facialHair so earlier traits keep their seed positions.
   mouth: [
