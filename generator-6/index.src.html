@@ -75,6 +75,8 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .lb-title { padding-right:36px; }
 .lb-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .lb-left { position:sticky; top:0; align-self:start; background:var(--panel); }
+/* the pinned art + buttons column must fit the box, or scrolling the traits pushes the art's top out of view */
+@media(min-width:601px) { .lb-preview svg { max-height:calc(90vh - 230px); max-height:calc(90dvh - 230px); } }
 .lb-left .lb-actions { padding:14px; }
 .lb-actions .btn { width:100%; text-align:center; padding:12px 8px; white-space:nowrap; }
 .toast { position:fixed; bottom:20px; right:20px; z-index:400; background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--acid); padding:10px 16px; font-family:'Space Mono',monospace; font-size:11px; transform:translateY(60px); opacity:0; transition:all .3s; max-width:260px; }

@@ -856,10 +856,10 @@ function drawAccessory(style, jx, skinHex) {
     return circle(HEAD.cx - HEAD.rx + 1, 180, 5, '#f5d020') + circle(HEAD.cx + HEAD.rx - 1, 180, 5, '#f5d020');
   } else if (style === 'horns') {
     const hornC = '#3a0c0c';
-    const hornL = 'M150 86 Q128 52 116 22 Q140 40 166 74 Z';
-    const hornR = 'M250 86 Q272 52 284 22 Q260 40 234 74 Z';
+    const hornL = 'M150 88 Q126 62 108 38 Q142 50 166 76 Z';
+    const hornR = 'M250 88 Q274 62 292 38 Q258 50 234 76 Z';
     return shaded(hornL, hornC, bboxOfD(hornL), { shadow: 0.45, hl: 0.35 }) + shaded(hornR, hornC, bboxOfD(hornR), { shadow: 0.45, hl: 0.35 }) +
-      line('M146 66 L158 60 M136 48 L147 43', '#000000', 2, 0.4) + line('M254 66 L242 60 M264 48 L253 43', '#000000', 2, 0.4);
+      line('M142 72 L154 67 M128 57 L139 52', '#000000', 2, 0.4) + line('M258 72 L246 67 M272 57 L261 52', '#000000', 2, 0.4);
   } else if (style === 'chain') {
     const gold = '#f5c518';
     return line('M168 224 Q200 272 232 224', outlineOf(gold), 9) + line('M168 224 Q200 272 232 224', gold, 5) +
