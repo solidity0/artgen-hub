@@ -2,7 +2,7 @@
 // AfterBots — Generative Trait Engine v2 "Riso Chalk"
 // Chalk-line bot + optional companion. v2 keeps the hand-drawn chalk line but
 // adds colour and depth: a bodyColor trait (riso-style offset fills with
-// halftone shading, rare chrome/gold/sunset finishes), pastel and midnight
+// halftone shading, rare gold/sunset finishes), pastel and midnight
 // backgrounds with a soft halo, chunkier proportions, outlined tube limbs,
 // filled hands/feet, drop + ground shadows, blush and glowing coloured eyes.
 // Usage:
@@ -54,11 +54,8 @@ const TRAITS = {
     { id: 'classic',   weight: 6, rarity: 'common' },               // unfilled: the v1 look
     // warm, saturated palette (a few strong cool tones for contrast)
     { id: 'tomato',    hex: '#FF3D24', weight: 7, rarity: 'common' },
-    { id: 'tangerine', hex: '#FF8200', weight: 7, rarity: 'common' },
-    { id: 'sunflower', hex: '#FFC400', weight: 7, rarity: 'common' },
     { id: 'coral',     hex: '#FF6F61', weight: 7, rarity: 'common' },
     { id: 'magenta',   hex: '#D6006F', weight: 7, rarity: 'common' },
-    { id: 'bubblegum', hex: '#FF6EB4', weight: 6, rarity: 'common' },
     { id: 'lime',      hex: '#8CD600', weight: 6, rarity: 'common' },
     { id: 'jade',      hex: '#00B383', weight: 6, rarity: 'common' },
     { id: 'azure',     hex: '#1A8CFF', weight: 6, rarity: 'common' },
@@ -67,13 +64,11 @@ const TRAITS = {
     { id: 'cherry',    hex: '#C8001E', weight: 4, rarity: 'uncommon' },
     { id: 'burgundy',  hex: '#8C0F2E', weight: 4, rarity: 'uncommon' },
     { id: 'espresso',  hex: '#5A2E1E', weight: 4, rarity: 'uncommon' },
-    { id: 'olive',     hex: '#8A9A00', weight: 4, rarity: 'uncommon' },
     { id: 'forest',    hex: '#0E8A45', weight: 4, rarity: 'uncommon' },
     { id: 'teal',      hex: '#00A3B4', weight: 4, rarity: 'uncommon' },
     { id: 'petrol',    hex: '#0B6F8F', weight: 4, rarity: 'uncommon' },
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
     { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon' },
-    { id: 'chrome',    hex: '#C9CED6', weight: 1.5, rarity: 'rare' },
     { id: 'gold',      hex: '#F2C14E', weight: 1.5, rarity: 'rare' },
     { id: 'sunset',    hex: '#F2704A', weight: 1.2, rarity: 'rare' },
     { id: 'rose_gold', hex: '#D9735A', weight: 1.2, rarity: 'rare' },
@@ -754,7 +749,6 @@ function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const gid = 'bf' + (suffix || '') + uid;
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
-  if (id === 'chrome') return { fill: 'url(#' + gid + ')', shade: '#6d7580', shoe: '#8e96a1', glow: '#dfe6ee', defs: grad(['#f4f6f9', '#aeb6c1', '#eef1f5', '#8f98a4', '#dde2e8']) };
   if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#9a6a12', shoe: '#c9922a', glow: '#ffd970', defs: grad(['#fff1b8', '#e9b340', '#fbe08a', '#c98f1e', '#f6d06a']) };
   if (id === 'rose_gold') return { fill: 'url(#' + gid + ')', shade: '#8a3a28', shoe: '#b8573f', glow: '#ff9d7f', defs: grad(['#ffb199', '#d9735a', '#f29a80', '#b8573f', '#e8876c']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
@@ -1174,7 +1168,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'sage', weight: 8 }, { id: 'blush', weight: 8 }, { id: 'powder', weight: 8 }, { id: 'lemon', weight: 8 }, { id: 'lavender', weight: 8 }, { id: 'blood_night', weight: 14 }],
-  bodyColor: [{ id: 'gold', weight: 7 }, { id: 'chrome', weight: 7 }, { id: 'sunset', weight: 6 }, { id: 'rose_gold', weight: 6 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'aurora', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'magenta', weight: 4 }, { id: 'lime', weight: 4 }, { id: 'tangerine', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'sunflower', weight: 4 }, { id: 'orchid', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
+  bodyColor: [{ id: 'gold', weight: 7 }, { id: 'sunset', weight: 6 }, { id: 'rose_gold', weight: 6 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'aurora', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'magenta', weight: 4 }, { id: 'lime', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'orchid', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
@@ -1185,9 +1179,9 @@ const ONE_OF_ONE_WEIGHTS = {
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
-  headColor: [{ id: 'matching', weight: 26 }, { id: 'gold', weight: 7 }, { id: 'chrome', weight: 6 }, { id: 'sunset', weight: 5 }, { id: 'aurora', weight: 5 }, { id: 'obsidian', weight: 5 }, { id: 'rose_gold', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'sunflower', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'jade', weight: 4 }, { id: 'bubblegum', weight: 4 }, { id: 'navy', weight: 4 }],
-  legColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'tomato', weight: 5 }, { id: 'azure', weight: 5 }, { id: 'sunflower', weight: 5 }, { id: 'navy', weight: 5 }, { id: 'magenta', weight: 5 }],
-  handColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'lime', weight: 5 }, { id: 'tangerine', weight: 5 }, { id: 'cobalt', weight: 5 }, { id: 'bubblegum', weight: 5 }],
+  headColor: [{ id: 'matching', weight: 26 }, { id: 'gold', weight: 7 }, { id: 'sunset', weight: 5 }, { id: 'aurora', weight: 5 }, { id: 'obsidian', weight: 5 }, { id: 'rose_gold', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'jade', weight: 4 }, { id: 'navy', weight: 4 }],
+  legColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'tomato', weight: 5 }, { id: 'azure', weight: 5 }, { id: 'navy', weight: 5 }, { id: 'magenta', weight: 5 }],
+  handColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'lime', weight: 5 }, { id: 'cobalt', weight: 5 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }, { id: 'blood_moon', weight: 60 }],
