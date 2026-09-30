@@ -2,7 +2,7 @@
 // AfterBots — Generative Trait Engine v2 "Riso Chalk"
 // Chalk-line bot + optional companion. v2 keeps the hand-drawn chalk line but
 // adds colour and depth: a bodyColor trait (riso-style offset fills with
-// halftone shading, rare gold/sunset finishes), pastel and midnight
+// halftone shading, rare gold/obsidian/aurora finishes), pastel and midnight
 // backgrounds with a soft halo, chunkier proportions, outlined tube limbs,
 // filled hands/feet, drop + ground shadows, blush and glowing coloured eyes.
 // Usage:
@@ -67,8 +67,6 @@ const TRAITS = {
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
     { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon' },
     { id: 'gold',      hex: '#F2C14E', weight: 1.5, rarity: 'rare' },
-    { id: 'sunset',    hex: '#F2704A', weight: 1.2, rarity: 'rare' },
-    { id: 'rose_gold', hex: '#D9735A', weight: 1.2, rarity: 'rare' },
     { id: 'purple',    hex: '#6B3FD1', weight: 1.2, rarity: 'rare' },
     { id: 'obsidian',  hex: '#2B2640', weight: 1,   rarity: 'rare' },
     { id: 'aurora',    hex: '#00C4A0', weight: 1,   rarity: 'rare' }
@@ -483,7 +481,7 @@ function renderChest(cx, cy, size, style, rng, ink, outline) {
     // Real emoji glyph, not a vector drawing — browsers render these in their
     // own native color regardless of the chalk ink color, which is the point:
     // a genuine splash of color against an otherwise monochrome chalk figure.
-    out += '<text x="' + cx + '" y="' + (cy + 24.7) + '" font-size="81.7" text-anchor="middle" style="font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',sans-serif;">' + emojiEntry.emoji + '</text>';
+    out += '<text x="' + cx + '" y="' + (cy + 23) + '" font-size="76" text-anchor="middle" style="font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',sans-serif;">' + emojiEntry.emoji + '</text>';
     return out;
   }
   if (style === 'x_cross') {
@@ -747,10 +745,8 @@ function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
   if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#9a6a12', shoe: '#c9922a', glow: '#ffd970', defs: grad(['#fff1b8', '#e9b340', '#fbe08a', '#c98f1e', '#f6d06a']) };
-  if (id === 'rose_gold') return { fill: 'url(#' + gid + ')', shade: '#8a3a28', shoe: '#b8573f', glow: '#ff9d7f', defs: grad(['#ffb199', '#d9735a', '#f29a80', '#b8573f', '#e8876c']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
   if (id === 'aurora') return { fill: 'url(#' + gid + ')', shade: '#1a4f8a', shoe: '#0a8f8f', glow: '#3dffc8', defs: grad(['#00e0a4', '#00a8ff', '#7a4dff', '#00d68f', '#ffcc00']) };
-  if (id === 'sunset') return { fill: 'url(#' + gid + ')', shade: '#8a2350', shoe: '#c2415e', glow: '#ff9a6b', defs: grad(['#ffb347', '#f2704a', '#e0457b', '#9b3fb5', '#f58a5a']) };
   return { fill: bodyColor.hex, shade: shadeColor(bodyColor.hex, -34), shoe: shadeColor(bodyColor.hex, -22), glow: bodyColor.hex, defs: '' };
 }
 
@@ -1165,7 +1161,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'sage', weight: 8 }, { id: 'blush', weight: 8 }, { id: 'powder', weight: 8 }, { id: 'lemon', weight: 8 }, { id: 'lavender', weight: 8 }, { id: 'blood_night', weight: 14 }],
-  bodyColor: [{ id: 'gold', weight: 7 }, { id: 'sunset', weight: 6 }, { id: 'rose_gold', weight: 6 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'aurora', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'magenta', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'orchid', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
+  bodyColor: [{ id: 'gold', weight: 7 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'aurora', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'magenta', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'orchid', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
@@ -1176,7 +1172,7 @@ const ONE_OF_ONE_WEIGHTS = {
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
-  headColor: [{ id: 'matching', weight: 26 }, { id: 'gold', weight: 7 }, { id: 'sunset', weight: 5 }, { id: 'aurora', weight: 5 }, { id: 'obsidian', weight: 5 }, { id: 'rose_gold', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'jade', weight: 4 }, { id: 'navy', weight: 4 }],
+  headColor: [{ id: 'matching', weight: 26 }, { id: 'gold', weight: 7 }, { id: 'aurora', weight: 5 }, { id: 'obsidian', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'jade', weight: 4 }, { id: 'navy', weight: 4 }],
   legColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'azure', weight: 5 }, { id: 'navy', weight: 5 }, { id: 'magenta', weight: 5 }],
   handColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'cobalt', weight: 5 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
