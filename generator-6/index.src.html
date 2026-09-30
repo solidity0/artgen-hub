@@ -95,7 +95,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   <div class="brand">Hood Characters <span>//</span> Generator</div>
   <div class="eyebrow">GENERATIVE CHARACTER ENGINE</div>
   <div class="h1" id="h1-text">Hood Characters</div>
-  <div class="sub">Shaded flat-vector chibi guys on brick city blocks. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
+  <div class="sub">Undead chibi guys haunting the block after dark — glowing eyes, fangs, stitches and fog. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
 </header>
 <main>
   <div class="panel-section">
@@ -111,7 +111,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
           <button class="chip" data-chain="robinhood">robinhood</button>
         </div>
       </div>
-      <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata">Hood Characters — chibi guys from the block. Fades, durags, gold chains and brick walk-ups, each one with his own look.</textarea></div>
+      <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata">Hood Characters — undead chibi guys haunting the block after dark. Glowing eyes, fangs, stitches and graveyard fog, each one with his own nightmare.</textarea></div>
       <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Launch settings (used in the batch zip)</div>
         <input type="text" id="launch-base-uri" placeholder="Image base URI for ETH / Robinhood, e.g. ipfs://bafy.../ (optional)" style="margin-bottom:6px;">
         <input type="text" id="launch-site-url" placeholder="Project website (optional)">
@@ -251,7 +251,9 @@ function generateOne(index,seed,opts) {
   const backdrop=(isOneOfOne&&!locked('backdrop'))?G.pickOneOfOneBackdrop(rng):pickTrait(rng,'backdrop',tierOverride);
   const bgColor=(isOneOfOne&&!locked('background'))?G.pickOneOfOneBgColor(rng):pickTrait(rng,'background',tierOverride);
   const facialHair=pickTrait(rng,'facialHair',tierOverride);
-  const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair};
+  const mouth=pickTrait(rng,'mouth',tierOverride);
+  const scars=pickTrait(rng,'scars',tierOverride);
+  const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair,mouth,scars};
   const traits={}, rarity={};
   for(const [k,v] of Object.entries(picks)){const key=k==='bgColor'?'background':k;traits[key]=v.id;rarity[key]=v.rarity;}
   return { index, picks, svg:null, isOneOfOne, seed, traits, rarity, tier:tierOverride||currentTier };
@@ -294,7 +296,7 @@ const CATEGORY_META=[
   {key:'skinTone',label:'Skin tone',swatch:'hex'},{key:'hairColor',label:'Hair color',swatch:'hex'},
   {key:'hairStyle',label:'Hair style'},{key:'facialHair',label:'Facial hair'},
   {key:'outfitType',label:'Outfit'},{key:'outfitColor',label:'Outfit color',swatch:'hex'},
-  {key:'eyeStyle',label:'Eyes'},{key:'accessory',label:'Accessory'},
+  {key:'eyeStyle',label:'Eyes'},{key:'mouth',label:'Mouth'},{key:'scars',label:'Scars'},{key:'accessory',label:'Accessory'},
   {key:'backdrop',label:'Backdrop'},{key:'background',label:'Background',swatch:'hex'}
 ];
 function rarityColor(r){return r==='rare'?'var(--acid)':r==='uncommon'?'var(--orange)':'var(--dim)';}
@@ -332,7 +334,7 @@ function render(){
   // 1/1 variety: every trait draws from its full pool (not forced to the rare tier), and each 1/1
   // prefers values the batch's earlier 1/1s haven't used yet (best of up to 40 deterministic rerolls)
   const usedCombos=new Set(), used={};
-  const VARY=['hairStyle','outfitType','skinTone','hairColor','eyeStyle','facialHair','background','backdrop','accessory'];
+  const VARY=['hairStyle','outfitType','skinTone','hairColor','eyeStyle','mouth','scars','facialHair','background','backdrop','accessory'];
   VARY.forEach(k=>used[k]=new Set());
   function generateOneOfOne(pi,seed){
     let best=null,bestScore=-1,last=null;

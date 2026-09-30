@@ -32,10 +32,10 @@ const BG_COLOR = '#d0fa05';
 // curated palette instead, same pattern as the other ONE_OF_ONE_* pickers.
 // Add more entries here as more hex codes come in.
 const ONE_OF_ONE_BG_WEIGHTS = [
-  { id: 'eth_blue',    hex: '#627EEA', weight: 25 },
-  { id: 'red',         hex: '#FF0000', weight: 25 },
-  { id: 'punchy_blue', hex: '#3A2BE8', weight: 25 },
-  { id: 'rich_lime',   hex: '#B8EB00', weight: 25 }
+  { id: 'pitch',      hex: '#0b0b10', weight: 25 },
+  { id: 'blood_moon', hex: '#8f0014', weight: 25 },
+  { id: 'void',       hex: '#22083a', weight: 25 },
+  { id: 'toxic',      hex: '#d0fa05', weight: 25 }
 ];
 function pickOneOfOneBgColor(rng) {
   const total = ONE_OF_ONE_BG_WEIGHTS.reduce((s,w)=>s+w.weight,0);
@@ -51,12 +51,13 @@ function pickOneOfOneBgColor(rng) {
 // ---------- trait pools ----------
 const TRAITS = {
   skinTone: [
-    { id: 'white',    weight: 30, hex: '#ffffff', rarity: 'common' },
-    { id: 'pale',     weight: 22, hex: '#f5e8dc', rarity: 'uncommon' },
-    { id: 'gray',     weight: 16, hex: '#9a9a9a', rarity: 'uncommon' },
-    { id: 'onyx',     weight: 6,  hex: '#1a1a1a', rarity: 'rare' },
-    { id: 'red',      weight: 11, hex: '#cc3f3f', rarity: 'rare' }, // weight 11 of total 122 ≈ 9% at tier 'any'
-    { id: 'blue',     weight: 11, hex: '#3f6fcc', rarity: 'rare' }  // same treatment as red, ≈ 9% at tier 'any'
+    { id: 'corpse',   weight: 26, hex: '#e6e6e6', rarity: 'common' },
+    { id: 'ghoul',    weight: 20, hex: '#8c8c8c', rarity: 'common' },
+    { id: 'zombie',   weight: 16, hex: '#8fae6a', rarity: 'uncommon' },
+    { id: 'ghost',    weight: 12, hex: '#b9d3de', rarity: 'uncommon' },
+    { id: 'bruised',  weight: 12, hex: '#8e6f9e', rarity: 'uncommon' },
+    { id: 'blood',    weight: 8,  hex: '#b8322f', rarity: 'rare' },
+    { id: 'shadow',   weight: 6,  hex: '#1a1a1a', rarity: 'rare' }
   ],
   hairColor: [
     { id: 'black',    weight: 20, hex: '#1a1a1a', rarity: 'common' },
@@ -88,27 +89,30 @@ const TRAITS = {
     { id: 'suit',     weight: 6,  rarity: 'rare' }
   ],
   outfitColor: [
-    { id: 'blue',     weight: 22, hex: '#3c5ae8', rarity: 'common' },
-    { id: 'red',      weight: 18, hex: '#e83c5a', rarity: 'common' },
-    { id: 'green',    weight: 16, hex: '#3ce85a', rarity: 'uncommon' },
-    { id: 'purple',   weight: 14, hex: '#8a3ce8', rarity: 'uncommon' },
-    { id: 'amber',    weight: 12, hex: '#e8a01a', rarity: 'uncommon' },
-    { id: 'white',    weight: 10, hex: '#e8e8e8', rarity: 'rare' },
+    { id: 'midnight', weight: 22, hex: '#2c3a80', rarity: 'common' },
+    { id: 'blood',    weight: 18, hex: '#9a1020', rarity: 'common' },
+    { id: 'rot',      weight: 16, hex: '#4f7a26', rarity: 'uncommon' },
+    { id: 'bruise',   weight: 14, hex: '#5a2a80', rarity: 'uncommon' },
+    { id: 'rust',     weight: 12, hex: '#a8481a', rarity: 'uncommon' },
+    { id: 'bone',     weight: 10, hex: '#d8d0bc', rarity: 'rare' },
     { id: 'black',    weight: 8,  hex: '#1a1a1a', rarity: 'rare' }
   ],
   eyeStyle: [
-    { id: 'dot',      weight: 46, rarity: 'common' },
-    { id: 'wide',     weight: 22, rarity: 'common' },
-    { id: 'sleepy',   weight: 16, rarity: 'uncommon' },
-    { id: 'wink',     weight: 10, rarity: 'uncommon' },
-    { id: 'sparkle',  weight: 6,  rarity: 'rare' }
+    { id: 'hollow',   weight: 30, rarity: 'common' },
+    { id: 'glowing',  weight: 24, rarity: 'common' },
+    { id: 'void',     weight: 16, rarity: 'uncommon' },
+    { id: 'bleeding', weight: 14, rarity: 'uncommon' },
+    { id: 'stitched', weight: 10, rarity: 'uncommon' },
+    { id: 'button',   weight: 6,  rarity: 'rare' },
+    { id: 'demon',    weight: 6,  rarity: 'rare' }
   ],
   accessory: [
-    { id: 'none',      weight: 46, rarity: 'common' },
-    { id: 'cap',       weight: 20, rarity: 'uncommon' },
-    { id: 'glasses',   weight: 16, rarity: 'uncommon' },
-    { id: 'earring',   weight: 10, rarity: 'rare' },
-    { id: 'chain',     weight: 8,  rarity: 'rare' }
+    { id: 'none',      weight: 44, rarity: 'common' },
+    { id: 'cap',       weight: 18, rarity: 'uncommon' },
+    { id: 'glasses',   weight: 14, rarity: 'uncommon' },
+    { id: 'earring',   weight: 8,  rarity: 'rare' },
+    { id: 'chain',     weight: 8,  rarity: 'rare' },
+    { id: 'horns',     weight: 8,  rarity: 'rare' }
   ],
   facialHair: [
     { id: 'none',      weight: 50, rarity: 'common' },
@@ -118,22 +122,39 @@ const TRAITS = {
     { id: 'beard',     weight: 6,  rarity: 'rare' }
   ],
   // Background scenery — flanking silhouettes in the side-padding columns
-  // (buildings) or small marks in the top headroom (birds). 'none' dominates
-  // the general pool; the four scene variants sum to 90/1000 = 9%.
+  // (buildings, graves) or bats in the top headroom. 'none' dominates the
+  // general pool; the five scene variants sum to 110/1000 = 11%.
   backdrop: [
-    { id: 'none',             weight: 910, rarity: 'common' },
-    { id: 'buildingsSmall',   weight: 25,  rarity: 'rare' },
-    { id: 'buildingsTall',    weight: 25,  rarity: 'rare' },
+    { id: 'none',             weight: 890, rarity: 'common' },
+    { id: 'buildingsSmall',   weight: 22,  rarity: 'rare' },
+    { id: 'buildingsTall',    weight: 22,  rarity: 'rare' },
     { id: 'buildingsSkyline', weight: 20,  rarity: 'rare' },
-    { id: 'birds',            weight: 20,  rarity: 'rare' }
+    { id: 'graves',           weight: 26,  rarity: 'rare' },
+    { id: 'bats',             weight: 20,  rarity: 'rare' }
   ],
   background: [
-    { id: 'warm_sand', hex: '#F4A259', weight: 25, rarity: 'common' },
-    { id: 'seafoam',   hex: '#4ECDC4', weight: 22, rarity: 'common' },
-    { id: 'cream',     hex: '#F5F0E8', weight: 20, rarity: 'common' },
-    { id: 'lime',      hex: '#d0fa05', weight: 18, rarity: 'common' },
-    { id: 'lavender',  hex: '#A78BFA', weight: 10, rarity: 'uncommon' },
-    { id: 'sunflower', hex: '#FFD23F', weight: 5,  rarity: 'rare' }
+    { id: 'midnight',  hex: '#1d1838', weight: 26, rarity: 'common' },
+    { id: 'blood',     hex: '#5c0b12', weight: 22, rarity: 'common' },
+    { id: 'fog',       hex: '#3a4046', weight: 20, rarity: 'common' },
+    { id: 'toxic',     hex: '#d0fa05', weight: 14, rarity: 'common' },
+    { id: 'bruise',    hex: '#3a1648', weight: 12, rarity: 'uncommon' },
+    { id: 'ember',     hex: '#7a2406', weight: 6,  rarity: 'rare' }
+  ],
+  // Rolled after facialHair so earlier traits keep their seed positions.
+  mouth: [
+    { id: 'stitched',  weight: 24, rarity: 'common' },
+    { id: 'fangs',     weight: 22, rarity: 'common' },
+    { id: 'grin',      weight: 18, rarity: 'uncommon' },
+    { id: 'gape',      weight: 14, rarity: 'uncommon' },
+    { id: 'bloody',    weight: 12, rarity: 'uncommon' },
+    { id: 'teeth',     weight: 10, rarity: 'rare' }
+  ],
+  scars: [
+    { id: 'none',      weight: 46, rarity: 'common' },
+    { id: 'scar',      weight: 18, rarity: 'common' },
+    { id: 'cracks',    weight: 12, rarity: 'uncommon' },
+    { id: 'splatter',  weight: 14, rarity: 'uncommon' },
+    { id: 'stitches',  weight: 10, rarity: 'rare' }
   ]
 };
 
@@ -191,12 +212,12 @@ function pickOneOfOneHairColor(rng) {
 // whole pool (favoring the visually rarer tones a bit) instead of filtering
 // down to whichever single entry happens to carry the 'rare' tag.
 const ONE_OF_ONE_SKIN_TONE_WEIGHTS = [
-  { id: 'onyx',  weight: 20 },
-  { id: 'red',   weight: 20 },
-  { id: 'blue',  weight: 20 },
-  { id: 'pale',  weight: 16 },
-  { id: 'gray',  weight: 16 },
-  { id: 'white', weight: 14 }
+  { id: 'shadow',  weight: 20 },
+  { id: 'blood',   weight: 20 },
+  { id: 'zombie',  weight: 18 },
+  { id: 'ghost',   weight: 16 },
+  { id: 'bruised', weight: 14 },
+  { id: 'corpse',  weight: 12 }
 ];
 function pickOneOfOneSkinTone(rng) {
   const total = ONE_OF_ONE_SKIN_TONE_WEIGHTS.reduce((s,w)=>s+w.weight,0);
@@ -235,10 +256,11 @@ function pickOneOfOneOutfitType(rng) {
 // show it off far more often — 90% here, with a small 'none' slice so it's
 // not literally forced on every single 1/1.
 const ONE_OF_ONE_BACKDROP_WEIGHTS = [
-  { id: 'buildingsSmall',   weight: 25 },
-  { id: 'buildingsTall',    weight: 25 },
-  { id: 'buildingsSkyline', weight: 20 },
-  { id: 'birds',            weight: 20 },
+  { id: 'buildingsSmall',   weight: 18 },
+  { id: 'buildingsTall',    weight: 18 },
+  { id: 'buildingsSkyline', weight: 16 },
+  { id: 'graves',           weight: 22 },
+  { id: 'bats',             weight: 16 },
   { id: 'none',             weight: 10 }
 ];
 function pickOneOfOneBackdrop(rng) {
@@ -467,27 +489,53 @@ function drawHead(skinHex) {
   return s;
 }
 
-// Thick, straight brows — the single strongest masculine cue on a chibi face.
+// Thick brows angled down hard toward the nose — a permanent glare.
 function drawBrows(eyeStyle, jx, skinHex) {
   const { ink } = faceInk(skinHex);
   const xs = [EYE_LX + jx*EYE_JITTER, EYE_RX + jx*EYE_JITTER];
-  const tilt = eyeStyle === 'sleepy' ? 0 : 4; // inner ends lower = more determined look
+  const tilt = eyeStyle === 'void' ? -2 : 9; // inner ends lower = more determined look
   return line(`M${xs[0]-15} ${EYE_Y-22} L${xs[0]+12} ${EYE_Y-22+tilt}`, ink, 6) +
     line(`M${xs[1]-12} ${EYE_Y-22+tilt} L${xs[1]+15} ${EYE_Y-22}`, ink, 6);
 }
 
-// Mouth width/offset jitter (seeded per piece) keeps faces from being
-// identical. Flatter lines and an occasional smirk rather than a round smile.
-function drawMouth(skinHex, rng) {
-  const wide = rng() < 0.3;
-  const ox = wide ? 0 : (rng() < 0.5 ? -4 : 4);
-  const half = wide ? 15 : 10;
-  const smirk = rng() < 0.35;
-  const mouthColor = luma(skinHex) < 60 ? shadePixel(skinHex, 40) : shadePixel(skinHex, -45);
-  const d = smirk
-    ? `M${CX+ox-half} 202 Q${CX+ox} 205 ${CX+ox+half} 196`
-    : `M${CX+ox-half} 200 Q${CX+ox} ${wide ? 208 : 204} ${CX+ox+half} 200`;
-  return line(d, mouthColor, 4);
+// Horror mouths. A small seeded offset keeps them from sitting on exactly the
+// same spot on every face.
+const CAVITY = '#1a0406', BLOOD = '#a3000f', TOOTH = '#f2ecd8';
+function drawMouth(style, skinHex, rng) {
+  const ox = rng() < 0.4 ? (rng() < 0.5 ? -4 : 4) : 0;
+  const x = CX + ox;
+  const { ink } = faceInk(skinHex);
+  const lip = luma(skinHex) < 60 ? shadePixel(skinHex, 40) : shadePixel(skinHex, -50);
+  const rim = { stroke: luma(skinHex) < 60 ? '#6a6a6a' : outlineOf(skinHex), sw: 2.5 };
+  let s = '';
+  if (style === 'stitched') {
+    s += line(`M${x-24} 202 Q${x} 206 ${x+24} 200`, lip, 4);
+    for (let i = -18; i <= 18; i += 9) s += line(`M${x+i} 195 L${x+i+1} 210`, lip, 2.5);
+  } else if (style === 'fangs') {
+    s += line(`M${x-18} 198 Q${x} 206 ${x+18} 196`, lip, 4);
+    s += path(`M${x-11} 200 L${x-7} 214 L${x-4} 201 Z`, TOOTH, { stroke: ink, sw: 1.8 });
+    s += path(`M${x+5} 199 L${x+8} 213 L${x+11} 198 Z`, TOOTH, { stroke: ink, sw: 1.8 });
+  } else if (style === 'grin') {
+    // wide jack-o'-lantern grin with jagged teeth
+    s += path(`M${x-32} 192 Q${x} 206 ${x+32} 192 Q${x+22} 222 ${x} 222 Q${x-22} 222 ${x-32} 192 Z`, CAVITY, rim);
+    let t = `M${x-28} 195`;
+    for (let i = -28; i < 28; i += 8) t += ` L${x+i+4} ${i % 16 === 0 ? 208 : 205} L${x+i+8} ${197 + Math.abs(i) * 0.08}`;
+    s += path(t + ` Q${x} 203 ${x-28} 195 Z`, TOOTH, { stroke: false });
+    s += path(`M${x-14} 219 L${x-10} 212 L${x-6} 219 Z M${x+6} 219 L${x+10} 212 L${x+14} 219 Z`, TOOTH, { stroke: false });
+  } else if (style === 'gape') {
+    s += ellipse(x, 208, 11, 15, CAVITY, rim);
+    s += path(`M${x+4} 221 Q${x+6} 232 ${x+5} 240 Q${x+2} 244 ${x+1} 238 Q${x+1} 230 ${x+1} 222 Z`, '#c8e8b0', { stroke: false, opacity: 0.8 });
+  } else if (style === 'bloody') {
+    s += line(`M${x-16} 202 Q${x} 198 ${x+16} 202`, lip, 4);
+    s += path(`M${x+10} 202 Q${x+14} 212 ${x+13} 224 Q${x+13} 232 ${x+9} 232 Q${x+6} 230 ${x+7} 222 Q${x+8} 212 ${x+10} 202 Z`, BLOOD, { stroke: false });
+    s += path(`M${x-12} 203 Q${x-10} 210 ${x-11} 214 Q${x-13} 216 ${x-14} 213 Q${x-14} 208 ${x-12} 203 Z`, BLOOD, { stroke: false });
+  } else if (style === 'teeth') {
+    // lipless, skull-like rows of teeth
+    s += rrect(x - 22, 194, 44, 20, 6, TOOTH, rim);
+    s += line(`M${x-22} 204 L${x+22} 204`, CAVITY, 2.5);
+    for (let i = -14; i <= 14; i += 7) s += line(`M${x+i} 195 L${x+i} 213`, CAVITY, 1.8);
+  }
+  return s;
 }
 
 function sparkleStar(x, y, r, color) {
@@ -495,33 +543,100 @@ function sparkleStar(x, y, r, color) {
   return path(`M${x} ${y-r} Q${x+i} ${y-i} ${x+r} ${y} Q${x+i} ${y+i} ${x} ${y+r} Q${x-i} ${y+i} ${x-r} ${y} Q${x-i} ${y-i} ${x} ${y-r} Z`, color, { stroke: false });
 }
 
+// Soft glow built from stacked translucent circles (no SVG filters — those
+// render blurry inside <img> thumbnails on Safari).
+function glow(x, y, r, color) {
+  return circle(x, y, r * 2, color, { stroke: false, opacity: 0.12 }) +
+    circle(x, y, r * 1.45, color, { stroke: false, opacity: 0.22 });
+}
+
+// Dark, sunken sockets under every eye style so the whole face reads gaunt.
+function drawSunken(jx, skinHex) {
+  const c = luma(skinHex) < 60 ? '#000000' : shadePixel(skinHex, -45);
+  return [EYE_LX + jx*EYE_JITTER, EYE_RX + jx*EYE_JITTER].map(x =>
+    ellipse(x, EYE_Y + 3, 20, 18, c, { stroke: false, opacity: 0.42 }) +
+    path(`M${x-14} ${EYE_Y+14} Q${x} ${EYE_Y+22} ${x+14} ${EYE_Y+14}`, 'none', { stroke: c, sw: 2.5, opacity: 0.7 })).join('');
+}
+
 function drawEyes(style, jx, skinHex) {
-  const { ink, hl } = faceInk(skinHex);
+  const { ink } = faceInk(skinHex);
   const xs = [EYE_LX + jx*EYE_JITTER, EYE_RX + jx*EYE_JITTER], y = EYE_Y;
-  const openEye = (x) => ellipse(x, y, 8, 10, ink, { stroke: false }) + circle(x + 3, y - 3, 2.5, hl, { stroke: false });
-  const closedEye = (x) => line(`M${x-10} ${y+1} L${x+10} ${y+1}`, ink, 4);
+  const socketRim = luma(skinHex) < 60 ? { stroke: '#5a5a5a', sw: 2 } : { stroke: false };
   let s = '';
-  if (style === 'dot') {
-    xs.forEach(x => { s += openEye(x); });
-  } else if (style === 'wide') {
+  if (style === 'hollow') {
     xs.forEach(x => {
-      s += ellipse(x, y, 13, 12, '#ffffff', { stroke: ink, sw: 3 });
-      s += circle(x, y + 1, 7, luma(skinHex) < 60 ? '#1a1a1a' : ink, { stroke: false });
-      s += circle(x + 2, y - 1, 2.5, '#ffffff', { stroke: false });
+      s += ellipse(x, y, 14, 15, '#07070a', socketRim);
+      s += glow(x, y + 1, 4, '#ffffff') + circle(x, y + 1, 2.6, '#ffffff', { stroke: false });
     });
-  } else if (style === 'sleepy') {
+  } else if (style === 'glowing') {
     xs.forEach(x => {
-      s += path(`M${x-10} ${y} L${x+10} ${y} Q${x+10} ${y+9} ${x} ${y+9} Q${x-10} ${y+9} ${x-10} ${y} Z`, ink, { stroke: false });
-      s += line(`M${x-12} ${y} L${x+12} ${y}`, ink, 4);
+      s += ellipse(x, y, 13, 12, '#1a0000', socketRim);
+      s += glow(x, y, 9, '#ff2a1a');
+      s += ellipse(x, y, 8, 7, '#ff3b2a', { stroke: false }) + circle(x, y, 3, '#ffd6c8', { stroke: false });
     });
-  } else if (style === 'wink') {
-    s += openEye(xs[0]);
-    s += closedEye(xs[1]);
-  } else if (style === 'sparkle') {
+  } else if (style === 'void') {
     xs.forEach(x => {
-      s += ellipse(x, y, 10, 12, ink, { stroke: false });
-      s += sparkleStar(x + 3, y - 3, 5, hl);
+      s += ellipse(x, y, 14, 14, '#f4f2e6', { stroke: ink, sw: 3 });
+      s += line(`M${x-13} ${y+2} L${x-6} ${y+1} L${x-3} ${y+5}`, '#c0101a', 1.4, 0.8);
+      s += line(`M${x+13} ${y-3} L${x+7} ${y-1} L${x+5} ${y-6}`, '#c0101a', 1.4, 0.8);
     });
+  } else if (style === 'bleeding') {
+    xs.forEach((x, i) => {
+      s += ellipse(x, y, 10, 12, '#07070a', socketRim);
+      s += circle(x + 3, y - 3, 2, '#ffffff', { stroke: false, opacity: 0.8 });
+      const len = i ? 30 : 42, bx = x - 2 + i * 3;
+      s += path(`M${bx-3} ${y+9} Q${bx-2} ${y+len*0.6} ${bx-4} ${y+len} Q${bx} ${y+len+7} ${bx+4} ${y+len} Q${bx+2} ${y+len*0.6} ${bx+3} ${y+9} Z`, BLOOD, { stroke: false });
+    });
+  } else if (style === 'stitched') {
+    xs.forEach(x => {
+      s += line(`M${x-10} ${y-10} L${x+10} ${y+10} M${x+10} ${y-10} L${x-10} ${y+10}`, ink, 5);
+    });
+  } else if (style === 'button') {
+    ['#7a1020', '#1f1f2a'].forEach((c, i) => {
+      const x = xs[i];
+      s += circle(x, y, 13, c, { stroke: outlineOf(c), sw: 3 });
+      s += circle(x - 3, y - 4, 4, '#ffffff', { stroke: false, opacity: 0.18 });
+      [[-4,-4],[4,-4],[-4,4],[4,4]].forEach(([dx,dy]) => { s += circle(x+dx, y+dy, 2, '#07070a', { stroke: false }); });
+      s += line(`M${x-4} ${y-4} L${x+4} ${y+4} M${x+4} ${y-4} L${x-4} ${y+4}`, '#e8e0c8', 1.6);
+    });
+  } else if (style === 'demon') {
+    xs.forEach(x => {
+      s += glow(x, y, 9, '#ffb000');
+      s += ellipse(x, y, 13, 11, '#ffb000', { stroke: '#3a1a00', sw: 2.5 });
+      s += ellipse(x, y, 2.6, 10, '#07070a', { stroke: false });
+    });
+  }
+  return s;
+}
+
+// Wounds and marks drawn over the finished face.
+function drawScars(style, skinHex, jx) {
+  if (!style || style === 'none') return '';
+  const seam = luma(skinHex) < 60 ? '#8a8a8a' : shadePixel(skinHex, -55);
+  const lx = EYE_LX + jx*EYE_JITTER;
+  let s = '';
+  if (style === 'scar') {
+    // a stitched gash straight down through the left eye
+    s += line(`M${lx+6} ${EYE_Y-34} Q${lx-2} ${EYE_Y} ${lx-10} ${EYE_Y+42}`, '#c85a6a', 5, 0.85);
+    for (let t = 0.12; t < 0.95; t += 0.2) {
+      const px = lx + 6 - 16 * t, py = EYE_Y - 34 + 76 * t;
+      s += line(`M${fmt(px-7)} ${fmt(py-1)} L${fmt(px+7)} ${fmt(py+1)}`, seam, 2.2);
+    }
+  } else if (style === 'cracks') {
+    s += line('M270 128 L252 146 L260 156 L240 176 M252 146 L236 142', seam, 2.6, 0.9);
+    s += line('M124 180 L140 188 L136 202 L150 212', seam, 2.4, 0.85);
+  } else if (style === 'splatter') {
+    [[236,128,5],[248,140,3],[226,138,2.5],[258,122,2],[152,204,4],[142,196,2.2],[260,190,3.5],[214,262,6],[230,276,3],[186,284,4]].forEach(([x,y,r]) => {
+      s += circle(x, y, r, BLOOD, { stroke: false, opacity: 0.9 });
+    });
+    s += path('M214 266 Q216 280 213 292 Q210 296 208 290 Q209 280 212 266 Z', BLOOD, { stroke: false, opacity: 0.9 });
+  } else if (style === 'stitches') {
+    // Frankenstein seam across the forehead
+    s += line('M140 124 Q200 112 262 124', seam, 3.5);
+    for (let x = 148; x <= 254; x += 13) {
+      const y = 124 - Math.sin((x - 140) / 122 * Math.PI) * 11;
+      s += line(`M${x} ${fmt(y-7)} L${x+2} ${fmt(y+7)}`, seam, 2.4);
+    }
   }
   return s;
 }
@@ -643,6 +758,12 @@ function drawAccessory(style, jx, skinHex) {
       line(`M${lx+22} ${EYE_Y-6} L${rx-22} ${EYE_Y-6}`, rim, 5);
   } else if (style === 'earring') {
     return circle(HEAD.cx - HEAD.rx + 1, 180, 5, '#f5d020') + circle(HEAD.cx + HEAD.rx - 1, 180, 5, '#f5d020');
+  } else if (style === 'horns') {
+    const hornC = '#3a0c0c';
+    const hornL = 'M150 86 Q128 52 116 22 Q140 40 166 74 Z';
+    const hornR = 'M250 86 Q272 52 284 22 Q260 40 234 74 Z';
+    return shaded(hornL, hornC, bboxOfD(hornL), { shadow: 0.45, hl: 0.35 }) + shaded(hornR, hornC, bboxOfD(hornR), { shadow: 0.45, hl: 0.35 }) +
+      line('M146 66 L158 60 M136 48 L147 43', '#000000', 2, 0.4) + line('M254 66 L242 60 M264 48 L253 43', '#000000', 2, 0.4);
   } else if (style === 'chain') {
     const gold = '#f5c518';
     return line('M168 224 Q200 272 232 224', outlineOf(gold), 9) + line('M168 224 Q200 272 232 224', gold, 5) +
@@ -655,8 +776,8 @@ function drawAccessory(style, jx, skinHex) {
 // Red-brick city blocks in the side margins: brownstones, walk-up tenements
 // with fire escapes and rooftop water towers, and a corner store. Right-side
 // buildings are mirror images of the left (x -> VB - x - w).
-const BRICK = '#9c4a36', BRICK_DARK = '#7a3626', TRIM = '#e8d8c0', IRON = '#2a2a2a';
-const WIN_LIT = '#f5e0a0', WIN_DARK = '#2d3748';
+const BRICK = '#5a2a24', BRICK_DARK = '#3e1c18', TRIM = '#8a7c6c', IRON = '#141414';
+const WIN_LIT = '#d8ff5a', WIN_DARK = '#10141c';
 
 function mx(side, x, w) { return side === 'L' ? x : VB - x - w; }
 function brickBody(side, x, top, w, color) {
@@ -680,13 +801,13 @@ function windowGrid(side, x, top, w, bottom, key) {
   for (let y = top + 16; y + 18 < bottom; y += 30, row++) {
     let col = 0;
     for (let wx = x + 8; wx + 14 <= x + w - 6; wx += 22, col++) {
-      s += windowAt(side, wx, y, 14, 18, (row * 3 + col * 5 + key) % 4 !== 0);
+      s += windowAt(side, wx, y, 14, 18, (row * 3 + col * 5 + key) % 5 === 0);
     }
   }
   return s;
 }
 function brownstone(side, x, top, w) {
-  let s = brickBody(side, x, top, w, '#8a4a38');
+  let s = brickBody(side, x, top, w, '#4e2620');
   s += windowGrid(side, x, top, w, GROUND_Y - 44, 1);
   // stoop door + steps
   const dx = x + Math.round(w / 2) - 9;
@@ -731,9 +852,9 @@ function cornerStore(side, x, top, w) {
   const ay = top + 30, stripes = Math.max(2, Math.floor((w - 4) / 8));
   const sw = (w + 4) / stripes;
   for (let i = 0; i < stripes; i++) {
-    s += path(`M${X-2+i*sw} ${ay} L${X-2+(i+1)*sw} ${ay} L${X-2+(i+1)*sw} ${ay+12} Q${X-2+(i+0.5)*sw} ${ay+17} ${X-2+i*sw} ${ay+12} Z`, i % 2 ? '#f5f5f5' : '#e83c3c', { stroke: false });
+    s += path(`M${X-2+i*sw} ${ay} L${X-2+(i+1)*sw} ${ay} L${X-2+(i+1)*sw} ${ay+12} Q${X-2+(i+0.5)*sw} ${ay+17} ${X-2+i*sw} ${ay+12} Z`, i % 2 ? '#1a1a1a' : '#8a0a14', { stroke: false });
   }
-  s += rrect(X + 6, ay + 20, w - 12, GROUND_Y - ay - 26, 2, WIN_LIT, { stroke: TRIM, sw: 2.5 });
+  s += rrect(X + 6, ay + 20, w - 12, GROUND_Y - ay - 26, 2, WIN_DARK, { stroke: TRIM, sw: 2.5 });
   return s;
 }
 // Buildings sit on a far street line (FAR_Y) higher up the frame than the
@@ -752,9 +873,20 @@ function drawBackdrop(backdropId, bgHex) {
     if (backdropId === 'buildingsSkyline') return tenement(sd, 40, 128, 34) + cornerStore(sd, 72, 236, 40);
     return '';
   };
-  if (backdropId === 'birds') {
-    const bird = (x, y) => line(`M${x-12} ${y} Q${x-6} ${y-8} ${x} ${y} Q${x+6} ${y-8} ${x+12} ${y}`, '#2a2a2a', 3.5);
-    return `<g opacity="0.8">${bird(66, 62) + bird(100, 42) + bird(302, 44) + bird(336, 66)}</g>`;
+  if (backdropId === 'bats') {
+    const bat = (x, y, k) => path(`M${x} ${y+3} Q${x-3} ${y-3} ${x-4} ${y-1} Q${x-10} ${y-9*k} ${x-20*k} ${y-4} Q${x-15*k} ${y} ${x-16*k} ${y+5} Q${x-11*k} ${y+2} ${x-8*k} ${y+6} Q${x-5} ${y+3} ${x} ${y+7} Q${x+5} ${y+3} ${x+8*k} ${y+6} Q${x+11*k} ${y+2} ${x+16*k} ${y+5} Q${x+15*k} ${y} ${x+20*k} ${y-4} Q${x+10} ${y-9*k} ${x+4} ${y-1} Q${x+3} ${y-3} ${x} ${y+3} Z`, '#0a0a0e', { stroke: false });
+    return `<g opacity="0.9">${bat(70, 60, 1) + bat(104, 36, 0.7) + bat(300, 40, 0.8) + bat(338, 70, 1.1) + bat(90, 96, 0.55)}</g>`;
+  }
+  if (backdropId === 'graves') {
+    const stone = (x, h, w, tilt) => {
+      const d = `M${x} ${GROUND_Y} L${x} ${GROUND_Y-h+w/2} Q${x} ${GROUND_Y-h} ${x+w/2} ${GROUND_Y-h} Q${x+w} ${GROUND_Y-h} ${x+w} ${GROUND_Y-h+w/2} L${x+w} ${GROUND_Y} Z`;
+      return `<g transform="rotate(${tilt} ${x+w/2} ${GROUND_Y})">` + shaded(d, '#6a6a72', [x, GROUND_Y-h, x+w, GROUND_Y], { shadow: 0.5, hl: 0.15 }) +
+        line(`M${x+w/2} ${GROUND_Y-h+10} L${x+w/2} ${GROUND_Y-h+30} M${x+w/2-7} ${GROUND_Y-h+17} L${x+w/2+7} ${GROUND_Y-h+17}`, '#3a3a40', 3) +
+        line(`M${x+6} ${GROUND_Y-h*0.35} L${x+w-6} ${GROUND_Y-h*0.35}`, '#3a3a40', 2, 0.6) + '</g>';
+    };
+    const L = stone(40, 70, 34, -6) + stone(82, 46, 26, 5);
+    const R = stone(VB - 74, 76, 34, 7) + stone(VB - 110, 44, 26, -4);
+    return `<g opacity="0.85">${farSide('L', L)}${farSide('R', R)}</g>`;
   }
   const L = side('L'), R = side('R');
   if (!L) return '';
@@ -793,9 +925,30 @@ function drawAtmosphere(bgHex, rng) {
   }
   return s;
 }
+// Pale moon (with a faint halo) in one top corner of the headroom, on most pieces.
+function drawMoon(bgHex, index, seed) {
+  const r = mulberry32((seed ?? 0) * 7919 + index * 37 + 5);
+  if (r() < 0.3) return '';
+  const left = r() < 0.5, x = left ? 76 : 324, y = 50 + r() * 10;
+  const blood = bgHex.toLowerCase() === '#8f0014';
+  const c = blood ? '#ff4a3a' : '#f0ead0';
+  let s = circle(x, y, 38, c, { stroke: false, opacity: 0.07 }) + circle(x, y, 28, c, { stroke: false, opacity: 0.12 }) +
+    circle(x, y, 20, c, { stroke: false });
+  s += circle(x - 6, y - 4, 4.5, shadePixel(c, -18), { stroke: false }) + circle(x + 7, y + 6, 3, shadePixel(c, -18), { stroke: false }) + circle(x + 4, y - 9, 2, shadePixel(c, -18), { stroke: false });
+  return s;
+}
+// Low fog banks rolling over the street and around the legs.
+function drawFog(rng) {
+  let s = '';
+  for (let i = 0; i < 4; i++) {
+    const x = 40 + rng() * 320, y = GROUND_Y - 14 + rng() * 22;
+    s += ellipse(fmt(x), fmt(y), fmt(90 + rng() * 70), fmt(9 + rng() * 7), '#d8dde2', { stroke: false, opacity: fmt(0.1 + rng() * 0.1) });
+  }
+  return s;
+}
 function drawVignette() {
   const id = `${_sid}vg`;
-  return `<defs><radialGradient id="${id}" cx="50%" cy="45%" r="70%"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.28"/></radialGradient></defs>` +
+  return `<defs><radialGradient id="${id}" cx="50%" cy="45%" r="70%"><stop offset="0.45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.6"/></radialGradient></defs>` +
     `<rect x="${CROP.x}" y="${CROP.y}" width="${CROP.size}" height="${CROP.size}" fill="url(#${id})"/>`;
 }
 
@@ -803,7 +956,7 @@ function drawVignette() {
 function renderFromTraits(picks, index, seed, opts) {
   const animate = !!(opts && opts.animate);
   _lite = !!(opts && opts.lite);
-  const { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair } = picks;
+  const { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair, mouth, scars } = picks;
   const bgHex = (bgColor && bgColor.hex) || BG_COLOR;
   // separate, deterministic RNG stream for cosmetic jitter (eye offset, mouth
   // shape) so it stays stable per index/seed without being coupled to
@@ -824,10 +977,11 @@ function renderFromTraits(picks, index, seed, opts) {
   }
 
   let body = '';
+  body += drawMoon(bgHex, index, seed);
   if (backdrop) body += drawBackdrop(backdrop.id, bgHex);
   body += drawGround(bgHex, fxRng);
-  // soft light pool behind the figure, tinted by the outfit color
-  body += ellipse(CX, 200, 118, 150, shadePixel(outfitColor.hex, 55), { stroke: false, opacity: 0.22 });
+  // faint aura behind the figure, tinted by the outfit color
+  body += ellipse(CX, 200, 118, 150, shadePixel(outfitColor.hex, 20), { stroke: false, opacity: 0.1 });
   // a cap sits over an afro's crown, so skip the big afro back layer then
   if (!(capped && hairStyle.id === 'afro')) body += drawHairBack(hairStyle.id, hairColor, gradId);
   body += drawBodyAndOutfit(skinTone.hex, outfitType.id, outfitColor.hex);
@@ -836,11 +990,14 @@ function renderFromTraits(picks, index, seed, opts) {
   // every piece; shared with brows and glasses so they stay aligned.
   const jx = jitterRng() < 0.3 ? (jitterRng() < 0.5 ? -1 : 1) : 0;
   body += drawFacialHair(facialHair && facialHair.id, hairColor, skinTone.hex);
+  body += drawSunken(jx, skinTone.hex);
   body += drawEyes(eyeStyle.id, jx, skinTone.hex);
-  body += drawMouth(skinTone.hex, jitterRng);
+  body += drawMouth((mouth && mouth.id) || 'stitched', skinTone.hex, jitterRng);
   body += drawHairFront(hairStyle.id, hairColor, gradId, capped);
   body += drawBrows(eyeStyle.id, jx, skinTone.hex);
+  body += drawScars(scars && scars.id, skinTone.hex, jx);
   body += drawAccessory(accessory.id, jx, skinTone.hex);
+  body += drawFog(fxRng);
 
   let blinkAnim = '';
   if (animate) {
@@ -851,14 +1008,14 @@ function renderFromTraits(picks, index, seed, opts) {
     // briefly, then back out.
     const { ink } = faceInk(skinTone.hex);
     const lids = [EYE_LX + jx*EYE_JITTER, EYE_RX + jx*EYE_JITTER].map(x =>
-      ellipse(x, EYE_Y, 15, 14, skinTone.hex, { stroke: false }) +
+      ellipse(x, EYE_Y, 17, 16, skinTone.hex, { stroke: false }) +
       line(`M${x-10} ${EYE_Y+2} L${x+10} ${EYE_Y+2}`, ink, 4)).join('');
     blinkAnim = `<g opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.46;0.5;0.54;1" dur="${dur}s" begin="-${phase}s" repeatCount="indefinite"/>${lids}</g>`;
   }
 
-  // warm golden light from the upper-left, over everything but the vignette
+  // cold moonlight from the upper-left, over everything but the vignette
   const sunId = `${_sid}sun`;
-  const sun = `<defs><radialGradient id="${sunId}" cx="18%" cy="8%" r="95%"><stop offset="0" stop-color="#ffb347" stop-opacity="0.12"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/></radialGradient></defs>` +
+  const sun = `<defs><radialGradient id="${sunId}" cx="18%" cy="8%" r="95%"><stop offset="0" stop-color="#9fe0ff" stop-opacity="0.14"/><stop offset="1" stop-color="#4a7aff" stop-opacity="0"/></radialGradient></defs>` +
     `<rect x="${CROP.x}" y="${CROP.y}" width="${CROP.size}" height="${CROP.size}" fill="url(#${sunId})"/>`;
   // 1.2x crop into the 400x400 stage so the figure fills the frame
   const svg = `<svg width="${SIZE}" height="${SIZE}" viewBox="${CROP.x} ${CROP.y} ${CROP.size} ${CROP.size}" xmlns="http://www.w3.org/2000/svg">
@@ -925,9 +1082,11 @@ function generatePiece(index, seed, tier, opts) {
   const accessory  = pickByRarity(rng, TRAITS.accessory, t);
   const backdrop   = isOneOfOne ? pickOneOfOneBackdrop(rng) : pickByRarity(rng, TRAITS.backdrop, t);
   const bgColor    = isOneOfOne ? pickOneOfOneBgColor(rng) : pickByRarity(rng, TRAITS.background, t);
-  const facialHair = pickByRarity(rng, TRAITS.facialHair, t); // rolled last so earlier traits stay seed-stable
+  const facialHair = pickByRarity(rng, TRAITS.facialHair, t); // rolled after the originals so earlier traits stay seed-stable
+  const mouth      = pickByRarity(rng, TRAITS.mouth, t);
+  const scars      = pickByRarity(rng, TRAITS.scars, t);
 
-  const picks = { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair };
+  const picks = { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair, mouth, scars };
   const svg = renderFromTraits(picks, index, seed, { animate: !!(opts && opts.animate) });
 
   return {
@@ -935,12 +1094,12 @@ function generatePiece(index, seed, tier, opts) {
     traits: {
       skinTone: skinTone.id, hairColor: hairColor.id, hairStyle: hairStyle.id,
       outfitType: outfitType.id, outfitColor: outfitColor.id, eyeStyle: eyeStyle.id, accessory: accessory.id,
-      backdrop: backdrop.id, background: bgColor.id, facialHair: facialHair.id
+      backdrop: backdrop.id, background: bgColor.id, facialHair: facialHair.id, mouth: mouth.id, scars: scars.id
     },
     rarity: {
       skinTone: skinTone.rarity, hairColor: hairColor.rarity, hairStyle: hairStyle.rarity,
       outfitType: outfitType.rarity, outfitColor: outfitColor.rarity, eyeStyle: eyeStyle.rarity, accessory: accessory.rarity,
-      backdrop: backdrop.rarity, background: bgColor.rarity, facialHair: facialHair.rarity
+      backdrop: backdrop.rarity, background: bgColor.rarity, facialHair: facialHair.rarity, mouth: mouth.rarity, scars: scars.rarity
     }
   };
 }

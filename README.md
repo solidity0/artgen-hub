@@ -14,7 +14,7 @@ works on GitHub Pages and can be inscribed on-chain as-is.
 | 3 | **Oddlings** | Hand-inked PFP characters with starburst eyes | 👽 | [generator-3](https://solidity0.github.io/artgen-hub/generator-3/index.html) |
 | 4 | **AfterBots** | Colourful riso-chalk robots, often with a companion | 🤖 | [generator-4](https://solidity0.github.io/artgen-hub/generator-4/index.html) |
 | 5 | **Ink Pups** | Scrawled ink dog heads with glowing eyes | 🐶 | [generator-5](https://solidity0.github.io/artgen-hub/generator-5/index.html) |
-| 6 | **Hood Characters** | Shaded flat-vector chibi guys on brick city blocks | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
+| 6 | **Hood Characters** | Undead chibi guys haunting the block after dark | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
 
 Slots 7 and 8 are reserved on the hub for future collections.
 
@@ -143,22 +143,25 @@ Curated 1/1 pickers, 1/1-exclusive values and batch-wide dedup.
 ### 6 — Hood Characters
 `generator-6/` · engine **v2** · `window.ChibiGen` · page ≈ 108 KB
 
-Full-body chibi guys in shaded flat vector: a soft ink underlay beneath every
-outline, clipped form shading and hatching, a lit backdrop with grain and
-vignette, a sidewalk, and hazed brick buildings across the street. Every
-piece gets a warm, saturated colour grade.
+Full-body undead chibi guys in shaded flat vector, set at night: a soft ink
+underlay beneath every outline, clipped form shading and hatching, sunken
+eye sockets, a moon over most pieces, cold moonlight, a heavy vignette, low
+fog over the sidewalk, and derelict brick buildings or graves across the
+street. Glows are stacked translucent shapes (no SVG filters).
 
 | Trait | Values |
 |-------|--------|
-| skinTone | 6 — white, pale, gray, onyx, red, blue |
+| skinTone | 7 — corpse, ghoul, zombie, ghost, bruised, blood, shadow |
 | hairColor | 10 — plus **rainbow**, 1/1-only |
 | hairStyle | 7 — buzz, crew, fade, afro, spiky, durag, mohawk |
 | facialHair | 5 — none, stubble, mustache, goatee, beard |
-| outfitType · outfitColor | 6 (tank, stripes, hoodie, overalls, sweater, suit) · 7 |
-| eyeStyle | 5 — dot, wide, sleepy, wink, sparkle |
-| accessory | 5 — none, cap, glasses, earring, gold chain |
-| backdrop | 5 — none, brownstones, tenements (fire escapes + water towers), tenement + corner store, birds |
-| background | 6 — warm sand, seafoam, cream, lime, lavender, sunflower; 1/1s use ETH blue, red, punchy blue, rich lime |
+| outfitType · outfitColor | 6 (tank, stripes, hoodie, overalls, sweater, suit) · 7 (midnight, blood, rot, bruise, rust, bone, black) |
+| eyeStyle | 7 — hollow, glowing, void, bleeding, stitched, button, demon |
+| mouth | 6 — stitched, fangs, grin, gape, bloody, teeth |
+| scars | 5 — none, scar, cracks, splatter, stitches |
+| accessory | 6 — none, cap, glasses, earring, gold chain, horns |
+| backdrop | 6 — none, brownstones, tenements (fire escapes + water towers), tenement + corner store, graves, bats |
+| background | 6 — midnight, blood, fog, toxic, bruise, ember; 1/1s use pitch, blood moon (red moon), void, toxic |
 
 1/1s use curated pickers for skin, hair colour, outfit, backdrop and
 background. The source of truth is
