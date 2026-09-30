@@ -42,13 +42,13 @@ const TRAITS = {
     { id: 'white', hex: '#FFFFFF', weight: 38, rarity: 'common', vibe: 'friendly' },
     { id: 'black', hex: '#141414', weight: 12, rarity: 'rare' },
     { id: 'deep_black', hex: '#000000', weight: 8, rarity: 'rare' },
-    { id: 'sage',     hex: '#D4EDB8', weight: 30, rarity: 'common', vibe: 'friendly' },
-    { id: 'blush',    hex: '#FFCFC0', weight: 30, rarity: 'common', vibe: 'friendly' },
-    { id: 'powder',   hex: '#C9E3FF', weight: 28, rarity: 'common', vibe: 'friendly' },
-    { id: 'lemon',    hex: '#FFE79A', weight: 24, rarity: 'uncommon', vibe: 'friendly' },
-    { id: 'lavender', hex: '#E2CFFF', weight: 22, rarity: 'uncommon', vibe: 'friendly' },
     { id: 'midnight', hex: '#1B1F3B', weight: 8,  rarity: 'rare' },
-    { id: 'blood_night', hex: '#2e060b', weight: 10, rarity: 'rare', vibe: 'scary' }
+    { id: 'blood_night', hex: '#2e060b', weight: 10, rarity: 'rare', vibe: 'scary' },
+    { id: 'concrete', hex: '#D6D3CC', weight: 34, rarity: 'common',   vibe: 'friendly' },
+    { id: 'ash',      hex: '#BFC3C7', weight: 30, rarity: 'common',   vibe: 'friendly' },
+    { id: 'sand',     hex: '#DCCDB0', weight: 28, rarity: 'common',   vibe: 'friendly' },
+    { id: 'smog',     hex: '#A8AEA6', weight: 24, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'rust_haze',hex: '#CFAE93', weight: 20, rarity: 'uncommon', vibe: 'friendly' }
   ],
   bodyColor: [
     { id: 'classic',   weight: 6, rarity: 'common' },               // unfilled: the v1 look
@@ -78,8 +78,6 @@ const TRAITS = {
     { id: 'cream',  hex: '#F3E3C3', weight: 16, rarity: 'common' },
     { id: 'cocoa',  hex: '#9A6B4B', weight: 12, rarity: 'uncommon' },
     { id: 'ink',    hex: '#34343C', weight: 10, rarity: 'uncommon' },
-    { id: 'pink',   hex: '#FFB7CF', weight: 6,  rarity: 'rare' },
-    { id: 'blue',   hex: '#9CCBFF', weight: 5,  rarity: 'rare' },
     { id: 'golden', hex: '#F7C948', weight: 4,  rarity: 'rare' }
   ],
   hair: [
@@ -126,22 +124,17 @@ const TRAITS = {
     { id: 'slash',         weight: 16, rarity: 'uncommon' },
     { id: 'circle_target', weight: 12, rarity: 'uncommon', vibe: 'friendly' },
     { id: 'emoji_fire',    weight: 10, rarity: 'uncommon', emoji: '\u{1F525}' },
-    { id: 'emoji_heart',   weight: 9,  rarity: 'uncommon', emoji: '\u2764\uFE0F', vibe: 'friendly' },
-    { id: 'emoji_star',    weight: 8,  rarity: 'uncommon', emoji: '\u2B50', vibe: 'friendly' },
-    { id: 'emoji_rocket',  weight: 8,  rarity: 'uncommon', emoji: '\u{1F680}', vibe: 'friendly' },
     { id: 'blank',         weight: 6,  rarity: 'rare' },
     { id: 'skull_small',   weight: 4,  rarity: 'rare' },
-    { id: 'emoji_100',     weight: 4,  rarity: 'rare', emoji: '\u{1F4AF}', vibe: 'friendly' },
     { id: 'emoji_skull',   weight: 4,  rarity: 'rare', emoji: '\u{1F480}' },
-    { id: 'emoji_ghost',   weight: 3,  rarity: 'rare', emoji: '\u{1F47B}' },
-    { id: 'emoji_rainbow', weight: 2,  rarity: 'rare', emoji: '\u{1F308}', vibe: 'friendly' },
     { id: 'emoji_broken_heart', weight: 3, rarity: 'rare', emoji: '\u{1F494}' },
-    { id: 'emoji_blast',        weight: 3, rarity: 'rare', emoji: '\u{1F4A5}' }
+    { id: 'emoji_blast',        weight: 3, rarity: 'rare', emoji: '\u{1F4A5}' },
+    { id: 'vent',          weight: 16, rarity: 'common' },
+    { id: 'hazard',        weight: 10, rarity: 'uncommon' },
+    { id: 'barcode',       weight: 8,  rarity: 'uncommon' }
   ],
   hands: [
-    { id: 'mitten_bow',  weight: 45, rarity: 'common' },
     { id: 'claw',        weight: 28, rarity: 'uncommon' },
-    { id: 'round_paw',   weight: 17, rarity: 'uncommon' },
     { id: 'broken_stub', weight: 10, rarity: 'rare' },
     { id: 'pincer',       weight: 22, rarity: 'uncommon' },
     { id: 'three_finger', weight: 18, rarity: 'uncommon' },
@@ -177,9 +170,7 @@ const TRAITS = {
     { id: 'broken',   weight: 8,  rarity: 'rare' }
   ],
   feet: [
-    { id: 'oval_shoes',   weight: 38, rarity: 'common' },
     { id: 'pointed_shoes',weight: 24, rarity: 'common' },
-    { id: 'round_stubs',  weight: 16, rarity: 'uncommon' },
     { id: 'robot_blocks', weight: 12, rarity: 'uncommon' },
     { id: 'claw_feet',    weight: 6,  rarity: 'rare' },
     { id: 'peg_legs',     weight: 4,  rarity: 'rare' }
@@ -491,6 +482,23 @@ function renderChest(cx, cy, size, style, rng, ink, outline) {
   } else if (style === 'circle_target') {
     out += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (half - 10) + '" class="stroke" fill="none"/>';
     out += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (half - 22) + '" class="stroke" fill="none"/>';
+  } else if (style === 'vent') {
+    // cooling grille: five rounded slots
+    const w = half * 0.62;
+    for (let k = -2; k <= 2; k++) out += doubleStroke([[cx - w, cy + k * 15], [cx + w, cy + k * 15]], rng, 0.8, 'strokeThick');
+  } else if (style === 'hazard') {
+    // warning triangle with an exclamation mark
+    const t = [[cx, cy - 36], [cx + 40, cy + 30], [cx - 40, cy + 30], [cx, cy - 36]];
+    out += doubleStroke(t, rng, 1.2, 'strokeThick');
+    out += doubleStroke([[cx, cy - 14], [cx, cy + 9]], rng, 0.6, 'strokeThick');
+    out += '<circle cx="' + cx + '" cy="' + (cy + 19) + '" r="3.6" fill="' + ink + '"/>';
+  } else if (style === 'barcode') {
+    // serial-number barcode plate
+    const widths = [3, 1.5, 1.5, 4, 1.5, 3, 1.5, 1.5, 4, 3, 1.5, 3, 1.5, 4];
+    let x = cx - 40;
+    widths.forEach((bw, k) => { if (k % 2 === 0) out += '<rect x="' + x.toFixed(1) + '" y="' + (cy - 24) + '" width="' + bw + '" height="40" fill="' + ink + '"/>'; x += bw + 3.2; });
+    out += '<rect x="' + (cx - 44) + '" y="' + (cy - 28) + '" width="88" height="56" fill="none" stroke="' + ink + '" stroke-width="2" rx="3"/>';
+    for (let k = 0; k < 8; k++) out += '<rect x="' + (cx - 38 + k * 10) + '" y="' + (cy + 20) + '" width="5" height="3" fill="' + ink + '" opacity=".75"/>';
   } else if (style === 'skull_small') {
     out += '<circle cx="' + cx + '" cy="' + (cy - 6) + '" r="14" class="stroke" fill="none"/>';
     out += '<circle cx="' + (cx - 5) + '" cy="' + (cy - 8) + '" r="3" fill="' + ink + '"/>';
@@ -829,7 +837,7 @@ function coilPts(path, amp, step) {
   return out;
 }
 // How far below the wrist point each hand shape reaches (for hands resting on the floor).
-const HAND_REACH = { mitten_bow: 11, round_paw: 10, claw: 12, broken_stub: 10, pincer: 21, three_finger: 20, hook: 21, magnet: 21, plug: 21 };
+const HAND_REACH = { claw: 12, broken_stub: 10, pincer: 21, three_finger: 20, hook: 21, magnet: 21, plug: 21 };
 
 function renderFromTraits(picks, index, seed, opts) {
   const isOneOfOne = !!(opts && opts.isOneOfOne);
@@ -1026,13 +1034,9 @@ function renderFromTraits(picks, index, seed, opts) {
   const earX = halfWidthAt(headPts, headCx, headCy) + 24;
   body += renderEars(headCx - earX, headCy, picks.ears.id, rng, true, headPaint.fill, headPaint.shade, ink);
   body += renderEars(headCx + earX, headCy, picks.ears.id, rng, false, headPaint.fill, headPaint.shade, ink);
-  // cheek blush (friendly) — scary bots get cracks and grime instead
+  // no cheek blush (robots don't blush); scary bots get cracks and grime
   const bx = Math.min(50, halfWidthAt(headPts, headCx, headCy + 20) - 20);
-  if (!scary) {
-    const blush = dark ? '#ff7aa8' : '#ff6f91';
-    body += '<ellipse cx="' + (headCx - bx) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
-    body += '<ellipse cx="' + (headCx + bx) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
-  } else {
+  if (scary) {
     // dark sockets behind the eyes
     body += '<ellipse cx="' + (headCx - 32) + '" cy="' + (headCy - 8) + '" rx="27" ry="24" fill="#000" opacity=".28"/><ellipse cx="' + (headCx + 32) + '" cy="' + (headCy - 8) + '" rx="27" ry="24" fill="#000" opacity=".28"/>';
     // a crack running in from the top of the head
@@ -1158,23 +1162,23 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // forcing tier:'rare' against pools that only have one rare value (the
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
-  background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'sage', weight: 8 }, { id: 'blush', weight: 8 }, { id: 'powder', weight: 8 }, { id: 'lemon', weight: 8 }, { id: 'lavender', weight: 8 }, { id: 'blood_night', weight: 14 }],
+  background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'blood_night', weight: 14 }, { id: 'concrete', weight: 8 }, { id: 'ash', weight: 8 }, { id: 'sand', weight: 8 }, { id: 'smog', weight: 8 }, { id: 'rust_haze', weight: 8 }],
   bodyColor: [{ id: 'steel', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'white', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
-  companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
+  companionColor: [{ id: 'golden', weight: 30 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
   eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }, { id: 'glare', weight: 24 }, { id: 'cracked', weight: 18 }],
   eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }, { id: 'toxic', weight: 26 }],
   mouth: [{ id: 'fangs_stitch', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'single_line', weight: 24 }, { id: 'stitches_uneven', weight: 20 }, { id: 'jaws', weight: 28 }],
-  chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'blank', weight: 12 }, { id: 'emoji_ghost', weight: 11 }, { id: 'emoji_skull', weight: 11 }, { id: 'emoji_100', weight: 9 }, { id: 'emoji_rainbow', weight: 9 }, { id: 'emoji_rocket', weight: 9 }, { id: 'emoji_broken_heart', weight: 9 }, { id: 'emoji_blast', weight: 9 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
-  hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
+  chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'hazard', weight: 10 }, { id: 'barcode', weight: 10 }, { id: 'vent', weight: 6 }, { id: 'blank', weight: 12 }, { id: 'emoji_skull', weight: 11 }, { id: 'emoji_broken_heart', weight: 9 }, { id: 'emoji_blast', weight: 9 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
+  hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   headColor: [{ id: 'matching', weight: 26 }, { id: 'steel', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'white', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'obsidian', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'navy', weight: 4 }],
   legColor: [{ id: 'matching', weight: 34 }, { id: 'steel', weight: 5 }, { id: 'gunmetal', weight: 5 }, { id: 'white', weight: 5 }, { id: 'black', weight: 5 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'navy', weight: 5 }],
   handColor: [{ id: 'matching', weight: 34 }, { id: 'steel', weight: 5 }, { id: 'gunmetal', weight: 5 }, { id: 'white', weight: 5 }, { id: 'black', weight: 5 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'cobalt', weight: 5 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
-  feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
+  feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }, { id: 'blood_moon', weight: 60 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
   grassColor: [{ id: 'default', weight: 50 }, { id: 'white', weight: 30 }, { id: 'green', weight: 20 }],

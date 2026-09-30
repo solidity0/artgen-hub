@@ -12,7 +12,7 @@ works on GitHub Pages and can be inscribed on-chain as-is.
 | 1 | **Drifters** | Characters, drifters, resisters — the working collection | 👤 | [generator-1](https://solidity0.github.io/artgen-hub/generator-1/index.html) |
 | 2 | **Glyphs** | Abstract machine-interface glyphs — fragmented, glitched, cold | 🌀 | [generator-2](https://solidity0.github.io/artgen-hub/generator-2/index.html) |
 | 3 | **Oddlings** | Hand-inked PFP characters with starburst eyes | 👽 | [generator-3](https://solidity0.github.io/artgen-hub/generator-3/index.html) |
-| 4 | **AfterBots** | Colourful riso-chalk robots, often with a companion | 🤖 | [generator-4](https://solidity0.github.io/artgen-hub/generator-4/index.html) |
+| 4 | **AfterBots** | Hand-inked industrial robots, often with a companion | 🤖 | [generator-4](https://solidity0.github.io/artgen-hub/generator-4/index.html) |
 | 5 | **Ink Pups** | Scrawled ink dog heads with glowing eyes | 🐶 | [generator-5](https://solidity0.github.io/artgen-hub/generator-5/index.html) |
 | 6 | **Hood Characters** | Undead chibi guys haunting the block after dark | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
 
@@ -115,11 +115,11 @@ often joined by a small companion creature.
 | vibe | 2 — friendly (65%), scary (35%): scary bots use the darker half of the pools below, get brow plates, cracks, rust streaks, oil drips, claw scratches and a red halo, and unlock the scary-only values in (brackets) |
 | headShape · bodyShape | 7 each — box, round, TV, dome, capsule, hex, octagon · barrel, trapezoid, bell, … |
 | bodyColor | 17 — incl. steel, gunmetal, white and black (black heads/bodies only on dark backgrounds) — plus separate head / leg / hand colour traits (16 each, or "matching") |
-| arms · hands · feet | 7 · 9 · 6 — spring, telescopic, floating… · claw, pincer, magnet, plug… · peg legs, robot blocks… |
+| arms · hands · feet | 7 · 7 · 4 — spring, telescopic, floating… · claw, pincer, hook, magnet, plug… · pointed, robot blocks, claw feet, peg legs |
 | hair · ears · eyes · eyeColor · mouth | 5 · 6 · 5 (+ glare, cracked) · 4 (+ toxic) · 5 (+ jaws) |
-| chestMark | 15 — x cross, target, emoji fire/heart/star/rocket/100/skull/ghost/rainbow, … |
-| companion · companionColor | 6 (cat, dog, bird, ghost cat, bunny) · 10 |
-| background · sky · ground · grassColor | 10 (+ blood night) · 3 (+ blood moon) · 4 · 3 |
+| chestMark | 12 — x cross, slash, target, vent, hazard, barcode, skull, emoji fire/skull, … |
+| companion · companionColor | 6 (cat, dog, bird, ghost cat, bunny) · 8 |
+| background · sky · ground · grassColor | 10 — cream, white, concrete, ash, sand, smog, rust haze, black, deep black, midnight (+ blood night) · 3 (+ blood moon) · 4 · 3 |
 
 1/1-only chest marks and grass colours, signature combos, and per-category
 1/1 weights.
