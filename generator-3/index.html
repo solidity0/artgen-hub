@@ -1237,7 +1237,6 @@ function renderFromTraits(picks, index, seed, opts) {
   svg+=`<clipPath id="hw${sid}"><path d="${headPath}"/></clipPath><g clip-path="url(#hw${sid})">`
      + `<ellipse cx="${(cx+headRx*0.62).toFixed(1)}" cy="${(cy+headRy*0.5).toFixed(1)}" rx="${(headRx*1.05).toFixed(1)}" ry="${(headRy*1.0).toFixed(1)}" fill="${lightBg?'#2b241d':'#000'}" opacity="${lightBg?0.15:0.4}"/>`
      + `<ellipse cx="${(cx-headRx*0.38).toFixed(1)}" cy="${(cy-headRy*0.42).toFixed(1)}" rx="${(headRx*0.5).toFixed(1)}" ry="${(headRy*0.36).toFixed(1)}" fill="#ffffff" opacity="${lightBg?0.45:0.07}"/></g>`;
-  svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${(sw*2.6).toFixed(1)}" stroke-linejoin="round" opacity="0.13"/>`;
   svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round"/>`;
   svg+=hairMarkup(hair.id, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+7));
   svg+=expressionMod(expression.id, cx, cy, eyeY, ink, mulberry32((seed??0)*100003+index+8));

@@ -411,7 +411,8 @@
     const w = o.w || LW, amt = o.amt == null ? 1.2 : o.amt, step = o.step || 7;
     let s = `<path d="${wob(rng, pts, closed, amt, step)}" fill="${o.fill || 'none'}" stroke="${ink}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round"${o.opacity ? ` opacity="${o.opacity}"` : ''}/>`;
     if (o.ghost !== false) {
-      s += `<path d="${wob(rng, pts, closed, amt * 1.7, step * 1.3)}" fill="none" stroke="${ink}" stroke-width="${f(w * 0.5)}" stroke-linecap="round" opacity=".4"/>`;
+      // faint ghost pass for the scrawled feel; kept close and light so it doesn't read as blur at tile size
+      s += `<path d="${wob(rng, pts, closed, amt * 1.25, step * 1.3)}" fill="none" stroke="${ink}" stroke-width="${f(w * 0.45)}" stroke-linecap="round" opacity=".22"/>`;
     }
     return s;
   }
@@ -513,7 +514,7 @@
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}">`;
     svg += `<defs>` +
-      `<filter id="gl${uid}" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="5"/></filter>` +
+      `<filter id="gl${uid}" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="3.5"/></filter>` +
       `<filter id="bl${uid}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"/></filter>` +
       `<clipPath id="hc${uid}"><path d="${headD}"/></clipPath></defs>`;
 

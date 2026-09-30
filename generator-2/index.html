@@ -807,7 +807,7 @@ function renderGlyphSVG(picks, index, seed, opts) {
   return `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <g id="fg${index}">${staticGlyph}</g>
-<filter id="halo${index}" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9"/></filter>
+<filter id="halo${index}" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5"/></filter>
 <radialGradient id="emit${index}" cx="50%" cy="50%" r="52%"><stop offset="0%" stop-color="${hexA(glow,0.2)}"/><stop offset="55%" stop-color="${hexA(glow,0.06)}"/><stop offset="100%" stop-color="${hexA(glow,0)}"/></radialGradient>
 </defs>
 <rect width="600" height="600" fill="${bg}"/>
@@ -816,7 +816,7 @@ ${fieldOverlay(rng, field, palette.invert, index)}
 ${hudFrame(seed, index, ink, glow)}
 <g transform="translate(300 300) scale(1.2) translate(-300 -300)">
 <g color="${glow}" stroke-width="2" opacity="0.26" transform="rotate(${(((seed ?? 0) * 7 + index * 37) % 8) * 22.5 + 22.5} 300 300) translate(300 300) scale(0.55) translate(-300 -300)"><use href="#fg${index}"/></g>
-<g color="${glow}" stroke-width="12" filter="url(#halo${index})" opacity="0.55"><use href="#fg${index}"/></g>
+<g color="${glow}" stroke-width="8" filter="url(#halo${index})" opacity="0.45"><use href="#fg${index}"/></g>
 ${slipLayers}
 ${mainLayer}
 <g color="#ffffff" stroke-width="1.1" opacity="0.7"><use href="#fg${index}"/></g>
