@@ -29,17 +29,26 @@ function weightedPick(rng, pool) {
 
 // ---------- trait pools ----------
 const TRAITS = {
+  // Friendly or scary: scary bots draw from the darker half of the pools
+  // (values tagged vibe:'friendly' are skipped, vibe:'scary' ones unlock) and
+  // get haunted render passes. Rolled on its own RNG stream, so friendly bots
+  // are exactly what they were before the vibe existed.
+  vibe: [
+    { id: 'friendly', weight: 65, rarity: 'common' },
+    { id: 'scary',    weight: 35, rarity: 'common' }
+  ],
   background: [
-    { id: 'cream', hex: '#F8E2C0', weight: 42, rarity: 'common' },
-    { id: 'white', hex: '#FFFFFF', weight: 38, rarity: 'common' },
+    { id: 'cream', hex: '#F8E2C0', weight: 42, rarity: 'common', vibe: 'friendly' },
+    { id: 'white', hex: '#FFFFFF', weight: 38, rarity: 'common', vibe: 'friendly' },
     { id: 'black', hex: '#141414', weight: 12, rarity: 'rare' },
     { id: 'deep_black', hex: '#000000', weight: 8, rarity: 'rare' },
-    { id: 'sage',     hex: '#D4EDB8', weight: 30, rarity: 'common' },
-    { id: 'blush',    hex: '#FFCFC0', weight: 30, rarity: 'common' },
-    { id: 'powder',   hex: '#C9E3FF', weight: 28, rarity: 'common' },
-    { id: 'lemon',    hex: '#FFE79A', weight: 24, rarity: 'uncommon' },
-    { id: 'lavender', hex: '#E2CFFF', weight: 22, rarity: 'uncommon' },
-    { id: 'midnight', hex: '#1B1F3B', weight: 8,  rarity: 'rare' }
+    { id: 'sage',     hex: '#D4EDB8', weight: 30, rarity: 'common', vibe: 'friendly' },
+    { id: 'blush',    hex: '#FFCFC0', weight: 30, rarity: 'common', vibe: 'friendly' },
+    { id: 'powder',   hex: '#C9E3FF', weight: 28, rarity: 'common', vibe: 'friendly' },
+    { id: 'lemon',    hex: '#FFE79A', weight: 24, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'lavender', hex: '#E2CFFF', weight: 22, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'midnight', hex: '#1B1F3B', weight: 8,  rarity: 'rare' },
+    { id: 'blood_night', hex: '#2e060b', weight: 10, rarity: 'rare', vibe: 'scary' }
   ],
   bodyColor: [
     { id: 'classic',   weight: 6, rarity: 'common' },               // unfilled: the v1 look
@@ -100,39 +109,43 @@ const TRAITS = {
     { id: 'jagged_broken',  weight: 6,  rarity: 'rare' }
   ],
   eyes: [
-    { id: 'ring_plain',  weight: 30, rarity: 'common' },
+    { id: 'ring_plain',  weight: 30, rarity: 'common', vibe: 'friendly' },
     { id: 'spiral',      weight: 28, rarity: 'common' },
-    { id: 'ring_double', weight: 18, rarity: 'uncommon' },
+    { id: 'ring_double', weight: 18, rarity: 'uncommon', vibe: 'friendly' },
     { id: 'asymmetric',  weight: 14, rarity: 'uncommon' },
-    { id: 'void',        weight: 10, rarity: 'rare' }
+    { id: 'void',        weight: 10, rarity: 'rare' },
+    { id: 'glare',       weight: 30, rarity: 'common',   vibe: 'scary' },
+    { id: 'cracked',     weight: 16, rarity: 'uncommon', vibe: 'scary' }
   ],
   eyeColor: [
-    { id: 'default', weight: 60, rarity: 'common' },
-    { id: 'blue',    hex: '#3aa0ff', weight: 16, rarity: 'uncommon' },
+    { id: 'default', weight: 60, rarity: 'common', vibe: 'friendly' },
+    { id: 'blue',    hex: '#3aa0ff', weight: 16, rarity: 'uncommon', vibe: 'friendly' },
     { id: 'red',     hex: '#ff3b3b', weight: 14, rarity: 'uncommon' },
-    { id: 'orange',  hex: '#ff8c1a', weight: 10, rarity: 'rare' }
+    { id: 'orange',  hex: '#ff8c1a', weight: 10, rarity: 'rare' },
+    { id: 'toxic',   hex: '#7dff3a', weight: 10, rarity: 'rare', vibe: 'scary' }
   ],
   mouth: [
-    { id: 'stitches_even',   weight: 32, rarity: 'common' },
+    { id: 'stitches_even',   weight: 32, rarity: 'common', vibe: 'friendly' },
     { id: 'stitches_uneven', weight: 26, rarity: 'common' },
     { id: 'zipper',          weight: 18, rarity: 'uncommon' },
-    { id: 'single_line',     weight: 14, rarity: 'uncommon' },
-    { id: 'fangs_stitch',    weight: 10, rarity: 'rare' }
+    { id: 'single_line',     weight: 14, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'fangs_stitch',    weight: 10, rarity: 'rare' },
+    { id: 'jaws',            weight: 24, rarity: 'common', vibe: 'scary' }
   ],
   chestMark: [
     { id: 'x_cross',       weight: 32, rarity: 'common' },
     { id: 'slash',         weight: 16, rarity: 'uncommon' },
-    { id: 'circle_target', weight: 12, rarity: 'uncommon' },
+    { id: 'circle_target', weight: 12, rarity: 'uncommon', vibe: 'friendly' },
     { id: 'emoji_fire',    weight: 10, rarity: 'uncommon', emoji: '\u{1F525}' },
-    { id: 'emoji_heart',   weight: 9,  rarity: 'uncommon', emoji: '\u2764\uFE0F' },
-    { id: 'emoji_star',    weight: 8,  rarity: 'uncommon', emoji: '\u2B50' },
-    { id: 'emoji_rocket',  weight: 8,  rarity: 'uncommon', emoji: '\u{1F680}' },
+    { id: 'emoji_heart',   weight: 9,  rarity: 'uncommon', emoji: '\u2764\uFE0F', vibe: 'friendly' },
+    { id: 'emoji_star',    weight: 8,  rarity: 'uncommon', emoji: '\u2B50', vibe: 'friendly' },
+    { id: 'emoji_rocket',  weight: 8,  rarity: 'uncommon', emoji: '\u{1F680}', vibe: 'friendly' },
     { id: 'blank',         weight: 6,  rarity: 'rare' },
     { id: 'skull_small',   weight: 4,  rarity: 'rare' },
-    { id: 'emoji_100',     weight: 4,  rarity: 'rare', emoji: '\u{1F4AF}' },
+    { id: 'emoji_100',     weight: 4,  rarity: 'rare', emoji: '\u{1F4AF}', vibe: 'friendly' },
     { id: 'emoji_skull',   weight: 4,  rarity: 'rare', emoji: '\u{1F480}' },
     { id: 'emoji_ghost',   weight: 3,  rarity: 'rare', emoji: '\u{1F47B}' },
-    { id: 'emoji_rainbow', weight: 2,  rarity: 'rare', emoji: '\u{1F308}' },
+    { id: 'emoji_rainbow', weight: 2,  rarity: 'rare', emoji: '\u{1F308}', vibe: 'friendly' },
     { id: 'emoji_broken_heart', weight: 3, rarity: 'rare', emoji: '\u{1F494}' },
     { id: 'emoji_blast',        weight: 3, rarity: 'rare', emoji: '\u{1F4A5}' }
   ],
@@ -184,8 +197,9 @@ const TRAITS = {
   ],
   sky: [
     { id: 'none',  weight: 50, rarity: 'common' },
-    { id: 'star',  weight: 35, rarity: 'uncommon' },
-    { id: 'comet', weight: 15, rarity: 'rare' }
+    { id: 'star',  weight: 35, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'comet', weight: 15, rarity: 'rare', vibe: 'friendly' },
+    { id: 'blood_moon', weight: 40, rarity: 'uncommon', vibe: 'scary' }
   ],
   ground: [
     { id: 'light_scribble',  weight: 40, rarity: 'common' },
@@ -200,11 +214,11 @@ const TRAITS = {
   ],
   companion: [
     { id: 'none',      weight: 60, rarity: 'common' },
-    { id: 'cat',       weight: 15, rarity: 'uncommon' },
-    { id: 'dog',       weight: 13, rarity: 'uncommon' },
-    { id: 'bird',      weight: 7,  rarity: 'uncommon' },
+    { id: 'cat',       weight: 15, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'dog',       weight: 13, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'bird',      weight: 7,  rarity: 'uncommon', vibe: 'friendly' },
     { id: 'cat_ghost', weight: 3,  rarity: 'rare' },
-    { id: 'bunny',     weight: 2,  rarity: 'rare' }
+    { id: 'bunny',     weight: 2,  rarity: 'rare', vibe: 'friendly' }
   ]
 };
 
@@ -218,6 +232,10 @@ TRAITS.headColor = [{ id: 'matching', weight: 36, rarity: 'common' }].concat(
 // (limb strokes are too thin for the gradient finishes to read), so finishes fall back to their base hex.
 TRAITS.legColor = [{ id: 'matching', weight: 40, rarity: 'common' }].concat(TRAITS.headColor.slice(1).map((c) => Object.assign({}, c)));
 TRAITS.handColor = [{ id: 'matching', weight: 40, rarity: 'common' }].concat(TRAITS.headColor.slice(1).map((c) => Object.assign({}, c)));
+
+// Values a bot of this vibe may use (untagged = both vibes).
+function vibePool(pool, vibe) { return vibe ? pool.filter((t) => !t.vibe || t.vibe === vibe) : pool; }
+function vibeRng(seed, index) { return mulberry32((seed ?? 0) * 7907 + index * 53 + 3); }
 
 const TIER_FALLBACK = {
   common:   ['common', 'uncommon', 'rare'],
@@ -306,7 +324,7 @@ function chalkGrain(points, rng, ink, density = 0.4) {
   }
   return out;
 }
-const DARK_BGS = ['black', 'deep_black', 'midnight'];
+const DARK_BGS = ['black', 'deep_black', 'midnight', 'blood_night'];
 function isDarkBg(bgId) { return DARK_BGS.includes(bgId); }
 function inkFor(bgId) { return isDarkBg(bgId) ? '#ffffff' : '#1c1c1c'; }
 // Every black-background piece (the rare tier) gets a proper starry
@@ -391,8 +409,29 @@ function renderEyes(cx, cy, style, rng, ink, eyeColor, uid, dark) {
       '<ellipse cx="' + (x - 5) + '" cy="' + (y - 7) + '" rx="6.5" ry="4" fill="#ffffff" opacity=".9" transform="rotate(-30 ' + (x - 5) + ' ' + (y - 7) + ')"/>' +
       '<circle cx="' + (x + 6) + '" cy="' + (y + 6) + '" r="2" fill="#ffffff" opacity=".7"/>';
   };
+  // scary: an angry, lidded black socket with a small burning iris
+  const glareEye = (x, y, side) => {
+    const col = eyeColor || '#ff3b3b';
+    const inner = side > 0 ? -1 : 1; // lid slopes down toward the nose
+    const pts = [[x - R, y - 2 - inner * 5], [x + R, y - 2 + inner * 5]];
+    for (let i = 0; i <= 10; i++) { const a = (i / 10) * Math.PI; pts.push([x + Math.cos(a) * R, y + Math.sin(a) * (R - 2)]); }
+    const d = pathD(pts) + ' Z';
+    return '<path d="' + d + '" fill="#0d0d0d"/>' + doubleStroke(pts.concat([pts[0]]), rng, 0.6, 'stroke') +
+      '<circle cx="' + (x + gx * 0.4).toFixed(1) + '" cy="' + (y + 5).toFixed(1) + '" r="6.5" fill="' + col + '"/>' +
+      '<circle cx="' + (x + gx * 0.4).toFixed(1) + '" cy="' + (y + 5).toFixed(1) + '" r="2.4" fill="#fff4e0"/>';
+  };
+  // scary: ring eye with a shattered lens
+  const crackedEye = (x, y, flip) => {
+    let o = ringEye(x, y, false);
+    const f = flip ? -1 : 1;
+    o += '<path d="M ' + (x - 3 * f) + ' ' + (y - R + 1) + ' L ' + (x + 2 * f) + ' ' + (y - 5) + ' L ' + (x - 4 * f) + ' ' + (y + 1) + ' L ' + (x + 5 * f) + ' ' + (y + 8) + ' L ' + (x + 1 * f) + ' ' + (y + R - 1) +
+      ' M ' + (x + 2 * f) + ' ' + (y - 5) + ' L ' + (x + 11 * f) + ' ' + (y - 9) + ' M ' + (x - 4 * f) + ' ' + (y + 1) + ' L ' + (x - 13 * f) + ' ' + (y + 5) + '" fill="none" stroke="#1c1c1c" stroke-width="1.8" stroke-linejoin="round"/>';
+    return o;
+  };
   let out = '';
-  if (style === 'void') {
+  if (style === 'glare') out += glareEye(lx, cy, -1) + glareEye(rx, cy, 1);
+  else if (style === 'cracked') out += crackedEye(lx, cy, false) + crackedEye(rx, cy, true);
+  else if (style === 'void') {
     const col = eyeColor || '#15151c';
     out += '<defs><radialGradient id="vg' + uid + '" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="' + shadeColor(col, 35) + '"/><stop offset="0.55" stop-color="' + col + '"/><stop offset="1" stop-color="' + shadeColor(col, -55) + '"/></radialGradient></defs>';
     out += voidEye(lx, cy) + voidEye(rx, cy);
@@ -423,6 +462,16 @@ function renderMouth(cx, cy, style, rng) {
     }
   } else if (style === 'single_line') {
     out += doubleStroke([[cx - 20, cy], [cx + 20, cy]], rng, 2, 'stroke');
+  } else if (style === 'jaws') {
+    // jagged steel-trap teeth in a dark maw
+    const w = 58, top = cy - 9, bot = cy + 11;
+    const maw = [[cx - w / 2, cy - 2], [cx + w / 2, cy - 2], [cx + w / 2 - 6, bot], [cx - w / 2 + 6, bot]];
+    out += fillPath(closeLoop(maw), '#120606');
+    const up = [[cx - w / 2, top + 4]], dn = [[cx - w / 2 + 6, bot]];
+    for (let i = 0; i < 7; i++) { const x0 = cx - w / 2 + (i + 0.5) * (w / 7); up.push([x0, cy + 5], [cx - w / 2 + (i + 1) * (w / 7), top + 4]); }
+    for (let i = 0; i < 6; i++) { const x0 = cx - w / 2 + 6 + (i + 0.5) * ((w - 12) / 6); dn.push([x0, cy + 1], [cx - w / 2 + 6 + (i + 1) * ((w - 12) / 6), bot]); }
+    out += fillPath(up.concat([[cx + w / 2, top + 4]]), '#f4efe2') + fillPath(dn, '#f4efe2');
+    out += doubleStroke(closeLoop([[cx - w / 2, top + 4], [cx + w / 2, top + 4], [cx + w / 2 - 6, bot], [cx - w / 2 + 6, bot]]), rng, 1, 'stroke');
   } else if (style === 'fangs_stitch') {
     const w = 40;
     out += doubleStroke([[cx - w / 2, cy], [cx + w / 2, cy]], rng, 1.5, 'stroke');
@@ -583,6 +632,12 @@ function renderSky(cx, y, style, rng) {
     }
     pts.push(pts[0]);
     return doubleStroke(pts, rng, 1.8, 'stroke');
+  } else if (style === 'blood_moon') {
+    const mx = cx - 150, my = 58;
+    return '<circle cx="' + mx + '" cy="' + my + '" r="58" fill="#ff2a2a" opacity=".08"/><circle cx="' + mx + '" cy="' + my + '" r="44" fill="#ff2a2a" opacity=".14"/>' +
+      '<circle cx="' + mx + '" cy="' + my + '" r="32" fill="#c8141e"/>' +
+      '<circle cx="' + (mx - 9) + '" cy="' + (my - 7) + '" r="7" fill="#8e0a12"/><circle cx="' + (mx + 11) + '" cy="' + (my + 9) + '" r="5" fill="#8e0a12"/><circle cx="' + (mx + 6) + '" cy="' + (my - 14) + '" r="3" fill="#8e0a12"/>' +
+      doubleStroke(ellipsePtsAt(mx, my, 32, 32, 20).concat([ellipsePtsAt(mx, my, 32, 32, 20)[0]]), rng, 0.8, 'strokeMid');
   } else if (style === 'comet') {
     // No connecting line at all now — just a small scattered dot trail,
     // tucked into a top corner well clear of the head/hair area entirely.
@@ -793,6 +848,9 @@ const HAND_REACH = { mitten_bow: 11, round_paw: 10, claw: 12, broken_stub: 10, p
 
 function renderFromTraits(picks, index, seed, opts) {
   const isOneOfOne = !!(opts && opts.isOneOfOne);
+  const scary = !!(picks.vibe && picks.vibe.id === 'scary');
+  // haunted passes use their own RNG so they never shift the shared stream
+  const fear = mulberry32((seed ?? 0) * 60013 + index * 29 + 17);
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const deco = mulberry32((seed ?? 0) * 100003 + index + 7777); // background texture only
   const W = 500, H = 572;
@@ -863,8 +921,8 @@ function renderFromTraits(picks, index, seed, opts) {
   let defs = paint.defs;
   let back = '';
   // ---- backdrop: soft halo behind the head + paper grain ----
-  const haloFill = dark ? (paint.classic ? '#ffffff' : paint.glow) : (bg.id === 'white' ? '#f3f1ec' : '#ffffff');
-  const haloOp = dark ? 0.1 : (bg.id === 'white' ? 1 : 0.55);
+  const haloFill = scary ? '#ff2a2a' : dark ? (paint.classic ? '#ffffff' : paint.glow) : (bg.id === 'white' ? '#f3f1ec' : '#ffffff');
+  const haloOp = scary ? 0.13 : dark ? 0.1 : (bg.id === 'white' ? 1 : 0.55);
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="196" fill="' + haloFill + '" opacity="' + haloOp + '"/>';
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="228" fill="' + haloFill + '" opacity="' + (haloOp * 0.35).toFixed(2) + '"/>';
   let grain = '';
@@ -983,11 +1041,26 @@ function renderFromTraits(picks, index, seed, opts) {
   const earX = halfWidthAt(headPts, headCx, headCy) + 24;
   body += renderEars(headCx - earX, headCy, picks.ears.id, rng, true, headPaint.fill, headPaint.shade, ink);
   body += renderEars(headCx + earX, headCy, picks.ears.id, rng, false, headPaint.fill, headPaint.shade, ink);
-  // cheek blush
-  const blush = dark ? '#ff7aa8' : '#ff6f91';
+  // cheek blush (friendly) — scary bots get cracks and grime instead
   const bx = Math.min(50, halfWidthAt(headPts, headCx, headCy + 20) - 20);
-  body += '<ellipse cx="' + (headCx - bx) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
-  body += '<ellipse cx="' + (headCx + bx) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
+  if (!scary) {
+    const blush = dark ? '#ff7aa8' : '#ff6f91';
+    body += '<ellipse cx="' + (headCx - bx) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
+    body += '<ellipse cx="' + (headCx + bx) + '" cy="' + (headCy + 20) + '" rx="15" ry="8" fill="' + blush + '" opacity="' + (dark ? 0.35 : 0.42) + '"/>';
+  } else {
+    // dark sockets behind the eyes
+    body += '<ellipse cx="' + (headCx - 32) + '" cy="' + (headCy - 8) + '" rx="27" ry="24" fill="#000" opacity=".28"/><ellipse cx="' + (headCx + 32) + '" cy="' + (headCy - 8) + '" rx="27" ry="24" fill="#000" opacity=".28"/>';
+    // a crack running in from the top of the head
+    const side = fear() < 0.5 ? -1 : 1, x0 = headCx + side * (18 + fear() * 30), y0 = topYAt(headPts, x0);
+    const top = Number.isFinite(y0) ? y0 + 2 : headTop + 4;
+    const crack = [[x0, top], [x0 + side * 8, top + 16], [x0 - side * 3, top + 26], [x0 + side * 10, top + 44]];
+    body += '<path d="' + pathD(crack) + ' M ' + (x0 - side * 3).toFixed(1) + ' ' + (top + 26) + ' L ' + (x0 - side * 16).toFixed(1) + ' ' + (top + 34) + '" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>';
+    // rust streaks running down the cheeks
+    for (const sx of [-1, 1]) if (fear() < 0.6) {
+      const x = headCx + sx * (bx + 4), y = headCy + 8, len = 16 + fear() * 18;
+      body += '<path d="M ' + (x - 3) + ' ' + y + ' Q ' + (x - 2) + ' ' + (y + len * 0.7) + ' ' + (x - 3) + ' ' + (y + len) + ' Q ' + x + ' ' + (y + len + 6) + ' ' + (x + 3) + ' ' + (y + len) + ' Q ' + (x + 2) + ' ' + (y + len * 0.7) + ' ' + (x + 3) + ' ' + y + ' Z" fill="#7a2a0e" opacity=".7"/>';
+    }
+  }
   const eyeColorHex = picks.eyeColor.hex || null;
   if (eyeColorHex) {
     defs += '<radialGradient id="eg' + uid + '"><stop offset="0.35" stop-color="' + eyeColorHex + '" stop-opacity="0.9"/><stop offset="1" stop-color="' + eyeColorHex + '" stop-opacity="0"/></radialGradient>';
@@ -997,12 +1070,30 @@ function renderFromTraits(picks, index, seed, opts) {
   body += '<g transform="translate(' + headCx + ' ' + (headCy - 12) + ') scale(1.06) translate(' + -headCx + ' ' + -(headCy - 12) + ')">' +
     renderEyes(headCx, headCy - 12, picks.eyes.id, rng, ink, eyeColorHex, uid, dark) + '</g>';
   body += renderMouth(headCx, headCy + 44, picks.mouth.id, rng);
+  if (scary) {
+    // heavy brow plates slanting down to the nose: the angry glare
+    const by = headCy - 12 - 26;
+    for (const sd of [-1, 1]) {
+      const outer = [headCx + sd * 52, by - 8], inner = [headCx + sd * 12, by + 8];
+      body += '<path d="M ' + outer[0] + ' ' + outer[1] + ' L ' + inner[0] + ' ' + inner[1] + ' L ' + inner[0] + ' ' + (inner[1] + 6) + ' L ' + outer[0] + ' ' + (outer[1] + 7) + ' Z" fill="' + ink + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>';
+      body += '<circle cx="' + (outer[0] - sd * 6) + '" cy="' + (outer[1] + 3.5) + '" r="1.6" fill="' + (dark ? '#1c1c1c' : '#ffffff') + '" opacity=".6"/>';
+    }
+    // oil dripping from a corner of the mouth
+    const dx = headCx + (fear() < 0.5 ? -18 : 20), dy = headCy + 47, dl = 14 + fear() * 16;
+    body += '<path d="M ' + (dx - 3) + ' ' + dy + ' Q ' + (dx - 2) + ' ' + (dy + dl * 0.7) + ' ' + (dx - 4) + ' ' + (dy + dl) + ' Q ' + dx + ' ' + (dy + dl + 8) + ' ' + (dx + 4) + ' ' + (dy + dl) + ' Q ' + (dx + 2) + ' ' + (dy + dl * 0.7) + ' ' + (dx + 3) + ' ' + dy + ' Z" fill="#141414"/>' +
+      '<circle cx="' + (dx - 1) + '" cy="' + (dy + dl + 1) + '" r="1.3" fill="#ffffff" opacity=".5"/>';
+  }
 
   // ---- neck + chest ----
   const neck = chalkLine([[headCx, neckTop - 2], [headCx, neckTop + neckLen + 2]], rng, 0.8);
   body += tube(neck, 17, ink) + tube(neck, 10, paint.fill);
   body += block(bodyPts, 'b');
   body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink, bodyKind === 'box' ? null : closeLoop(bodyPts));
+  if (scary) {
+    // three claw scratches across the chest plate
+    const sx = headCx + (fear() < 0.5 ? -1 : 1) * (30 + fear() * 14), sy = chestCy - 30;
+    for (let k = 0; k < 3; k++) body += '<path d="M ' + (sx - 18 + k * 9) + ' ' + (sy + k * 3) + ' L ' + (sx + 4 + k * 9) + ' ' + (sy + 40 + k * 3) + '" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round" opacity=".75"/>';
+  }
   if (bodyKind === 'barrel' || bodyKind === 'capsule') {
     // riveted belly band
     const by = chestCy + ch * 0.62, bw = halfWidthAt(bodyPts, headCx, by) - 4;
@@ -1082,14 +1173,14 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // forcing tier:'rare' against pools that only have one rare value (the
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
-  background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'sage', weight: 8 }, { id: 'blush', weight: 8 }, { id: 'powder', weight: 8 }, { id: 'lemon', weight: 8 }, { id: 'lavender', weight: 8 }],
+  background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'sage', weight: 8 }, { id: 'blush', weight: 8 }, { id: 'powder', weight: 8 }, { id: 'lemon', weight: 8 }, { id: 'lavender', weight: 8 }, { id: 'blood_night', weight: 14 }],
   bodyColor: [{ id: 'gold', weight: 7 }, { id: 'chrome', weight: 7 }, { id: 'sunset', weight: 6 }, { id: 'rose_gold', weight: 6 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'aurora', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'magenta', weight: 4 }, { id: 'lime', weight: 4 }, { id: 'tangerine', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'sunflower', weight: 4 }, { id: 'orchid', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'tomato', weight: 4 }, { id: 'azure', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'blue', weight: 25 }, { id: 'pink', weight: 25 }, { id: 'ink', weight: 20 }],
   hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
-  eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }],
-  eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }],
-  mouth: [{ id: 'fangs_stitch', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'single_line', weight: 24 }, { id: 'stitches_uneven', weight: 20 }],
+  eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }, { id: 'glare', weight: 24 }, { id: 'cracked', weight: 18 }],
+  eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }, { id: 'toxic', weight: 26 }],
+  mouth: [{ id: 'fangs_stitch', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'single_line', weight: 24 }, { id: 'stitches_uneven', weight: 20 }, { id: 'jaws', weight: 28 }],
   chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'blank', weight: 12 }, { id: 'emoji_ghost', weight: 11 }, { id: 'emoji_skull', weight: 11 }, { id: 'emoji_100', weight: 9 }, { id: 'emoji_rainbow', weight: 9 }, { id: 'emoji_rocket', weight: 9 }, { id: 'emoji_broken_heart', weight: 9 }, { id: 'emoji_blast', weight: 9 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }, { id: 'round_paw', weight: 4 }, { id: 'mitten_bow', weight: 4 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
@@ -1099,13 +1190,15 @@ const ONE_OF_ONE_WEIGHTS = {
   handColor: [{ id: 'matching', weight: 34 }, { id: 'gold', weight: 8 }, { id: 'chrome', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'lime', weight: 5 }, { id: 'tangerine', weight: 5 }, { id: 'cobalt', weight: 5 }, { id: 'bubblegum', weight: 5 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }, { id: 'round_stubs', weight: 8 }],
-  sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }],
+  sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }, { id: 'blood_moon', weight: 60 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
   grassColor: [{ id: 'default', weight: 50 }, { id: 'white', weight: 30 }, { id: 'green', weight: 20 }],
   companion: [{ id: 'none', weight: 24 }, { id: 'bunny', weight: 16 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 16 }, { id: 'cat', weight: 16 }, { id: 'cat_ghost', weight: 12 }]
 };
-function pickOneOfOne(category, rng) {
-  const weights = ONE_OF_ONE_WEIGHTS[category];
+function pickOneOfOne(category, rng, vibe) {
+  const ok = new Set(vibePool(TRAITS[category], vibe).map((o) => o.id));
+  const weights = ONE_OF_ONE_WEIGHTS[category].filter((w) => ok.has(w.id));
+  if (!weights.length) return weightedPick(rng, vibePool(TRAITS[category], vibe));
   const total = weights.reduce((s, w) => s + w.weight, 0);
   let r = rng() * total;
   for (const w of weights) {
@@ -1145,20 +1238,30 @@ function generatePiece(index, seed, tier, opts) {
   const isOneOfOne = !!(opts && opts.isOneOfOne);
   const locks = (opts && opts.locks) || {};
 
-  const sigOverride = maybeSignatureCombo(rng, isOneOfOne);
+  const vsel = locks.vibe && locks.vibe.length ? TRAITS.vibe.filter((v) => locks.vibe.includes(v.id)) : [];
+  let vibe = weightedPick(vibeRng(seed, index), vsel.length ? vsel : TRAITS.vibe);
+  const V = vibe.id;
+
+  // the 'condemned' signature is a haunted bot: only scary 1/1s keep it (the roll still
+  // happens for every 1/1 so friendly 1/1s keep their exact RNG sequence)
+  let sigOverride = maybeSignatureCombo(rng, isOneOfOne);
+  if (V !== 'scary') sigOverride = null;
 
   function pick(category) {
     const sel = locks[category];
     const explicitLock = !!(sel && sel.length);
+    const vp = vibePool(TRAITS[category], V);
     if (explicitLock) {
-      const sub = TRAITS[category].filter((p) => sel.includes(p.id));
+      // an explicit lock wins, even on a value from the other vibe
+      let sub = vp.filter((p) => sel.includes(p.id));
+      if (!sub.length) sub = TRAITS[category].filter((p) => sel.includes(p.id));
       if (sub.length) return weightedPick(rng, sub);
     }
-    if (isOneOfOne) return pickOneOfOne(category, rng);
-    let choice = pickByRarity(rng, TRAITS[category], t);
+    if (isOneOfOne) return pickOneOfOne(category, rng, V);
+    let choice = pickByRarity(rng, vp, t);
     const exclusiveList = ONE_OF_ONE_ONLY_BY_CATEGORY[category];
     if (exclusiveList && !explicitLock && exclusiveList.includes(choice.id)) {
-      const pool = TRAITS[category].filter((p) => !exclusiveList.includes(p.id));
+      const pool = vp.filter((p) => !exclusiveList.includes(p.id));
       choice = pickByRarity(rng, pool, t);
     }
     return choice;
@@ -1192,6 +1295,7 @@ function generatePiece(index, seed, tier, opts) {
   picks.bodyShape = sigOverride ? sigOverride.bodyShape : pick('bodyShape');
   picks.arms = sigOverride ? sigOverride.arms : pick('arms');
   // hands-on-the-floor arms reach down where the companion stands: no companion (unless explicitly locked)
+  picks.vibe = vibe;
   if (picks.arms.id === 'on_floor' && picks.companion.id !== 'none' && !(locks.companion && locks.companion.length)) {
     picks.companion = TRAITS.companion.find((o) => o.id === 'none');
     picks.companionColor = TRAITS.companionColor[0];
@@ -1217,6 +1321,7 @@ function generatePiece(index, seed, tier, opts) {
   const svg = opts && opts.render === false ? null : renderFromTraits(picks, index, seed, { isOneOfOne });
   const traits = {}, rarity = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { traits[k] = picks[k].id; rarity[k] = picks[k].rarity; });
+  traits.vibe = vibe.id; rarity.vibe = vibe.rarity;
 
   return { index, svg, tier: t, isOneOfOne, traits, rarity, picks, renderIndex: index, seed };
 }
@@ -1232,7 +1337,7 @@ function generateBatch(count, seed, tier, opts) {
 
 const api = {
   TRAITS, TIER_FALLBACK, CHAIN_THEMES,
-  mulberry32, weightedPick, pickByRarity, shadeColor,
+  mulberry32, weightedPick, pickByRarity, shadeColor, vibePool, vibeRng,
   renderFromTraits, renderPiece, generatePiece, generateBatch,
   ONE_OF_ONE_WEIGHTS, pickOneOfOne, ONE_OF_ONE_ONLY_CHESTMARK, ONE_OF_ONE_ONLY_GRASSCOLOR, ONE_OF_ONE_ONLY_BY_CATEGORY,
   ONE_OF_ONE_SIGNATURE_COMBOS, SIGNATURE_TRAIT_KEYS, resolveSignatureCombo,

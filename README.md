@@ -112,13 +112,14 @@ often joined by a small companion creature.
 
 | Trait | Values |
 |-------|--------|
+| vibe | 2 — friendly (65%), scary (35%): scary bots use the darker half of the pools below, get brow plates, cracks, rust streaks, oil drips, claw scratches and a red halo, and unlock the scary-only values in (brackets) |
 | headShape · bodyShape | 7 each — box, round, TV, dome, capsule, hex, octagon · barrel, trapezoid, bell, … |
 | bodyColor | 28 — plus separate head / leg / hand colour traits (28 each, or "matching") |
 | arms · hands · feet | 7 · 9 · 6 — spring, telescopic, floating… · claw, pincer, magnet, plug… · peg legs, robot blocks… |
-| hair · ears · eyes · eyeColor · mouth | 5 · 6 · 5 · 4 · 5 |
+| hair · ears · eyes · eyeColor · mouth | 5 · 6 · 5 (+ glare, cracked) · 4 (+ toxic) · 5 (+ jaws) |
 | chestMark | 15 — x cross, target, emoji fire/heart/star/rocket/100/skull/ghost/rainbow, … |
 | companion · companionColor | 6 (cat, dog, bird, ghost cat, bunny) · 10 |
-| background · sky · ground · grassColor | 10 · 3 · 4 · 3 |
+| background · sky · ground · grassColor | 10 (+ blood night) · 3 (+ blood moon) · 4 · 3 |
 
 1/1-only chest marks and grass colours, signature combos, and per-category
 1/1 weights.
