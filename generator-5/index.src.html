@@ -96,7 +96,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
   <div class="brand">Ink Pups <span>//</span> Generator</div>
   <div class="eyebrow">GENERATIVE INK ENGINE</div>
   <div class="h1" id="h1-text">Ink Pups</div>
-  <div class="sub">Scrawled ink dog heads with glowing eyes. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
+  <div class="sub">Scrawled ink hellhounds — burning eyes, fangs, scars and blood. Lock specific traits or leave on random — nothing regenerates until you hit Generate.</div>
 </header>
 <main>
   <div class="panel-section">
@@ -112,7 +112,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
           <button class="chip" data-chain="robinhood">robinhood</button>
         </div>
       </div>
-      <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata">Ink Pups — scrawled ink dog heads with glowing eyes. Loyal, loose-lined and a little bit feral.</textarea></div>
+      <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Description (optional)</div><textarea id="collection-description-input" rows="2" placeholder="A short description for your collection metadata">Ink Pups — scrawled ink hellhounds with burning eyes, bared fangs and old scars. Loose-lined and fully feral.</textarea></div>
       <div class="trait-group" style="grid-column:1/-1;"><div class="trait-label">Launch settings (used in the batch zip)</div>
         <input type="text" id="launch-base-uri" placeholder="Image base URI for ETH / Robinhood, e.g. ipfs://bafy.../ (optional)" style="margin-bottom:6px;">
         <input type="text" id="launch-site-url" placeholder="Project website (optional)">
@@ -582,7 +582,7 @@ async function downloadBatchZipOne(_zp) {
       if (!_zipMetaOnly) vectors.file(p.index+'.svg',getDisplaySVG(p));
       const attrs=G.CATEGORY_ORDER.map(k=>({trait_type:G.CATEGORY_META[k],value:G.traitName(k,p.traits[k]),rarity:rarityOf(k,p.traits[k])}));
       if(p.isOneOfOne)attrs.push({trait_type:'Tier',value:'1/1'});
-      const meta={name:getDisplayName()+' #'+p.index,description:getDescription()||'Scrawled ink dog head from '+getDisplayName()+'.',image:'images/'+p.index+'.png',vector:'vectors/'+p.index+'.svg',chain:currentChain,isOneOfOne:!!p.isOneOfOne,attributes:attrs};
+      const meta={name:getDisplayName()+' #'+p.index,description:getDescription()||'Scrawled ink hellhound from '+getDisplayName()+'.',image:'images/'+p.index+'.png',vector:'vectors/'+p.index+'.svg',chain:currentChain,isOneOfOne:!!p.isOneOfOne,attributes:attrs};
       const sym=getSymbol();if(sym)meta.symbol=sym;if(currentChain!=='bitcoin')meta.external_url='';
       launchItems.push({ index: p.index, attrs: attrs });
     }

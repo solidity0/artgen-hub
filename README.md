@@ -13,7 +13,7 @@ works on GitHub Pages and can be inscribed on-chain as-is.
 | 2 | **Glyphs** | Abstract machine-interface glyphs — fragmented, glitched, cold | 🌀 | [generator-2](https://solidity0.github.io/artgen-hub/generator-2/index.html) |
 | 3 | **Oddlings** | Hand-inked PFP characters with starburst eyes | 👽 | [generator-3](https://solidity0.github.io/artgen-hub/generator-3/index.html) |
 | 4 | **AfterBots** | Hand-inked industrial robots, often with a companion | 🤖 | [generator-4](https://solidity0.github.io/artgen-hub/generator-4/index.html) |
-| 5 | **Ink Pups** | Scrawled ink dog heads with glowing eyes | 🐶 | [generator-5](https://solidity0.github.io/artgen-hub/generator-5/index.html) |
+| 5 | **Ink Pups** | Scrawled ink hellhounds with burning eyes | 🐶 | [generator-5](https://solidity0.github.io/artgen-hub/generator-5/index.html) |
 | 6 | **Hood Characters** | Undead chibi guys haunting the block after dark | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
 
 Slots 7 and 8 are reserved on the hub for future collections.
@@ -127,17 +127,17 @@ often joined by a small companion creature.
 ### 5 — Ink Pups
 `generator-5/` · engine **v2 "Scrawl"** (2.3.0) · `window.InkPupsGen` · page ≈ 92 KB
 
-Crude, wobbly single-weight dog heads (head only, scaled up) with glowing
-eyes on textured environmental backgrounds.
+Crude, wobbly single-weight hellhound heads (head only, scaled up) with
+burning eyes, fangs, scars and blood on dark textured backgrounds.
 
 | Trait | Values |
 |-------|--------|
-| background | 6 — paper, void, fog, smoke, hatch, static |
-| headShape · fur | 4 · 4 (smooth, spiky, tuft, shaggy) |
+| background | 7 — void, smoke, paper, blood, fog, hatch, static; 1/1s add blood moon, red, pitch, bruise |
+| headShape · fur | 4 · 4 (smooth, spiky, shaggy, tuft) |
 | ears · earTone | 5 (floppy long/short, perky, folded, rose) · 3 |
-| coat | 7 — plain, spots, freckles, eye patch, hatch shade, blaze, solid face |
-| eyeColor · eyes · brows | 7 · 7 (ring, spiral, x mark, starburst, sleepy, visor, …) · 4 |
-| nose · mouth · muzzle | 4 (incl. heart) · 7 (smile, blep, teeth, …) · 4 |
+| coat | 8 — plain, spots, scars, eye patch, hatch shade, blaze, blood, solid face |
+| eyeColor · eyes · brows | 7 · 9 (hollow, ring, dot, slit, bleeding, spiral, x mark, starburst, visor; 1/1 third eye) · 4 (angry, snarl, none, scarred) |
+| nose · mouth · muzzle | 4 (incl. skull) · 7 (fangs, snarl, stitched, teeth, drool, frown, howl) · 4 |
 
 Curated 1/1 pickers, 1/1-exclusive values and batch-wide dedup.
 

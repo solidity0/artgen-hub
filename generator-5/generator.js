@@ -42,12 +42,13 @@
   /* ------------------------------------------------------------- TRAITS */
   const TRAITS = {
     background: [
-      { id: 'paper',  name: 'Paper',  hex: '#f3f3f1', rarity: 'common',   weight: 30 },
-      { id: 'void',   name: 'Void',   hex: '#050505', rarity: 'common',   weight: 24 },
-      { id: 'fog',    name: 'Fog',    hex: '#8c8c8c', rarity: 'uncommon', weight: 14 },
-      { id: 'smoke',  name: 'Smoke',  hex: '#151515', rarity: 'uncommon', weight: 14 },
-      { id: 'hatch',  name: 'Hatch',  hex: '#161616', rarity: 'rare',     weight: 9 },
-      { id: 'static', name: 'Static', hex: '#eeeeec', rarity: 'rare',     weight: 9 }
+      { id: 'void',   name: 'Void',   hex: '#050505', rarity: 'common',   weight: 30 },
+      { id: 'smoke',  name: 'Smoke',  hex: '#151515', rarity: 'common',   weight: 18 },
+      { id: 'paper',  name: 'Paper',  hex: '#f3f3f1', rarity: 'common',   weight: 16 },
+      { id: 'blood',  name: 'Blood',  hex: '#2a0507', rarity: 'uncommon', weight: 12 },
+      { id: 'fog',    name: 'Fog',    hex: '#8c8c8c', rarity: 'uncommon', weight: 12 },
+      { id: 'hatch',  name: 'Hatch',  hex: '#161616', rarity: 'rare',     weight: 12 },
+      { id: 'static', name: 'Static', hex: '#eeeeec', rarity: 'rare',     weight: 6 }
     ],
     headShape: [
       { id: 'round',   name: 'Round',   rarity: 'common',   weight: 32 },
@@ -56,17 +57,17 @@
       { id: 'pointed', name: 'Pointed', rarity: 'uncommon', weight: 18 }
     ],
     fur: [
-      { id: 'smooth', name: 'Smooth', rarity: 'common',   weight: 45 },
-      { id: 'spiky',  name: 'Spiky',  rarity: 'uncommon', weight: 22 },
-      { id: 'tuft',   name: 'Tuft',   rarity: 'uncommon', weight: 18 },
-      { id: 'shaggy', name: 'Shaggy', rarity: 'rare',     weight: 15 }
+      { id: 'smooth', name: 'Smooth', rarity: 'common',   weight: 30 },
+      { id: 'spiky',  name: 'Spiky',  rarity: 'common',   weight: 30 },
+      { id: 'shaggy', name: 'Shaggy', rarity: 'uncommon', weight: 24 },
+      { id: 'tuft',   name: 'Tuft',   rarity: 'uncommon', weight: 16 }
     ],
     ears: [
-      { id: 'floppy_long',  name: 'Floppy long',  rarity: 'common',   weight: 26 },
-      { id: 'perky',        name: 'Perky',        rarity: 'common',   weight: 18 },
-      { id: 'floppy_short', name: 'Floppy short', rarity: 'common',   weight: 22 },
-      { id: 'folded',       name: 'Folded',       rarity: 'uncommon', weight: 16 },
-      { id: 'rose',         name: 'Rose',         rarity: 'uncommon', weight: 12 }
+      { id: 'perky',        name: 'Perky',        rarity: 'common',   weight: 26 },
+      { id: 'floppy_short', name: 'Floppy short', rarity: 'common',   weight: 18 },
+      { id: 'rose',         name: 'Rose',         rarity: 'uncommon', weight: 16 },
+      { id: 'floppy_long',  name: 'Floppy long',  rarity: 'uncommon', weight: 14 },
+      { id: 'folded',       name: 'Folded',       rarity: 'uncommon', weight: 14 }
     ],
     earTone: [
       { id: 'hollow',  name: 'Hollow',  rarity: 'common',   weight: 45 },
@@ -74,17 +75,18 @@
       { id: 'hatched', name: 'Hatched', rarity: 'uncommon', weight: 20 }
     ],
     coat: [
-      { id: 'plain',       name: 'Plain',       rarity: 'common',   weight: 30 },
-      { id: 'spots',       name: 'Spots',       rarity: 'common',   weight: 18 },
-      { id: 'freckles',    name: 'Freckles',    rarity: 'common',   weight: 16 },
+      { id: 'plain',       name: 'Plain',       rarity: 'common',   weight: 26 },
+      { id: 'spots',       name: 'Spots',       rarity: 'common',   weight: 14 },
+      { id: 'scars',       name: 'Scars',       rarity: 'uncommon', weight: 12 },
       { id: 'eye_patch',   name: 'Eye patch',   rarity: 'uncommon', weight: 12 },
       { id: 'hatch_shade', name: 'Hatch shade', rarity: 'uncommon', weight: 12 },
       { id: 'blaze',       name: 'Blaze',       rarity: 'uncommon', weight: 10 },
+      { id: 'blood',       name: 'Blood',       rarity: 'rare',     weight: 8 },
       { id: 'solid_face',  name: 'Solid face',  rarity: 'rare',     weight: 6 }
     ],
     eyeColor: [
       { id: 'ink',    name: 'Ink',    hex: null,      rarity: 'common',   weight: 28 },
-      { id: 'red',    name: 'Red',    hex: '#ff3b3b', rarity: 'common',   weight: 16 },
+      { id: 'red',    name: 'Red',    hex: '#ff3b3b', rarity: 'common',   weight: 30 },
       { id: 'blue',   name: 'Blue',   hex: '#6f7dff', rarity: 'common',   weight: 16 },
       { id: 'green',  name: 'Green',  hex: '#39ff6a', rarity: 'uncommon', weight: 12 },
       { id: 'orange', name: 'Orange', hex: '#ffa12b', rarity: 'uncommon', weight: 12 },
@@ -92,34 +94,36 @@
       { id: 'white',  name: 'White',  hex: '#f4f4f4', rarity: 'rare',     weight: 8 }
     ],
     eyes: [
-      { id: 'ring',      name: 'Ring',      rarity: 'common',   weight: 26 },
-      { id: 'dot',       name: 'Dot',       rarity: 'common',   weight: 24 },
-      { id: 'spiral',    name: 'Spiral',    rarity: 'uncommon', weight: 14 },
-      { id: 'x_mark',    name: 'X mark',    rarity: 'uncommon', weight: 12 },
-      { id: 'starburst', name: 'Starburst', rarity: 'uncommon', weight: 12 },
-      { id: 'sleepy',    name: 'Sleepy',    rarity: 'uncommon', weight: 8 },
+      { id: 'hollow',    name: 'Hollow',    rarity: 'common',   weight: 22 },
+      { id: 'ring',      name: 'Ring',      rarity: 'common',   weight: 18 },
+      { id: 'dot',       name: 'Dot',       rarity: 'common',   weight: 14 },
+      { id: 'slit',      name: 'Slit',      rarity: 'uncommon', weight: 14 },
+      { id: 'bleeding',  name: 'Bleeding',  rarity: 'uncommon', weight: 14 },
+      { id: 'spiral',    name: 'Spiral',    rarity: 'uncommon', weight: 10 },
+      { id: 'x_mark',    name: 'X mark',    rarity: 'uncommon', weight: 10 },
+      { id: 'starburst', name: 'Starburst', rarity: 'uncommon', weight: 8 },
       { id: 'visor',     name: 'Visor',     rarity: 'rare',     weight: 6 }
     ],
     brows: [
-      { id: 'none',     name: 'None',     rarity: 'common',   weight: 55 },
-      { id: 'worried',  name: 'Worried',  rarity: 'uncommon', weight: 15 },
-      { id: 'wrinkles', name: 'Wrinkles', rarity: 'uncommon', weight: 15 },
-      { id: 'angry',    name: 'Angry',    rarity: 'rare',     weight: 15 }
+      { id: 'angry',    name: 'Angry',    rarity: 'common',   weight: 40 },
+      { id: 'wrinkles', name: 'Snarl',    rarity: 'uncommon', weight: 25 },
+      { id: 'none',     name: 'None',     rarity: 'common',   weight: 20 },
+      { id: 'scarred',  name: 'Scarred',  rarity: 'rare',     weight: 15 }
     ],
     nose: [
       { id: 'triangle', name: 'Triangle', rarity: 'common',   weight: 40 },
       { id: 'button',   name: 'Button',   rarity: 'common',   weight: 28 },
       { id: 'hollow_o', name: 'Hollow O', rarity: 'uncommon', weight: 18 },
-      { id: 'heart',    name: 'Heart',    rarity: 'rare',     weight: 14 }
+      { id: 'skull',    name: 'Skull',    rarity: 'rare',     weight: 14 }
     ],
     mouth: [
-      { id: 'smile',    name: 'Smile',    rarity: 'common',   weight: 30 },
-      { id: 'flat',     name: 'Flat',     rarity: 'common',   weight: 16 },
-      { id: 'open',     name: 'Open',     rarity: 'uncommon', weight: 14 },
-      { id: 'blep',     name: 'Blep',     rarity: 'uncommon', weight: 14 },
-      { id: 'stitched', name: 'Stitched', rarity: 'uncommon', weight: 12 },
+      { id: 'fangs',    name: 'Fangs',    rarity: 'common',   weight: 26 },
+      { id: 'snarl',    name: 'Snarl',    rarity: 'common',   weight: 20 },
+      { id: 'stitched', name: 'Stitched', rarity: 'uncommon', weight: 14 },
+      { id: 'teeth',    name: 'Teeth',    rarity: 'uncommon', weight: 12 },
+      { id: 'drool',    name: 'Drool',    rarity: 'uncommon', weight: 12 },
       { id: 'frown',    name: 'Frown',    rarity: 'uncommon', weight: 8 },
-      { id: 'teeth',    name: 'Teeth',    rarity: 'rare',     weight: 8 }
+      { id: 'open',     name: 'Howl',     rarity: 'rare',     weight: 8 }
     ],
     muzzle: [
       { id: 'clean',        name: 'Clean',        rarity: 'common',   weight: 45 },
@@ -141,32 +145,32 @@
   /* 1/1-exclusive values — never in regular pools, only via the 1/1 pickers */
   const ONE_OF_ONE_EXCLUSIVES = {
     background: [
-      { id: 'eth_blue',    name: 'ETH Blue',    hex: '#627EEA', rarity: 'rare', exclusive: true },
+      { id: 'blood_moon',  name: 'Blood Moon',  hex: '#8f0014', rarity: 'rare', exclusive: true },
       { id: 'red',         name: 'Red',         hex: '#FF3B3B', rarity: 'rare', exclusive: true },
-      { id: 'rich_lime',   name: 'Rich Lime',   hex: '#C6EE4D', rarity: 'rare', exclusive: true },
-      { id: 'punchy_blue', name: 'Punchy Blue', hex: '#3A2BE8', rarity: 'rare', exclusive: true }
+      { id: 'pitch',       name: 'Pitch',       hex: '#0b0b10', rarity: 'rare', exclusive: true },
+      { id: 'bruise',      name: 'Bruise',      hex: '#24083d', rarity: 'rare', exclusive: true }
     ],
     eyeColor: [
       { id: 'gold', name: 'Gold', hex: '#ffd23f', rarity: 'rare', exclusive: true }
     ],
     eyes: [
-      { id: 'hearts', name: 'Hearts', rarity: 'rare', exclusive: true }
+      { id: 'third_eye', name: 'Third eye', rarity: 'rare', exclusive: true }
     ]
   };
 
   /* Curated, flattened 1/1 pickers for EVERY category (prevents rare-tier collapse). */
   const ONE_OF_ONE_PICKERS = {
-    background: ['eth_blue', 'red', 'rich_lime', 'punchy_blue', 'hatch', 'static', 'void', 'fog'],
+    background: ['blood_moon', 'red', 'pitch', 'bruise', 'blood', 'hatch', 'static', 'void', 'fog'],
     headShape:  ['round', 'long', 'square', 'pointed'],
     fur:        ['smooth', 'spiky', 'tuft', 'shaggy'],
     ears:       ['floppy_long', 'floppy_short', 'perky', 'folded', 'rose'],
     earTone:    ['hollow', 'solid', 'hatched'],
-    coat:       ['spots', 'eye_patch', 'hatch_shade', 'blaze', 'solid_face', 'plain'],
+    coat:       ['spots', 'eye_patch', 'hatch_shade', 'blaze', 'solid_face', 'plain', 'scars', 'blood'],
     eyeColor:   ['red', 'blue', 'green', 'orange', 'violet', 'white', 'gold'],
-    eyes:       ['ring', 'spiral', 'x_mark', 'starburst', 'visor', 'hearts'],
-    brows:      ['none', 'worried', 'wrinkles', 'angry'],
-    nose:       ['triangle', 'button', 'hollow_o', 'heart'],
-    mouth:      ['smile', 'open', 'blep', 'stitched', 'frown', 'teeth'],
+    eyes:       ['ring', 'spiral', 'x_mark', 'starburst', 'visor', 'hollow', 'slit', 'bleeding', 'third_eye'],
+    brows:      ['none', 'wrinkles', 'angry', 'scarred'],
+    nose:       ['triangle', 'button', 'hollow_o', 'skull'],
+    mouth:      ['fangs', 'snarl', 'open', 'stitched', 'drool', 'frown', 'teeth'],
     muzzle:     ['clean', 'whisker_dots', 'jowls', 'snout_line']
   };
 
@@ -625,6 +629,15 @@
       }
       case 'fog': s += blobs(8, ['#b4b4b4', '#6c6c6c', '#a0a0a0'], 0.6) + dots(14, '#222', 0.6, 1.3, 0.2, 0.5); break;
       case 'smoke': s += blobs(8, ['#3d3d3d', '#2a2a2a', '#4a4a4a'], 0.75) + dots(20, '#fff', 0.5, 1.1, 0.15, 0.5); break;
+      case 'blood': {
+        // dark clotted red with spatter and a few runs dripping from the top edge
+        s += blobs(7, ['#4a0a0e', '#1a0204', '#5c0d12'], 0.8) + dots(26, '#8a0a14', 0.8, 3.2, 0.35, 0.8);
+        for (let i = 0; i < 4; i++) {
+          const x = 30 + rng() * (WIDTH - 60), len = 40 + rng() * 120, w = 2 + rng() * 3;
+          s += `<path d="M${f(x - w)},0L${f(x - w * 0.7)},${f(len)}Q${f(x)},${f(len + w * 3)} ${f(x + w * 0.7)},${f(len)}L${f(x + w)},0Z" fill="#6e0a10" opacity=".85"/>`;
+        }
+        break;
+      }
       case 'hatch': s += hatchLines(rng, 0, 0, WIDTH, HEIGHT, 8, 38, '#2b2b2b', 1, 1) + dots(16, '#fff', 0.5, 1.1, 0.15, 0.4); break;
       default: s += dots(34, ink, 0.6, 1.6, 0.2, 0.5) + scribbles(3, ink, 0.18); break; // 1/1 flat colours
     }
@@ -677,10 +690,34 @@
         }
         break;
       }
-      case 'freckles':
-        for (const side of [-1, 1]) for (let i = 0; i < 4 + Math.floor(rng() * 3); i++)
-          s += `<circle cx="${f(HX + side * (20 + rng() * 26))}" cy="${f(HY + P.noseY - 4 + rng() * 18)}" r="${f(1.3 + rng())}" fill="${ink}"/>`;
+      case 'scars': {
+        // stitched gashes across the head, kept off the eyes and snout
+        const n = 2 + Math.floor(rng() * 2);
+        for (let i = 0, tries = 0; i < n && tries < 60; tries++) {
+          const x = HX + jit(rng, P.rx * 0.8), y = HY + jit(rng, P.ry * 0.8), a = jit(rng, 1.2), L = 18 + rng() * 16;
+          const x0 = x - Math.cos(a) * L, y0 = y - Math.sin(a) * L, x1 = x + Math.cos(a) * L, y1 = y + Math.sin(a) * L;
+          if (!clear(x, y, L * 0.7)) continue;
+          s += `<path d="M${f(x0)},${f(y0)}L${f(x1)},${f(y1)}" stroke="${ink}" stroke-width="1.8" stroke-linecap="round"/>`;
+          for (let k = 1; k < 5; k++) {
+            const t = k / 5, px = x0 + (x1 - x0) * t, py = y0 + (y1 - y0) * t, nx = -Math.sin(a) * 5, ny = Math.cos(a) * 5;
+            s += `<path d="M${f(px - nx)},${f(py - ny)}L${f(px + nx)},${f(py + ny)}" stroke="${ink}" stroke-width="1.3" stroke-linecap="round"/>`;
+          }
+          i++;
+        }
         break;
+      }
+      case 'blood': {
+        // spatter across the crown with a couple of runs down the face
+        for (let i = 0; i < 14; i++) {
+          const a = -Math.PI / 2 + jit(rng, 1.3), rr = 0.35 + rng() * 0.6;
+          s += `<circle cx="${f(HX + Math.cos(a) * P.rx * rr)}" cy="${f(HY + Math.sin(a) * P.ry * rr)}" r="${f(1.2 + rng() * 4.5)}" fill="#b0001a" opacity=".9"/>`;
+        }
+        for (let i = 0; i < 2; i++) {
+          const x = HX + jit(rng, P.rx * 0.6), y = HY - P.ry * 0.55, len = 30 + rng() * 40;
+          s += `<path d="M${f(x - 2.5)},${f(y)}L${f(x - 1.8)},${f(y + len)}Q${f(x)},${f(y + len + 7)} ${f(x + 1.8)},${f(y + len)}L${f(x + 2.5)},${f(y)}Z" fill="#b0001a" opacity=".9"/>`;
+        }
+        break;
+      }
       case 'eye_patch': {
         const side = rng() < 0.5 ? -1 : 1;
         const cx = HX + side * ex, cy = eyeY, r = 24;
@@ -741,7 +778,7 @@
       for (const e of eyes) {
         const { x, y, r } = e;
         if (halo) s += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(r + 7)}" fill="${headFill}"/>`;
-        s += glow(x, y, r * (t.eyes === 'sleepy' ? 1.2 : 1.8));
+        s += glow(x, y, r * (t.eyes === 'hollow' ? 1.5 : 1.8));
         switch (t.eyes) {
           case 'ring':
             s += sketch(rng, circ(rng, x, y, r), true, featInk, { fill: headFill, w: 1.9 });
@@ -770,22 +807,52 @@
             s += spin(`<path d="${d}" stroke="${col}" stroke-width="1.6" stroke-linecap="round"/>`, x, y);
             break;
           }
-          case 'sleepy':
-            s += sketch(rng, [[x - r, y - 1], [x - r * 0.5, y + r * 0.45], [x + r * 0.5, y + r * 0.45], [x + r, y - 1]], false, featInk, { w: 2, step: 5 });
+          case 'hollow':
+            // an empty black socket with a single burning pinprick
+            s += sketch(rng, circ(rng, x, y, r * 1.15), true, featInk, { fill: featInk, w: 1.8, ghost: false });
+            s += `<circle cx="${f(x + jit(rng, 1.2))}" cy="${f(y + 1)}" r="${f(r * 0.24)}" fill="${eyeHex || headFill}"/>`;
             break;
-          case 'hearts':
-            s += sketch(rng, heartPts(x, y, r * 1.1), true, col === featInk ? featInk : col, { fill: eyeHex ? eyeHex : featInk, w: 1.6, ghost: false });
+          case 'slit': {
+            // almond eye with a vertical predator slit
+            const al = [[x - r * 1.3, y], [x - r * 0.4, y - r * 0.8], [x + r * 0.4, y - r * 0.8], [x + r * 1.3, y], [x + r * 0.4, y + r * 0.8], [x - r * 0.4, y + r * 0.8]];
+            s += sketch(rng, al, true, featInk, { fill: eyeHex || headFill, w: 1.8, ghost: false });
+            s += `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(r * 0.18)}" ry="${f(r * 0.7)}" fill="${featInk === headFill ? ink : (eyeHex ? '#0a0a0a' : featInk)}"/>`;
+            break;
+          }
+          case 'bleeding': {
+            s += sketch(rng, circ(rng, x, y, r), true, featInk, { fill: headFill, w: 1.9 });
+            s += `<circle cx="${f(x + jit(rng, 1.5))}" cy="${f(y + jit(rng, 1.5))}" r="${f(r * 0.42)}" fill="${col}"/>`;
+            const len = 16 + rng() * 18, bx = x + jit(rng, 3);
+            s += `<path d="M${f(bx - 2.4)},${f(y + r - 1)}L${f(bx - 1.6)},${f(y + r + len)}Q${f(bx)},${f(y + r + len + 6)} ${f(bx + 1.6)},${f(y + r + len)}L${f(bx + 2.4)},${f(y + r - 1)}Z" fill="#c0001a"/>`;
+            break;
+          }
+          case 'third_eye':
+            s += sketch(rng, circ(rng, x, y, r), true, featInk, { fill: headFill, w: 1.9 });
+            s += `<circle cx="${f(x + jit(rng, 1.5))}" cy="${f(y + jit(rng, 1.5))}" r="${f(r * 0.42)}" fill="${col}"/>`;
             break;
         }
       }
+    }
+
+    // 1/1 third eye: a vertical glowing eye in the middle of the forehead
+    if (t.eyes === 'third_eye') {
+      const x = HX, y = Math.min(eyes[0].y, eyes[1].y) - 30, r = 9;
+      s += glow(x, y, r * 1.8);
+      s += sketch(rng, [[x, y - r * 1.4], [x + r * 0.8, y - r * 0.4], [x + r * 0.8, y + r * 0.4], [x, y + r * 1.4], [x - r * 0.8, y + r * 0.4], [x - r * 0.8, y - r * 0.4]], true, featInk, { fill: headFill, w: 1.8, ghost: false });
+      s += `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(r * 0.35)}" ry="${f(r * 0.7)}" fill="${col}"/>`;
     }
 
     /* brows */
     const lines = [];
     for (const e of eyes) {
       const side = e.x < HX ? -1 : 1, by = e.y - e.r - 9;
-      if (t.brows === 'worried') lines.push([[e.x + side * 12, by + 3], [e.x - side * 8, by - 5]]);
-      if (t.brows === 'angry') lines.push([[e.x + side * 12, by - 5], [e.x - side * 9, by + 4]]);
+      if (t.brows === 'angry' || t.brows === 'scarred') lines.push([[e.x + side * 13, by - 7], [e.x - side * 10, by + 5]]);
+    }
+    if (t.brows === 'scarred') {
+      // a slash straight down through the left eye, stitched shut
+      const e = eyes[0], x0 = e.x + 8, y0 = e.y - 30, x1 = e.x - 10, y1 = e.y + 26;
+      lines.push([[x0, y0], [x1, y1]]);
+      for (let k = 1; k < 5; k++) { const t2 = k / 5, px = x0 + (x1 - x0) * t2, py = y0 + (y1 - y0) * t2; lines.push([[px - 5, py - 2], [px + 5, py + 2]]); }
     }
     if (t.brows === 'wrinkles') {
       const by = Math.min(eyes[0].y, eyes[1].y) - 26;
@@ -808,15 +875,35 @@
     const FS = 1.3; // face-feature scale (mouth + nose)
     const mlines = []; let ms = '';
     const my = ny + 9;
+    const tooth = headFill === ink ? '#f4f4f2' : (headFill === featInk ? '#f4f4f2' : headFill);
+    const fangPair = (y0, len) => sketch(rng, [[nx - 10, y0], [nx - 7, y0 + len], [nx - 4, y0 + 1]], true, featInk, { fill: tooth, w: 1.3, ghost: false, step: 3 }) +
+      sketch(rng, [[nx + 4, y0 + 1], [nx + 7, y0 + len], [nx + 10, y0]], true, featInk, { fill: tooth, w: 1.3, ghost: false, step: 3 });
     switch (t.mouth) {
-      case 'smile':
+      case 'fangs':
         mlines.push([[nx, ny + 4], [nx, my + 3]]);
-        mlines.push([[nx - 13, my + 1], [nx - 6, my + 7], [nx, my + 3], [nx + 6, my + 7], [nx + 13, my + 1]]);
+        mlines.push([[nx - 15, my + 1], [nx - 7, my + 4], [nx, my + 3], [nx + 7, my + 4], [nx + 15, my + 1]]);
+        ms += fangPair(my + 3, 11);
         break;
-      case 'flat':
-        mlines.push([[nx, ny + 4], [nx, my + 4]]);
-        mlines.push([[nx - 11, my + 5], [nx + 11, my + 4]]);
+      case 'drool': {
+        mlines.push([[nx, ny + 4], [nx, my + 3]]);
+        mlines.push([[nx - 15, my + 1], [nx - 7, my + 4], [nx, my + 3], [nx + 7, my + 4], [nx + 15, my + 1]]);
+        ms += fangPair(my + 3, 11);
+        const dx = nx + 13, len = 14 + rng() * 10;
+        ms += `<path d="M${f(dx - 1.6)},${f(my + 2)}L${f(dx - 1)},${f(my + len)}Q${f(dx)},${f(my + len + 5)} ${f(dx + 1)},${f(my + len)}L${f(dx + 1.6)},${f(my + 2)}Z" fill="${featInk}" opacity=".8"/>`;
         break;
+      }
+      case 'snarl': {
+        // open maw with a jagged row of teeth top and bottom
+        mlines.push([[nx, ny + 4], [nx, my]]);
+        ms += sketch(rng, [[nx - 16, my], [nx + 16, my - 1], [nx + 11, my + 15], [nx - 11, my + 15]], true, featInk, { fill: featInk, w: 1.6, ghost: false });
+        let top = `M${f(nx - 15)},${f(my)}`;
+        for (let i = 0; i < 6; i++) top += `L${f(nx - 12.5 + i * 5)},${f(my + 5 + (i % 2) * 2)}L${f(nx - 10 + i * 5)},${f(my)}`;
+        ms += `<path d="${top}Z" fill="${tooth}"/>`;
+        let bot = `M${f(nx - 10)},${f(my + 15)}`;
+        for (let i = 0; i < 4; i++) bot += `L${f(nx - 7.5 + i * 5)},${f(my + 10)}L${f(nx - 5 + i * 5)},${f(my + 15)}`;
+        ms += `<path d="${bot}Z" fill="${tooth}"/>`;
+        break;
+      }
       case 'frown':
         mlines.push([[nx, ny + 4], [nx, my + 2]]);
         mlines.push([[nx - 13, my + 10], [nx - 6, my + 3], [nx + 6, my + 3], [nx + 13, my + 10]]);
@@ -824,11 +911,6 @@
       case 'open':
         mlines.push([[nx, ny + 4], [nx, my + 1]]);
         ms += sketch(rng, [[nx - 12, my + 2], [nx + 12, my + 2], [nx + 8, my + 13], [nx - 8, my + 13]], true, featInk, { fill: featInk, w: 1.6, ghost: false });
-        break;
-      case 'blep':
-        mlines.push([[nx, ny + 4], [nx, my + 3]]);
-        mlines.push([[nx - 13, my + 1], [nx - 6, my + 7], [nx, my + 3], [nx + 6, my + 7], [nx + 13, my + 1]]);
-        ms += sketch(rng, [[nx - 4, my + 5], [nx - 4, my + 13], [nx, my + 16], [nx + 4, my + 13], [nx + 4, my + 5]], false, featInk, { w: 1.5, step: 4, ghost: false });
         break;
       case 'stitched': {
         mlines.push([[nx - 15, my + 5], [nx + 15, my + 4]]);
@@ -858,8 +940,9 @@
       case 'hollow_o':
         ns = sketch(rng, circ(rng, nx, ny - 1, 5, 8), true, featInk, { w: 1.7, fill: headFill, ghost: false });
         break;
-      case 'heart':
-        ns = `<path d="${closedD(heartPts(nx, ny - 1, 7))}" fill="${featInk}"/>`;
+      case 'skull':
+        // upside-down heart: the nasal cavity of a skull
+        ns = `<g transform="translate(0 ${f(2 * (ny - 1))}) scale(1 -1)"><path d="${closedD(heartPts(nx, ny - 1, 7))}" fill="${featInk}"/></g>`;
         break;
     }
     // mouth + nose drawn in a scaled group so they read at thumbnail size
