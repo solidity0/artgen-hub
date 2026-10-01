@@ -77,7 +77,10 @@ const TRAITS = {
     { id: 'cream',  hex: '#E8C384', weight: 16, rarity: 'common' },
     { id: 'cocoa',  hex: '#87512C', weight: 12, rarity: 'uncommon' },
     { id: 'ink',    hex: '#34343C', weight: 10, rarity: 'uncommon' },
-    { id: 'golden', hex: '#F4AF1C', weight: 4,  rarity: 'rare' }
+    { id: 'golden', hex: '#F4AF1C', weight: 4,  rarity: 'rare' },
+    { id: 'rust',    hex: '#B4532A', weight: 8,  rarity: 'uncommon' },
+    { id: 'teal',    hex: '#178F96', weight: 8,  rarity: 'uncommon' },
+    { id: 'crimson', hex: '#B3122E', weight: 5,  rarity: 'rare' }
   ],
   hair: [
     { id: 'antenna',  weight: 30, rarity: 'common' },
@@ -197,7 +200,9 @@ const TRAITS = {
     { id: 'dog',       weight: 13, rarity: 'uncommon', vibe: 'friendly' },
     { id: 'bird',      weight: 7,  rarity: 'uncommon', vibe: 'friendly' },
     { id: 'cat_ghost', weight: 3,  rarity: 'rare' },
-    { id: 'bunny',     weight: 2,  rarity: 'rare', vibe: 'friendly' }
+    { id: 'bunny',     weight: 2,  rarity: 'rare', vibe: 'friendly' },
+    { id: 'drone',     weight: 6,  rarity: 'uncommon' },
+    { id: 'robo_dog',  weight: 5,  rarity: 'uncommon' }
   ]
 };
 
@@ -709,7 +714,7 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
   const leg = (lx, top, len) => '<path d="' + pathD(chalkLine([[lx, top], [lx, top + len]], rng, 0.6)) + '" stroke="' + ink + '" stroke-width="9" stroke-linecap="round" fill="none"/>' +
     '<path d="' + pathD([[lx, top], [lx, top + len]]) + '" stroke="' + fill + '" stroke-width="4.5" stroke-linecap="round" fill="none"/>';
   let o = '<g transform="translate(' + x + ',' + y + ') scale(1.3)">';
-  o += '<ellipse cx="4" cy="1" rx="' + (style === 'bird' ? 20 : 38) + '" ry="5" fill="#000" opacity="' + (dark ? 0.45 : 0.12) + '"/>';
+  o += '<ellipse cx="4" cy="1" rx="' + (style === 'bird' ? 20 : style === 'drone' ? 22 : 38) + '" ry="' + (style === 'drone' ? 3.5 : 5) + '" fill="#000" opacity="' + (dark ? 0.45 : style === 'drone' ? 0.08 : 0.12) + '"/>';
 
   if (style === 'cat' || style === 'cat_ghost') {
     if (ghost) o += '<ellipse cx="6" cy="-26" rx="46" ry="34" fill="#C9BCFF" opacity=".25"/>';
@@ -745,6 +750,42 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
     o += poly([[17, -34], [30, -30], [17, -26]], '#FFB23E');
     o += '<path d="M -2 -45 Q 2 -54 6 -46 Q 8 -54 12 -45" stroke="' + ink + '" stroke-width="2" fill="none" stroke-linecap="round"/>';
     o += eye(9, -34, 3.4) + cheek(8, -26);
+  } else if (style === 'drone') {
+    // hovering quad-drone: body pod, two rotor arms, camera eye, landing skids
+    const rect = (x0, y0, w, h, f) => poly([[x0, y0], [x0 + w, y0], [x0 + w, y0 + h], [x0, y0 + h]], f);
+    const metal = '#6b737d';
+    for (const sd of [-1, 1]) {
+      o += '<path d="M ' + (sd * 14) + ' -74 L ' + (sd * 34) + ' -82" stroke="' + ink + '" stroke-width="7" stroke-linecap="round"/><path d="M ' + (sd * 14) + ' -74 L ' + (sd * 34) + ' -82" stroke="' + metal + '" stroke-width="3" stroke-linecap="round"/>';
+      o += rect(sd * 34 - 4, -88, 8, 7, metal);
+      o += '<ellipse cx="' + (sd * 34) + '" cy="-90" rx="17" ry="3" fill="#9aa3ad" opacity=".75" stroke="' + ink + '" stroke-width="1.6"/>';
+      o += '<path d="M ' + (sd * 34 - 20) + ' -95 L ' + (sd * 34 - 12) + ' -95 M ' + (sd * 34 + 12) + ' -95 L ' + (sd * 34 + 20) + ' -95" stroke="' + ink + '" stroke-width="1.4" opacity=".5"/>';
+    }
+    o += poly([[-20, -82], [20, -82], [24, -68], [16, -60], [-16, -60], [-24, -68]]);
+    o += '<path d="M -14 -76 L 14 -76" stroke="' + shade + '" stroke-width="2.5" stroke-linecap="round"/>';
+    o += '<circle cx="0" cy="-58" r="7.5" fill="#2b2f36" stroke="' + ink + '" stroke-width="2.2"/><circle cx="0" cy="-58" r="4.2" fill="#0b0d12"/><circle cx="0" cy="-58" r="2" fill="#ff3b3b"/><circle cx="-1.6" cy="-59.8" r="0.9" fill="#ffffff"/>';
+    o += '<path d="M -14 -60 L -18 -50 M 14 -60 L 18 -50 M -24 -50 L -10 -50 M 10 -50 L 24 -50" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>';
+    o += '<circle cx="0" cy="-86" r="2.4" fill="#7dff3a" stroke="' + ink + '" stroke-width="1.2"/>';
+  } else if (style === 'robo_dog') {
+    // mechanical quadruped: riveted torso, jointed legs, visor head, antenna tail
+    const rect = (x0, y0, w, h, f) => poly([[x0, y0], [x0 + w, y0], [x0 + w, y0 + h], [x0, y0 + h]], f);
+    const metal = '#6b737d';
+    o += '<path d="M -28 -34 L -40 -48" stroke="' + ink + '" stroke-width="6" stroke-linecap="round"/><path d="M -28 -34 L -40 -48" stroke="' + metal + '" stroke-width="2.6" stroke-linecap="round"/>';
+    o += '<circle cx="-41" cy="-50" r="3.4" fill="#ff3b3b" stroke="' + ink + '" stroke-width="1.4"/>';
+    for (const lx of [-20, -8, 10, 22]) {
+      o += '<path d="M ' + lx + ' -22 L ' + (lx - 3) + ' -11 L ' + lx + ' 0" stroke="' + ink + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+      o += '<path d="M ' + lx + ' -22 L ' + (lx - 3) + ' -11 L ' + lx + ' 0" stroke="' + metal + '" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+      o += '<circle cx="' + (lx - 3) + '" cy="-11" r="2.6" fill="' + shade + '" stroke="' + ink + '" stroke-width="1.2"/>';
+      o += rect(lx - 4, -2, 9, 4, '#3a3f46');
+    }
+    o += rect(-28, -38, 56, 18);
+    o += '<path d="M -18 -29 L 14 -29" stroke="' + shade + '" stroke-width="2.4" stroke-linecap="round"/>';
+    for (const rx of [-23, 23]) o += '<circle cx="' + rx + '" cy="-33" r="1.8" fill="#c9d0d8" stroke="' + ink + '" stroke-width="1"/>';
+    o += '<path d="M 22 -38 L 26 -46" stroke="' + ink + '" stroke-width="7" stroke-linecap="round"/><path d="M 22 -38 L 26 -46" stroke="' + metal + '" stroke-width="3" stroke-linecap="round"/>';
+    o += rect(20, -64, 30, 20);
+    o += rect(32, -56, 22, 10, shadeColor(fill, -18));
+    o += '<rect x="25" y="-60" width="18" height="5" rx="2.5" fill="#0b0d12"/><rect x="27" y="-59" width="14" height="3" rx="1.5" fill="#5fe1ff"/>';
+    o += poly([[22, -64], [24, -74], [30, -64]], shade) + poly([[36, -64], [40, -74], [44, -64]], shade);
+    o += '<path d="M 44 -47 L 50 -47" stroke="' + ink + '" stroke-width="1.6" stroke-linecap="round"/>';
   } else if (style === 'bunny') {
     o += blob(-26, -24, 8, 8, '#ffffff');
     for (const lx of [-12, 12]) o += blob(lx, -7, 9, 5);
@@ -1214,7 +1255,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'blood_night', weight: 14 }, { id: 'concrete', weight: 8 }, { id: 'ash', weight: 8 }, { id: 'sand', weight: 8 }, { id: 'smog', weight: 8 }, { id: 'rust_haze', weight: 8 }],
   bodyColor: [{ id: 'steel', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
-  companionColor: [{ id: 'golden', weight: 30 }, { id: 'ink', weight: 20 }],
+  companionColor: [{ id: 'golden', weight: 30 }, { id: 'ink', weight: 20 }, { id: 'rust', weight: 18 }, { id: 'teal', weight: 18 }, { id: 'crimson', weight: 18 }],
   hair: [{ id: 'cables', weight: 30 }, { id: 'fin', weight: 26 }, { id: 'none', weight: 24 }, { id: 'twin_antenna', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
   eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }, { id: 'glare', weight: 24 }, { id: 'cracked', weight: 18 }],
@@ -1232,7 +1273,7 @@ const ONE_OF_ONE_WEIGHTS = {
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }, { id: 'blood_moon', weight: 60 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
   grassColor: [{ id: 'default', weight: 50 }, { id: 'white', weight: 30 }, { id: 'green', weight: 20 }],
-  companion: [{ id: 'none', weight: 24 }, { id: 'bunny', weight: 16 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 16 }, { id: 'cat', weight: 16 }, { id: 'cat_ghost', weight: 12 }]
+  companion: [{ id: 'none', weight: 24 }, { id: 'bunny', weight: 16 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 16 }, { id: 'cat', weight: 16 }, { id: 'cat_ghost', weight: 12 }, { id: 'drone', weight: 14 }, { id: 'robo_dog', weight: 14 }]
 };
 function pickOneOfOne(category, rng, vibe) {
   const ok = new Set(vibePool(TRAITS[category], vibe).map((o) => o.id));

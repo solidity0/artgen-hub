@@ -119,7 +119,7 @@ with knee bolts and riveted plates — often joined by a small companion creatur
 | arms · hands · feet | 7 · 7 · 4 — spring, telescopic, floating… · claw, pincer, hook, magnet, plug… · pointed, robot blocks, claw feet, peg legs |
 | topper · ears · eyes · eyeColor · mouth | 5 (antenna, twin antenna, cables, fin, none) · 6 · 5 camera-lens optics (+ glare, cracked) · 4 (+ toxic) · 5 (grille, vent, zipper, LED bar, fang grille; + jaws) |
 | chestMark | 12 — x cross, slash, target, vent, hazard, barcode, skull, emoji fire/skull, … |
-| companion · companionColor | 6 (cat, dog, bird, ghost cat, bunny) · 8 |
+| companion · companionColor | 8 (cat, dog, bird, ghost cat, bunny, drone, robo-dog) · 11 (incl. rust, teal, crimson) |
 | background · sky · ground · grassColor | 10 — cream, white, concrete, ash, sand, smog, rust haze, black, deep black, midnight (+ blood night) · 3 (+ blood moon) · 4 · 3 |
 
 1/1-only chest marks and grass colours, signature combos, and per-category
