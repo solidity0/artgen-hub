@@ -38,17 +38,17 @@ const TRAITS = {
     { id: 'scary',    weight: 35, rarity: 'common' }
   ],
   background: [
-    { id: 'cream', hex: '#F8E2C0', weight: 42, rarity: 'common', vibe: 'friendly' },
+    { id: 'cream', hex: '#F4D6A8', weight: 42, rarity: 'common', vibe: 'friendly' },
     { id: 'white', hex: '#FFFFFF', weight: 38, rarity: 'common', vibe: 'friendly' },
     { id: 'black', hex: '#141414', weight: 12, rarity: 'rare' },
     { id: 'deep_black', hex: '#000000', weight: 8, rarity: 'rare' },
     { id: 'midnight', hex: '#1B1F3B', weight: 8,  rarity: 'rare' },
     { id: 'blood_night', hex: '#2e060b', weight: 10, rarity: 'rare', vibe: 'scary' },
-    { id: 'concrete', hex: '#D6D3CC', weight: 34, rarity: 'common',   vibe: 'friendly' },
-    { id: 'ash',      hex: '#BFC3C7', weight: 30, rarity: 'common',   vibe: 'friendly' },
-    { id: 'sand',     hex: '#DCCDB0', weight: 28, rarity: 'common',   vibe: 'friendly' },
-    { id: 'smog',     hex: '#A8AEA6', weight: 24, rarity: 'uncommon', vibe: 'friendly' },
-    { id: 'rust_haze',hex: '#CFAE93', weight: 20, rarity: 'uncommon', vibe: 'friendly' }
+    { id: 'concrete', hex: '#CFC3AD', weight: 34, rarity: 'common',   vibe: 'friendly' },
+    { id: 'ash',      hex: '#A9B7C6', weight: 30, rarity: 'common',   vibe: 'friendly' },
+    { id: 'sand',     hex: '#DEBC7E', weight: 28, rarity: 'common',   vibe: 'friendly' },
+    { id: 'smog',     hex: '#9AAE93', weight: 24, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'rust_haze',hex: '#D49564', weight: 20, rarity: 'uncommon', vibe: 'friendly' }
   ],
   bodyColor: [
     { id: 'classic',   weight: 6, rarity: 'common' },               // unfilled: the v1 look
@@ -66,18 +66,18 @@ const TRAITS = {
     { id: 'gunmetal',  hex: '#4E5660', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
     { id: 'gold',      hex: '#E8A512', weight: 1.5, rarity: 'rare' },
-    { id: 'purple',    hex: '#6B3FD1', weight: 1.2, rarity: 'rare' },
+    { id: 'purple',    hex: '#6526E0', weight: 1.2, rarity: 'rare' },
     { id: 'obsidian',  hex: '#2B2640', weight: 1,   rarity: 'rare' }
   ],
   companionColor: [
     { id: 'none',   weight: 0,  rarity: 'common' },                 // only when there is no companion
-    { id: 'snow',   hex: '#FAFAF7', weight: 24, rarity: 'common' },
-    { id: 'ginger', hex: '#F29B4B', weight: 22, rarity: 'common' },
-    { id: 'gray',   hex: '#A9ADB5', weight: 18, rarity: 'common' },
-    { id: 'cream',  hex: '#F3E3C3', weight: 16, rarity: 'common' },
-    { id: 'cocoa',  hex: '#9A6B4B', weight: 12, rarity: 'uncommon' },
+    { id: 'snow',   hex: '#F3F0E8', weight: 24, rarity: 'common' },
+    { id: 'ginger', hex: '#F07A22', weight: 22, rarity: 'common' },
+    { id: 'gray',   hex: '#7C8695', weight: 18, rarity: 'common' },
+    { id: 'cream',  hex: '#E8C384', weight: 16, rarity: 'common' },
+    { id: 'cocoa',  hex: '#87512C', weight: 12, rarity: 'uncommon' },
     { id: 'ink',    hex: '#34343C', weight: 10, rarity: 'uncommon' },
-    { id: 'golden', hex: '#F7C948', weight: 4,  rarity: 'rare' }
+    { id: 'golden', hex: '#F4AF1C', weight: 4,  rarity: 'rare' }
   ],
   hair: [
     { id: 'antenna',  weight: 30, rarity: 'common' },
@@ -188,7 +188,7 @@ const TRAITS = {
   ],
   grassColor: [
     { id: 'default', weight: 60, rarity: 'common' },
-    { id: 'green',   hex: '#3fa34d', weight: 26, rarity: 'uncommon' },
+    { id: 'green',   hex: '#22b043', weight: 26, rarity: 'uncommon' },
     { id: 'white',   hex: '#ffffff', weight: 14, rarity: 'rare' }
   ],
   companion: [
@@ -771,8 +771,8 @@ function wobblyRect(x0, y0, x1, y1, rng, amt) {
 function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const id = bodyColor ? bodyColor.id : 'classic';
   if (id === 'classic') {
-    const f = dark ? '#262626' : bg.hex;
-    return { fill: f, shade: dark ? '#000000' : shadeColor(bg.hex, -22), shoe: dark ? '#3a3a3a' : shadeColor(bg.hex, -12), defs: '', glow: '#ffffff', classic: true };
+    const f = dark ? '#262626' : shadeColor(bg.hex, -16);
+    return { fill: f, shade: dark ? '#000000' : shadeColor(bg.hex, -34), shoe: dark ? '#3a3a3a' : shadeColor(bg.hex, -26), defs: '', glow: '#ffffff', classic: true };
   }
   const gid = 'bf' + (suffix || '') + uid;
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
@@ -956,8 +956,9 @@ function renderFromTraits(picks, index, seed, opts) {
   let defs = paint.defs, bodyRivets = '';
   let back = '';
   // ---- backdrop: soft halo behind the head + paper grain ----
-  const haloFill = scary ? '#ff2a2a' : dark ? (paint.classic ? '#ffffff' : paint.glow) : (bg.id === 'white' ? '#f3f1ec' : '#ffffff');
-  const haloOp = scary ? 0.13 : dark ? 0.1 : (bg.id === 'white' ? 1 : 0.55);
+  const haloFill = scary ? '#ff2a2a' : dark ? (paint.classic ? '#ffffff' : paint.glow) : (bg.id === 'white' ? '#e9e6df' : '#ffffff');
+  // a light touch only: a strong pale disc behind the bot washed the whole centre out
+  const haloOp = scary ? 0.13 : dark ? 0.1 : (bg.id === 'white' ? 0.7 : 0.26);
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="196" fill="' + haloFill + '" opacity="' + haloOp + '"/>';
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="228" fill="' + haloFill + '" opacity="' + (haloOp * 0.35).toFixed(2) + '"/>';
   let grain = '';
