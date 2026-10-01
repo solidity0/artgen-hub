@@ -254,7 +254,7 @@ const TRAITS = {
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
     { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon' },
     { id: 'steel',     hex: '#56789A', weight: 6, rarity: 'common' },
-    { id: 'gunmetal',  hex: '#4E5660', weight: 6, rarity: 'common' },
+    { id: 'gunmetal',  hex: '#3B5068', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
     { id: 'gold',      hex: '#E8A512', weight: 1.5, rarity: 'rare' },
     { id: 'purple',    hex: '#6526E0', weight: 1.2, rarity: 'rare' },
@@ -968,6 +968,7 @@ function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const gid = 'bf' + (suffix || '') + uid;
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
+  if (id === 'gunmetal') return { fill: 'url(#' + gid + ')', shade: '#141d28', shoe: '#2a3a4c', glow: '#7f9bb8', defs: grad(['#6d87a3', '#2c3d50', '#5a7390', '#1f2c3b', '#4d6683']) };
   if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#7a4a00', shoe: '#b8790a', glow: '#ffc21f', defs: grad(['#ffcf3a', '#d4900a', '#ffbe1a', '#a86a04', '#f0a912']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
   return { fill: bodyColor.hex, shade: shadeColor(bodyColor.hex, -34), shoe: shadeColor(bodyColor.hex, -22), glow: bodyColor.hex, defs: '' };
