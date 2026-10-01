@@ -249,14 +249,14 @@ const TRAITS = {
     { id: 'burgundy',  hex: '#8C0F2E', weight: 4, rarity: 'uncommon' },
     { id: 'espresso',  hex: '#5A2E1E', weight: 4, rarity: 'uncommon' },
     { id: 'forest',    hex: '#05873C', weight: 4, rarity: 'uncommon' },
-    { id: 'teal',      hex: '#00897B', weight: 4, rarity: 'uncommon' },
-    { id: 'petrol',    hex: '#0B6F8F', weight: 4, rarity: 'uncommon' },
+    { id: 'teal',      hex: '#009683', weight: 4, rarity: 'uncommon' },
+    { id: 'petrol',    hex: '#00709E', weight: 4, rarity: 'uncommon' },
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
     { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon' },
     { id: 'steel',     hex: '#4A73A0', weight: 6, rarity: 'common' },
     { id: 'gunmetal',  hex: '#3B5068', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
-    { id: 'gold',      hex: '#E8A512', weight: 1.5, rarity: 'rare' },
+    { id: 'gold',      hex: '#EBA000', weight: 1.5, rarity: 'rare' },
     { id: 'purple',    hex: '#6526E0', weight: 1.2, rarity: 'rare' },
     { id: 'obsidian',  hex: '#2B2640', weight: 1,   rarity: 'rare' }
   ],
@@ -981,15 +981,15 @@ function wobblyRect(x0, y0, x1, y1, rng, amt) {
 function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const id = bodyColor ? bodyColor.id : 'classic';
   if (id === 'classic') {
-    const f = dark ? '#262626' : shadeColor(bg.hex, -16);
-    return { fill: f, shade: dark ? '#000000' : shadeColor(bg.hex, -34), shoe: dark ? '#3a3a3a' : shadeColor(bg.hex, -26), defs: '', glow: '#ffffff', classic: true };
+    const f = dark ? '#262626' : shadeColor(bg.hex, -26);
+    return { fill: f, shade: dark ? '#000000' : shadeColor(bg.hex, -44), shoe: dark ? '#3a3a3a' : shadeColor(bg.hex, -36), defs: '', glow: '#ffffff', classic: true };
   }
   const gid = 'bf' + (suffix || '') + uid;
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
-  if (id === 'steel') return { fill: 'url(#' + gid + ')', shade: '#1f3550', shoe: '#3d5f85', glow: '#8fb4dc', defs: grad(['#8fb4dc', '#3a6290', '#78a2d0', '#2a4d78', '#6890c2']) };
-  if (id === 'gunmetal') return { fill: 'url(#' + gid + ')', shade: '#141d28', shoe: '#2a3a4c', glow: '#7f9bb8', defs: grad(['#6d87a3', '#2c3d50', '#5a7390', '#1f2c3b', '#4d6683']) };
-  if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#7a4a00', shoe: '#b8790a', glow: '#ffc21f', defs: grad(['#ffcf3a', '#d4900a', '#ffbe1a', '#a86a04', '#f0a912']) };
+  if (id === 'steel') return { fill: 'url(#' + gid + ')', shade: '#17304e', shoe: '#33598a', glow: '#6fa0dc', defs: grad(['#7aa8de', '#2c5a90', '#6598d2', '#1f4474', '#5587c4']) };
+  if (id === 'gunmetal') return { fill: 'url(#' + gid + ')', shade: '#141d28', shoe: '#2a3a4c', glow: '#7f9bb8', defs: grad(['#6584aa', '#24374d', '#4f6e94', '#182537', '#45638c']) };
+  if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#5e3500', shoe: '#a86800', glow: '#ffae00', defs: grad(['#ffbf14', '#c98000', '#f5aa00', '#985a00', '#e89800']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
   return { fill: bodyColor.hex, shade: shadeColor(bodyColor.hex, -34), shoe: shadeColor(bodyColor.hex, -22), glow: bodyColor.hex, defs: '' };
 }
@@ -1185,7 +1185,7 @@ function renderFromTraits(picks, index, seed, opts) {
   // ---- backdrop: soft halo behind the head + paper grain ----
   const haloFill = scary ? '#ff2a2a' : dark ? (paint.classic ? '#ffffff' : paint.glow) : (bg.id === 'white' ? '#e9e6df' : '#ffffff');
   // a light touch only: a strong pale disc behind the bot washed the whole centre out
-  const haloOp = scary ? 0.13 : dark ? 0.1 : (bg.id === 'white' ? 0.7 : 0.26);
+  const haloOp = scary ? 0.13 : dark ? 0.06 : (bg.id === 'white' ? 0.7 : 0.16);
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="196" fill="' + haloFill + '" opacity="' + haloOp + '"/>';
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="228" fill="' + haloFill + '" opacity="' + (haloOp * 0.35).toFixed(2) + '"/>';
   let grain = '';
@@ -1286,7 +1286,7 @@ function renderFromTraits(picks, index, seed, opts) {
     for (const [x, y] of moved) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
     const cid = 'sc' + key + uid;
     defs += '<clipPath id="' + cid + '"><path d="' + pathD(moved) + ' Z"/></clipPath>';
-    o += '<rect x="' + (x0 + 3).toFixed(1) + '" y="' + (y0 + 3).toFixed(1) + '" width="' + (x1 - x0 - 6).toFixed(1) + '" height="' + (y1 - y0 - 6).toFixed(1) + '" fill="url(#' + pat + uid + ')" mask="url(#hm' + uid + ')" clip-path="url(#' + cid + ')" opacity="' + (pp.classic ? 0.35 : 0.55) + '"/>';
+    o += '<rect x="' + (x0 + 3).toFixed(1) + '" y="' + (y0 + 3).toFixed(1) + '" width="' + (x1 - x0 - 6).toFixed(1) + '" height="' + (y1 - y0 - 6).toFixed(1) + '" fill="url(#' + pat + uid + ')" mask="url(#hm' + uid + ')" clip-path="url(#' + cid + ')" opacity="' + (pp.classic ? 0.35 : pp.fill.startsWith('url(') ? 0.32 : 0.55) + '"/>';
     return o;
   };
 
