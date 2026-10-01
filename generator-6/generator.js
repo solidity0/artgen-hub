@@ -60,9 +60,9 @@ const TRAITS = {
   skinTone: [
     { id: 'corpse',   weight: 26, hex: '#e6e6e6', rarity: 'common', vibe: 'scary' },
     { id: 'ghoul',    weight: 20, hex: '#8c8c8c', rarity: 'common', vibe: 'scary' },
-    { id: 'zombie',   weight: 16, hex: '#8fae6a', rarity: 'uncommon', vibe: 'scary' },
-    { id: 'ghost',    weight: 12, hex: '#b9d3de', rarity: 'uncommon', vibe: 'scary' },
-    { id: 'bruised',  weight: 12, hex: '#8e6f9e', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'zombie',   weight: 16, hex: '#7cab4c', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'ghost',    weight: 12, hex: '#9ccde4', rarity: 'uncommon', vibe: 'scary' },
+    { id: 'bruised',  weight: 12, hex: '#82589e', rarity: 'uncommon', vibe: 'scary' },
     { id: 'blood',    weight: 8,  hex: '#b8322f', rarity: 'rare', vibe: 'scary' },
     { id: 'shadow',   weight: 6,  hex: '#1a1a1a', rarity: 'rare', vibe: 'scary' },
     { id: 'white',    weight: 30, hex: '#ffffff', rarity: 'common',   vibe: 'cute' },

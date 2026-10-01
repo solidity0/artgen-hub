@@ -134,12 +134,12 @@ const TRAITS = {
   ],
   eyeColor: [
     { id: 'black',  weight: 38, hex: '#111111', glow: '#444444', rarity: 'common' },
-    { id: 'blue',   weight: 32, hex: '#627eea', glow: '#8ba4ff', rarity: 'uncommon' },
+    { id: 'blue',   weight: 32, hex: '#4a6cff', glow: '#6f8eff', rarity: 'uncommon' },
     { id: 'orange', weight: 22, hex: '#f7931a', glow: '#ffb347', rarity: 'uncommon' },
-    { id: 'green',  weight: 20, hex: '#2ecc40', glow: '#5eff70', rarity: 'uncommon' },
-    { id: 'red',    weight: 10, hex: '#e63e3e', glow: '#ff6b6b', rarity: 'rare' },
+    { id: 'green',  weight: 20, hex: '#2ecc40', glow: '#3cff58', rarity: 'uncommon' },
+    { id: 'red',    weight: 10, hex: '#e63e3e', glow: '#ff4f4f', rarity: 'rare' },
     { id: 'white',  weight: 6,  hex: '#ffffff', glow: '#ffffff', rarity: 'rare' },
-    { id: 'purple', weight: 8,  hex: '#a855f7', glow: '#d8b4fe', rarity: 'rare' }
+    { id: 'purple', weight: 8,  hex: '#9b3df5', glow: '#b77cfb', rarity: 'rare' }
   ],
   eyeStyle: [
     { id: 'starburst',     weight: 42, rarity: 'common' },
