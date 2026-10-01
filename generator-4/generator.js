@@ -865,6 +865,21 @@ function halfWidthAt(pts, cx, y) {
   return best;
 }
 // Topmost y of a closed outline at column x (where hair roots sit).
+function bottomYAt(pts, x) {
+  let best = -Infinity;
+  for (let i = 0; i < pts.length; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % pts.length];
+    if ((x0 - x) * (x1 - x) > 0 || x0 === x1) continue;
+    best = Math.max(best, y0 + (y1 - y0) * (x - x0) / (x1 - x0));
+  }
+  return best;
+}
+// metal socket / bolt plate used where limbs join the body
+function socketAt(x, y, r, ink) {
+  return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r + '" fill="#59616b" stroke="' + ink + '" stroke-width="2.6"/>' +
+    '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * 0.45).toFixed(1) + '" fill="#3a3f46"/>' +
+    '<circle cx="' + (x - r * 0.15).toFixed(1) + '" cy="' + (y - r * 0.15).toFixed(1) + '" r="' + (r * 0.18).toFixed(1) + '" fill="#c9d0d8"/>';
+}
 function topYAt(pts, x) {
   let best = Infinity;
   for (let i = 0; i < pts.length; i++) {
@@ -1054,6 +1069,13 @@ function renderFromTraits(picks, index, seed, opts) {
   body += limb(legL, 1.2, peg, legFill) + limb(legR, 1.2, peg, legFill);
   // knee bolts
   for (const lx of [headCx - legX, headCx + legX]) body += joint(lx, (legTop + legEnd) / 2 + 6, peg ? 6 : 8);
+  // ankle collars above the feet and wrist collars where the hands attach
+  if (!peg) for (const lx of [headCx - legX, headCx + legX]) body += '<rect x="' + (lx - 12) + '" y="' + (legEnd - 9) + '" width="24" height="7" rx="2.5" fill="#59616b" stroke="' + ink + '" stroke-width="2.4"/>';
+  for (const a of arms) {
+    if (a.kind === 'stub') continue;
+    const e = a.pts[a.pts.length - 1];
+    body += socketAt(e[0], e[1], 6.5, ink);
+  }
   for (const h of hands) {
     let g = renderHand(h.x, h.y, picks.hands.id, rng, h.flip, handFill, ink);
     // hands read at thumbnail size (hands resting on the floor stay 1x so they sit on the ground)
@@ -1150,19 +1172,28 @@ function renderFromTraits(picks, index, seed, opts) {
   const neck = chalkLine([[headCx, neckTop - 2], [headCx, neckTop + neckLen + 2]], rng, 0.8); // rng draw kept
   void neck;
   // mechanical neck: ribbed metal conduit, two wires looping from head to body, bolted collars
-  const nT = neckTop - 2, nB = neckTop + neckLen + 4;
+  // span the real gap: some head shapes end above neckTop, some bodies start below it
+  let headBot = bottomYAt(headPts, headCx), bodyTopY = topYAt(bodyPts, headCx);
+  if (!Number.isFinite(headBot)) headBot = neckTop;
+  if (!Number.isFinite(bodyTopY)) bodyTopY = neckTop + neckLen;
+  const nT = headBot - 3, nB = bodyTopY + 4, nMid = (headBot + bodyTopY) / 2, nH = bodyTopY - headBot;
   body += '<rect x="' + (headCx - 7) + '" y="' + nT + '" width="14" height="' + (nB - nT) + '" rx="3" fill="#3a3f46" stroke="' + ink + '" stroke-width="3"/>';
   for (let y = nT + 4; y < nB - 1; y += 4) body += '<path d="M ' + (headCx - 6) + ' ' + y + ' L ' + (headCx + 6) + ' ' + y + '" stroke="#8a929c" stroke-width="1.6" stroke-linecap="round"/>';
   for (const [sd, wc] of [[-1, '#c8302a'], [1, '#2a6fd6']]) {
-    const wd = 'M ' + (headCx + sd * 11) + ' ' + (neckTop + 1) + ' C ' + (headCx + sd * 19) + ' ' + (neckTop + 7) + ' ' + (headCx + sd * 19) + ' ' + (neckTop + neckLen - 4) + ' ' + (headCx + sd * 12) + ' ' + (neckTop + neckLen + 3);
+    const wd = 'M ' + (headCx + sd * 11) + ' ' + (headBot + 1) + ' C ' + (headCx + sd * 19) + ' ' + (headBot + nH * 0.3).toFixed(1) + ' ' + (headCx + sd * 19) + ' ' + (bodyTopY - nH * 0.3).toFixed(1) + ' ' + (headCx + sd * 12) + ' ' + (bodyTopY + 2);
     body += '<path d="' + wd + '" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/><path d="' + wd + '" fill="none" stroke="' + wc + '" stroke-width="2.6" stroke-linecap="round"/>';
   }
   const collar = (y) => '<rect x="' + (headCx - 16) + '" y="' + (y - 3) + '" width="32" height="6" rx="2" fill="#59616b" stroke="' + ink + '" stroke-width="2.2"/>' +
     '<circle cx="' + (headCx - 11) + '" cy="' + y + '" r="1.4" fill="#c9d0d8"/><circle cx="' + (headCx + 11) + '" cy="' + y + '" r="1.4" fill="#c9d0d8"/>';
-  body += collar(neckTop);
+  body += collar(headBot + 1);
   body += block(bodyPts, 'b');
   // lower collar sits on the body plate (drawn after it so it stays visible)
-  body += collar(topYAt(bodyPts, headCx) + 2 || (neckTop + neckLen + 2));
+  body += collar(bodyTopY + 2);
+  void nMid;
+  // shoulder sockets where the arms leave the body, hip sockets where the legs do
+  { const sy = shoulderY + 4, hw = halfWidthAt(bodyPts, headCx, sy);
+    if (Number.isFinite(hw)) for (const sd of [-1, 1]) body += socketAt(headCx + sd * (hw - 2), sy, 9, ink);
+    for (const lx of [headCx - legX, headCx + legX]) { const by = bottomYAt(bodyPts, lx); if (Number.isFinite(by)) body += socketAt(lx, by - 3, 10, ink); } }
   bodyRivets = rivets(bodyPts, headCx, chestCy, ink);
   body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink, bodyKind === 'box' ? null : closeLoop(bodyPts));
   body += bodyRivets;
