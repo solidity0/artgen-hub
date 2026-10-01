@@ -57,12 +57,12 @@ const TRAITS = {
     { id: 'cherry',    hex: '#C8001E', weight: 4, rarity: 'uncommon' },
     { id: 'burgundy',  hex: '#8C0F2E', weight: 4, rarity: 'uncommon' },
     { id: 'espresso',  hex: '#5A2E1E', weight: 4, rarity: 'uncommon' },
-    { id: 'forest',    hex: '#0E8A45', weight: 4, rarity: 'uncommon' },
+    { id: 'forest',    hex: '#05873C', weight: 4, rarity: 'uncommon' },
     { id: 'teal',      hex: '#00897B', weight: 4, rarity: 'uncommon' },
     { id: 'petrol',    hex: '#0B6F8F', weight: 4, rarity: 'uncommon' },
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
     { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon' },
-    { id: 'steel',     hex: '#5E7F9F', weight: 6, rarity: 'common' },
+    { id: 'steel',     hex: '#4A73A0', weight: 6, rarity: 'common' },
     { id: 'gunmetal',  hex: '#3B5068', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
     { id: 'gold',      hex: '#E8A512', weight: 1.5, rarity: 'rare' },
@@ -120,6 +120,14 @@ const TRAITS = {
     { id: 'led_bar',     weight: 14, rarity: 'uncommon', vibe: 'friendly' },
     { id: 'fang_grille',    weight: 10, rarity: 'rare' },
     { id: 'jaws',            weight: 24, rarity: 'common', vibe: 'scary' }
+  ],
+  // what the open service hatch in the body shows
+  internals: [
+    { id: 'circuit',    weight: 30, rarity: 'common' },
+    { id: 'hydraulics', weight: 24, rarity: 'common' },
+    { id: 'gearbox',    weight: 20, rarity: 'uncommon' },
+    { id: 'coolant',    weight: 16, rarity: 'uncommon' },
+    { id: 'reactor',    weight: 10, rarity: 'rare' }
   ],
   hands: [
     { id: 'claw',        weight: 28, rarity: 'uncommon' },
@@ -788,7 +796,7 @@ function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const gid = 'bf' + (suffix || '') + uid;
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
-  if (id === 'steel') return { fill: 'url(#' + gid + ')', shade: '#2e4155', shoe: '#4a6580', glow: '#b4cbe0', defs: grad(['#b3c8dc', '#56718d', '#9db5cc', '#3f5872', '#87a2bd']) };
+  if (id === 'steel') return { fill: 'url(#' + gid + ')', shade: '#1f3550', shoe: '#3d5f85', glow: '#8fb4dc', defs: grad(['#8fb4dc', '#3a6290', '#78a2d0', '#2a4d78', '#6890c2']) };
   if (id === 'gunmetal') return { fill: 'url(#' + gid + ')', shade: '#141d28', shoe: '#2a3a4c', glow: '#7f9bb8', defs: grad(['#6d87a3', '#2c3d50', '#5a7390', '#1f2c3b', '#4d6683']) };
   if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#7a4a00', shoe: '#b8790a', glow: '#ffc21f', defs: grad(['#ffcf3a', '#d4900a', '#ffbe1a', '#a86a04', '#f0a912']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
@@ -1164,89 +1172,154 @@ function renderFromTraits(picks, index, seed, opts) {
   body += block(bodyPts, 'b');
   // lower collar sits on the body plate (drawn after it so it stays visible)
   void nMid;
-  // internals, seen on the body only: an open, bolted service hatch shows the robot's electronics —
-  // a brainbox (CPU) fed by a ribbon cable from the neck, IC chips, a capacitor bank, a power cell and
-  // copper traces; braided harnesses run from the junction box to the shoulder sockets and from the
-  // power cell to the hip sockets. Everything is clipped to the body shape.
+  // internals, seen on the body only, inside an open bolted service hatch. Five types (the
+  // 'internals' trait): circuit board, reactor core, hydraulics, gearbox and coolant. Each wires
+  // or plumbs the junction box under the neck to the shoulder and hip sockets differently.
   { const sy = shoulderY + 4, hw = halfWidthAt(bodyPts, headCx, sy);
-    const hubY = bodyTopY + 15;
+    const hubY = bodyTopY + 15, kind = (picks.internals && picks.internals.id) || 'circuit';
     const shoulderEnds = [], hipEnds = [];
     if (Number.isFinite(hw)) for (const sd of [-1, 1]) shoulderEnds.push([headCx + sd * (hw - 2), sy, 9]);
     for (const lx of [headCx - legX, headCx + legX]) { const by = bottomYAt(bodyPts, lx); if (Number.isFinite(by)) hipEnds.push([lx, by - 3, 10]); }
     const cid = 'iw' + uid;
     defs += '<clipPath id="' + cid + '"><path d="' + pathD(bodyPts) + ' Z"/></clipPath>';
-    const R = (x, y, w, h, rx, fill, sw, extra) => '<rect x="' + (+x).toFixed(1) + '" y="' + (+y).toFixed(1) + '" width="' + (+w).toFixed(1) + '" height="' + (+h).toFixed(1) + '" rx="' + rx + '" fill="' + fill + '"' + (sw ? ' stroke="' + ink + '" stroke-width="' + sw + '"' : '') + (extra || '') + '/>';
-    const L = (pts, col, wd) => '<path d="M ' + pts.map((p) => (+p[0]).toFixed(1) + ' ' + (+p[1]).toFixed(1)).join(' L ') + '" fill="none" stroke="' + col + '" stroke-width="' + wd + '" stroke-linecap="round" stroke-linejoin="round"/>';
-    const copper = '#d9a441', pad = (x, y) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.2" fill="' + copper + '" stroke="#5a3a10" stroke-width="0.8"/>';
-    const strandSets = [['#c8302a', '#1a1a1a', '#e8b020'], ['#2a6fd6', '#e8e8e8', '#c8302a'], ['#e8b020', '#2e9e4f', '#1a1a1a'], ['#2e9e4f', '#2a6fd6', '#e8e8e8']];
+    const f1 = (v) => (+v).toFixed(1);
+    const R = (x, y, w, h, rx, fill, sw, extra) => '<rect x="' + f1(x) + '" y="' + f1(y) + '" width="' + f1(w) + '" height="' + f1(h) + '" rx="' + rx + '" fill="' + fill + '"' + (sw ? ' stroke="' + ink + '" stroke-width="' + sw + '"' : '') + (extra || '') + '/>';
+    const L = (pts, col, wd, extra) => '<path d="M ' + pts.map((p) => f1(p[0]) + ' ' + f1(p[1])).join(' L ') + '" fill="none" stroke="' + col + '" stroke-width="' + wd + '" stroke-linecap="round" stroke-linejoin="round"' + (extra || '') + '/>';
+    const C = (x, y, r, fill, sw, extra) => '<circle cx="' + f1(x) + '" cy="' + f1(y) + '" r="' + f1(r) + '" fill="' + fill + '"' + (sw ? ' stroke="' + ink + '" stroke-width="' + sw + '"' : '') + (extra || '') + '/>';
+    const copper = '#d9a441', pad = (x, y) => C(x, y, 2.2, copper, 0, ' stroke="#5a3a10" stroke-width="0.8"');
+    const cubD = (P, ox, oy) => 'M ' + P.map((p, i) => (i === 1 ? 'C ' : '') + f1(p[0] + (ox || 0)) + ' ' + f1(p[1] + (oy || 0))).join(' ');
     const cub = (P, t) => { const u = 1 - t; return [0, 1].map((i) => u*u*u*P[0][i] + 3*u*u*t*P[1][i] + 3*u*t*t*P[2][i] + t*t*t*P[3][i]); };
+    const strandSets = [['#c8302a', '#1a1a1a', '#e8b020'], ['#2a6fd6', '#e8e8e8', '#c8302a'], ['#e8b020', '#2e9e4f', '#1a1a1a'], ['#2e9e4f', '#2a6fd6', '#e8e8e8']];
     const harness = (P, set, ties) => {
-      const dpath = (ox, oy) => 'M ' + P.map((p, i) => (i === 1 ? 'C ' : '') + (p[0] + ox).toFixed(1) + ' ' + (p[1] + oy).toFixed(1)).join(' ');
       const len = Math.hypot(P[3][0] - P[0][0], P[3][1] - P[0][1]) || 1, nx = -(P[3][1] - P[0][1]) / len, ny = (P[3][0] - P[0][0]) / len;
-      let o = '<path d="' + dpath(0, 0) + '" fill="none" stroke="' + ink + '" stroke-width="10" stroke-linecap="round"/><path d="' + dpath(0, 0) + '" fill="none" stroke="#2a2d33" stroke-width="7.4" stroke-linecap="round"/>';
-      set.forEach((c, j) => { const off = (j - 1) * 2.2; o += '<path d="' + dpath(nx * off, ny * off) + '" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linecap="round"/>'; });
+      let o = '<path d="' + cubD(P) + '" fill="none" stroke="' + ink + '" stroke-width="10" stroke-linecap="round"/><path d="' + cubD(P) + '" fill="none" stroke="#2a2d33" stroke-width="7.4" stroke-linecap="round"/>';
+      set.forEach((c, j) => { const off = (j - 1) * 2.2; o += '<path d="' + cubD(P, nx * off, ny * off) + '" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linecap="round"/>'; });
       for (const t of ties) {
         const a = cub(P, t), b = cub(P, t + 0.02), tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, qx = -(b[1] - a[1]) / tl * 6, qy = (b[0] - a[0]) / tl * 6;
         o += L([[a[0] - qx, a[1] - qy], [a[0] + qx, a[1] + qy]], ink, 3.6) + L([[a[0] - qx * 0.8, a[1] - qy * 0.8], [a[0] + qx * 0.8, a[1] + qy * 0.8]], '#e8e8e8', 1.6);
       }
       return o;
     };
+    // thick single cable / pipe (armoured power cable, coolant pipe)
+    const pipe = (P, col, wd, stripe) => '<path d="' + cubD(P) + '" fill="none" stroke="' + ink + '" stroke-width="' + (wd + 3.5) + '" stroke-linecap="round"/><path d="' + cubD(P) + '" fill="none" stroke="' + col + '" stroke-width="' + wd + '" stroke-linecap="round"/>' +
+      (stripe ? '<path d="' + cubD(P) + '" fill="none" stroke="' + stripe + '" stroke-width="' + (wd * 0.3) + '" stroke-linecap="round" stroke-dasharray="4 4"/>' : '');
+    const toShoulder = (x0, y0, k) => { const [ex, ey] = shoulderEnds[k]; return [[x0, y0], [x0 + (ex - x0) * 0.3, y0 + (ey - y0) * 0.2], [ex - (ex - x0) * 0.3, ey], [ex, ey]]; };
+    const toHip = (x0, y0, k) => { const [ex, ey] = hipEnds[k]; return [[x0, y0], [x0, y0 + 8], [ex, ey - 12], [ex, ey]]; };
     let w = '';
-    // --- service hatch: a recessed cavity inset from the body edge
+    // --- hatch: recessed cavity inset from the body edge
     const cTop = Math.max(bodyTopY + 30, chestCy - ch * 0.5), cBot = chestCy + ch * 0.72;
     let cw = Infinity;
     for (const yy of [cTop, (cTop + cBot) / 2, cBot]) { const h2 = halfWidthAt(bodyPts, headCx, yy); if (Number.isFinite(h2)) cw = Math.min(cw, h2); }
     cw = Number.isFinite(cw) ? Math.min(cw * 0.78, 64) : 50;
-    const cx0 = headCx - cw, cx1 = headCx + cw, cH = cBot - cTop;
-    w += R(cx0 - 5, cTop - 5, cw * 2 + 10, cH + 10, 7, '#59616b', 3.2);                 // hatch frame
-    w += R(cx0, cTop, cw * 2, cH, 4, '#161a20', 2.2);                                   // dark interior
-    for (let x = cx0 + 6; x < cx1 - 2; x += 8) w += L([[x, cTop + 2], [x, cBot - 2]], '#1f252d', 1);  // back-plane grid
-    for (const [x, y] of [[cx0 - 1, cTop - 1], [cx1 + 1, cTop - 1], [cx0 - 1, cBot + 1], [cx1 + 1, cBot + 1]]) w += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2" fill="#c9d0d8" stroke="' + ink + '" stroke-width="0.9"/>';
-    // --- brainbox (CPU) at the top of the cavity, with heat-sink fins and a status LED row
-    const bw = Math.min(46, cw * 1.1), bh = Math.min(30, cH * 0.36), bx = headCx - bw / 2, byy = cTop + 8;
-    w += R(bx, byy, bw, bh, 3, '#262c35', 2.2);
-    for (let k = 0; k < 6; k++) w += L([[bx + 5 + k * ((bw - 10) / 5), byy + 3], [bx + 5 + k * ((bw - 10) / 5), byy + bh * 0.42]], '#8a929c', 1.6);
-    w += R(headCx - bw * 0.22, byy + bh * 0.5, bw * 0.44, bh * 0.36, 1.5, copper, 1.2);
-    w += R(headCx - bw * 0.13, byy + bh * 0.56, bw * 0.26, bh * 0.22, 1, '#1a1d22', 0);
-    const leds = ['#7dff3a', '#ffb020', '#ff3b3b', '#5fe1ff'];
-    leds.forEach((c, k) => { w += '<circle cx="' + (bx + bw - 5).toFixed(1) + '" cy="' + (byy + 5 + k * ((bh - 10) / 3)).toFixed(1) + '" r="1.5" fill="' + c + '"/>'; });
-    for (let k = 0; k < 4; k++) { const py = byy + 6 + k * ((bh - 12) / 3); w += L([[bx, py], [bx - 3, py]], '#c9d0d8', 1.3) + L([[bx + bw, py], [bx + bw + 3, py]], '#c9d0d8', 1.3); }
-    // --- ribbon cable from the junction box down into the brainbox
-    const ribbon = ['#c8302a', '#e8b020', '#2e9e4f', '#2a6fd6', '#e8e8e8'];
-    w += R(headCx - 8, hubY + 4, 16, byy - hubY - 3, 1, '#1a1a1a', 0);
-    ribbon.forEach((c, k) => { const x = headCx - 6 + k * 3; w += L([[x, hubY + 5], [x, byy + 1]], c, 1.6); });
-    // --- two ICs either side below the brainbox, a capacitor bank and a power cell
-    const icY = byy + bh + 10, icW = Math.min(16, cw * 0.42), icH = 11;
-    const ic = (x) => {
-      let o = R(x - icW / 2, icY, icW, icH, 1.2, '#1d2026', 1.6) + '<circle cx="' + (x - icW / 2 + 3).toFixed(1) + '" cy="' + (icY + 3) + '" r="1" fill="#8a929c"/>';
-      for (let k = 0; k < 3; k++) { const px = x - icW / 2 + 4 + k * ((icW - 8) / 2); o += L([[px, icY], [px, icY - 2.6]], '#c9d0d8', 1.2) + L([[px, icY + icH], [px, icY + icH + 2.6]], '#c9d0d8', 1.2); }
-      return o;
-    };
-    const icL = headCx - cw * 0.55, icR = headCx + cw * 0.55;
-    // copper traces: brainbox pins -> ICs -> power cell
-    const cellW = Math.min(30, cw * 0.9), cellY = cBot - 15;
-    w += L([[bx - 3, byy + 6], [icL, byy + 6], [icL, icY - 3]], copper, 1.6) + L([[bx + bw + 3, byy + 6 + (bh - 12) / 3], [icR, byy + 6 + (bh - 12) / 3], [icR, icY - 3]], copper, 1.6);
-    w += L([[icL, icY + icH + 3], [icL, cellY + 4], [headCx - cellW / 2, cellY + 4]], copper, 1.6) + L([[icR, icY + icH + 3], [icR, cellY + 4], [headCx + cellW / 2, cellY + 4]], copper, 1.6);
-    w += L([[headCx - bw * 0.3, byy + bh], [headCx - bw * 0.3, icY + 4], [headCx - 4, icY + 4]], copper, 1.4) + L([[headCx + bw * 0.3, byy + bh], [headCx + bw * 0.3, icY + 8], [headCx + 4, icY + 8]], copper, 1.4);
-    for (const [x, y] of [[icL, byy + 6], [icR, byy + 6 + (bh - 12) / 3], [headCx - 4, icY + 4], [headCx + 4, icY + 8]]) w += pad(x, y);
-    w += ic(icL) + ic(icR);
-    // capacitor bank (three cans) between the ICs
-    for (let k = -1; k <= 1; k++) {
-      const x = headCx + k * 7;
-      w += R(x - 2.8, icY + 1, 5.6, 10, 1.8, k === 0 ? '#2a6fd6' : '#1d2026', 1.2) + R(x - 2.8, icY + 1, 5.6, 2.4, 1, '#c9d0d8', 0);
+    const cx0 = headCx - cw, cx1 = headCx + cw, cH = cBot - cTop, cMid = (cTop + cBot) / 2;
+    w += R(cx0 - 5, cTop - 5, cw * 2 + 10, cH + 10, 7, '#59616b', 3.2);
+    w += R(cx0, cTop, cw * 2, cH, 4, '#161a20', 2.2);
+    for (let x = cx0 + 6; x < cx1 - 2; x += 8) w += L([[x, cTop + 2], [x, cBot - 2]], '#1f252d', 1);
+    for (const [x, y] of [[cx0 - 1, cTop - 1], [cx1 + 1, cTop - 1], [cx0 - 1, cBot + 1], [cx1 + 1, cBot + 1]]) w += C(x, y, 2, '#c9d0d8', 0.9);
+    const glowCol = eyeColorHex || '#5fe1ff';
+
+    if (kind === 'circuit') {
+      const bw = Math.min(46, cw * 1.1), bh = Math.min(30, cH * 0.36), bx = headCx - bw / 2, byy = cTop + 8;
+      w += R(bx, byy, bw, bh, 3, '#262c35', 2.2);
+      for (let k = 0; k < 6; k++) w += L([[bx + 5 + k * ((bw - 10) / 5), byy + 3], [bx + 5 + k * ((bw - 10) / 5), byy + bh * 0.42]], '#8a929c', 1.6);
+      w += R(headCx - bw * 0.22, byy + bh * 0.5, bw * 0.44, bh * 0.36, 1.5, copper, 1.2) + R(headCx - bw * 0.13, byy + bh * 0.56, bw * 0.26, bh * 0.22, 1, '#1a1d22', 0);
+      ['#7dff3a', '#ffb020', '#ff3b3b', '#5fe1ff'].forEach((c, k) => { w += C(bx + bw - 5, byy + 5 + k * ((bh - 10) / 3), 1.5, c, 0); });
+      for (let k = 0; k < 4; k++) { const py = byy + 6 + k * ((bh - 12) / 3); w += L([[bx, py], [bx - 3, py]], '#c9d0d8', 1.3) + L([[bx + bw, py], [bx + bw + 3, py]], '#c9d0d8', 1.3); }
+      w += R(headCx - 8, hubY + 4, 16, byy - hubY - 3, 1, '#1a1a1a', 0);
+      ['#c8302a', '#e8b020', '#2e9e4f', '#2a6fd6', '#e8e8e8'].forEach((c, k) => { const x = headCx - 6 + k * 3; w += L([[x, hubY + 5], [x, byy + 1]], c, 1.6); });
+      const icY = byy + bh + 10, icW = Math.min(16, cw * 0.42), icH = 11, icL = headCx - cw * 0.55, icR = headCx + cw * 0.55;
+      const ic = (x) => { let o = R(x - icW / 2, icY, icW, icH, 1.2, '#1d2026', 1.6) + C(x - icW / 2 + 3, icY + 3, 1, '#8a929c', 0);
+        for (let k = 0; k < 3; k++) { const px = x - icW / 2 + 4 + k * ((icW - 8) / 2); o += L([[px, icY], [px, icY - 2.6]], '#c9d0d8', 1.2) + L([[px, icY + icH], [px, icY + icH + 2.6]], '#c9d0d8', 1.2); } return o; };
+      const cellW = Math.min(30, cw * 0.9), cellY = cBot - 15;
+      w += L([[bx - 3, byy + 6], [icL, byy + 6], [icL, icY - 3]], copper, 1.6) + L([[bx + bw + 3, byy + 6 + (bh - 12) / 3], [icR, byy + 6 + (bh - 12) / 3], [icR, icY - 3]], copper, 1.6);
+      w += L([[icL, icY + icH + 3], [icL, cellY + 4], [headCx - cellW / 2, cellY + 4]], copper, 1.6) + L([[icR, icY + icH + 3], [icR, cellY + 4], [headCx + cellW / 2, cellY + 4]], copper, 1.6);
+      for (const [x, y] of [[icL, byy + 6], [icR, byy + 6 + (bh - 12) / 3]]) w += pad(x, y);
+      w += ic(icL) + ic(icR);
+      for (let k = -1; k <= 1; k++) { const x = headCx + k * 7; w += R(x - 2.8, icY + 1, 5.6, 10, 1.8, k === 0 ? '#2a6fd6' : '#1d2026', 1.2) + R(x - 2.8, icY + 1, 5.6, 2.4, 1, '#c9d0d8', 0); }
+      w += R(headCx - cellW / 2, cellY, cellW, 10, 2, '#2b2f36', 1.8) + R(headCx + cellW / 2, cellY + 3, 2.5, 4, 0.8, '#c9d0d8', 0);
+      for (let k = 0; k < 4; k++) w += R(headCx - cellW / 2 + 3 + k * ((cellW - 6) / 4), cellY + 2.5, (cellW - 6) / 4 - 1.5, 5, 0.8, k < 3 ? '#7dff3a' : '#3a3f46', 0);
+      shoulderEnds.forEach((e, k) => { w += harness(toShoulder(headCx + (k ? 10 : -10), hubY, k), strandSets[k], [0.5]); });
+      hipEnds.forEach((e, k) => { w += harness(toHip(headCx + (k ? 1 : -1) * (cellW / 2 - 4), cellY + 10, k), strandSets[k + 2], []); });
+    } else if (kind === 'reactor') {
+      // glowing power core in a bolted ring, copper coils either side, armoured power cables out
+      const rr = Math.min(cw * 0.55, cH * 0.36), cy = cMid - 2;
+      for (const sd of [-1, 1]) {
+        const x = headCx + sd * (cw * 0.72);
+        w += R(x - 6, cy - rr * 0.9, 12, rr * 1.8, 3, '#3a3f46', 1.6);
+        for (let k = 0; k < 6; k++) w += L([[x - 6, cy - rr * 0.75 + k * (rr * 1.5 / 5)], [x + 6, cy - rr * 0.75 + k * (rr * 1.5 / 5)]], copper, 2.2);
+      }
+      shoulderEnds.forEach((e, k) => { w += pipe(toShoulder(headCx + (k ? 6 : -6), hubY, k), '#e8641a', 5.2, '#1a1a1a'); });
+      hipEnds.forEach((e, k) => { w += pipe(toHip(headCx + (k ? 1 : -1) * rr * 0.5, cy + rr * 0.8, k), '#e8641a', 5.2, '#1a1a1a'); });
+      w += pipe([[headCx, hubY + 4], [headCx, hubY + 10], [headCx, cy - rr - 6], [headCx, cy - rr + 2]], '#e8641a', 5.2, '#1a1a1a');
+      w += C(headCx, cy, rr + 4, '#59616b', 2.6) + C(headCx, cy, rr, '#0b0d12', 1.8);
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; w += C(headCx + Math.cos(a) * (rr + 2), cy + Math.sin(a) * (rr + 2), 1.4, '#c9d0d8', 0); }
+      w += C(headCx, cy, rr * 0.82, glowCol, 0, ' opacity=".25"') + C(headCx, cy, rr * 0.6, glowCol, 0, ' opacity=".55"') + C(headCx, cy, rr * 0.38, glowCol, 1.2) + C(headCx, cy, rr * 0.16, '#ffffff', 0);
+      for (let k = 0; k < 3; k++) { const a = k * 2 * Math.PI / 3 - Math.PI / 2; w += L([[headCx + Math.cos(a) * rr * 0.42, cy + Math.sin(a) * rr * 0.42], [headCx + Math.cos(a) * rr * 0.78, cy + Math.sin(a) * rr * 0.78]], '#0b0d12', 2.2); }
+    } else if (kind === 'hydraulics') {
+      // pump with a pressure gauge; pistons drive each arm and leg; pipes with red valve wheels
+      const pw = Math.min(34, cw * 0.9), ph = Math.min(26, cH * 0.32), px0 = headCx - pw / 2, py0 = cMid - ph / 2 - 4;
+      const piston = (x0, y0, x1, y1) => {
+        const mx = x0 + (x1 - x0) * 0.55, my = y0 + (y1 - y0) * 0.55, a = Math.atan2(y1 - y0, x1 - x0), nx = -Math.sin(a) * 5, ny = Math.cos(a) * 5;
+        return '<path d="M ' + f1(x0 + nx) + ' ' + f1(y0 + ny) + ' L ' + f1(mx + nx) + ' ' + f1(my + ny) + ' L ' + f1(mx - nx) + ' ' + f1(my - ny) + ' L ' + f1(x0 - nx) + ' ' + f1(y0 - ny) + ' Z" fill="#59616b" stroke="' + ink + '" stroke-width="1.8" stroke-linejoin="round"/>' +
+          L([[mx, my], [x1, y1]], ink, 5) + L([[mx, my], [x1, y1]], '#d8dee6', 2.6) + C(mx, my, 2.2, '#3a3f46', 1);
+      };
+      shoulderEnds.forEach(([ex, ey], k) => { w += piston(headCx + (k ? 1 : -1) * pw * 0.35, py0, ex, ey); });
+      hipEnds.forEach(([ex, ey], k) => { w += piston(headCx + (k ? 1 : -1) * pw * 0.35, py0 + ph, ex, ey); });
+      // pipes from the neck box into the pump, with valve wheels
+      for (const sd of [-1, 1]) {
+        const x = headCx + sd * 6, P = [[x, hubY + 4], [x, hubY + 14], [x + sd * 8, py0 - 10], [x + sd * 8, py0]];
+        w += pipe(P, '#b8c2cc', 3.4);
+        const v = cub(P, 0.55); w += C(v[0], v[1], 4.2, '#c8302a', 1.4) + L([[v[0] - 3, v[1]], [v[0] + 3, v[1]]], '#1a1a1a', 1) + L([[v[0], v[1] - 3], [v[0], v[1] + 3]], '#1a1a1a', 1);
+      }
+      w += R(px0, py0, pw, ph, 3, '#3a4250', 2.2);
+      for (let k = 0; k < 3; k++) w += L([[px0 + 4, py0 + 5 + k * 5], [px0 + pw * 0.45, py0 + 5 + k * 5]], '#8a929c', 1.4);
+      const gx = px0 + pw * 0.72, gy = py0 + ph / 2, gr = Math.min(8, ph * 0.34);
+      w += C(gx, gy, gr, '#f2efe6', 1.6) + L([[gx, gy], [gx + gr * 0.6, gy - gr * 0.5]], '#c8302a', 1.4) + C(gx, gy, 1.2, '#1a1a1a', 0);
+      for (let k = 0; k < 5; k++) { const a = Math.PI * (0.8 + k * 0.35); w += L([[gx + Math.cos(a) * gr * 0.75, gy + Math.sin(a) * gr * 0.75], [gx + Math.cos(a) * gr * 0.95, gy + Math.sin(a) * gr * 0.95]], '#1a1a1a', 0.8); }
+      w += R(headCx - pw * 0.4, py0 + ph + 3, pw * 0.8, 6, 2, '#2b2f36', 1.4);
+    } else if (kind === 'gearbox') {
+      // meshing gears and a drive belt, a small motor, wires to the sockets
+      const gear = (x, y, r, teeth, col, rot) => {
+        let d = '';
+        for (let k = 0; k < teeth * 2; k++) {
+          const a0 = rot + (k / (teeth * 2)) * Math.PI * 2, a1 = rot + ((k + 1) / (teeth * 2)) * Math.PI * 2, rad = k % 2 ? r * 0.8 : r;
+          d += (k ? ' L ' : 'M ') + f1(x + Math.cos(a0) * rad) + ' ' + f1(y + Math.sin(a0) * rad) + ' L ' + f1(x + Math.cos(a1) * rad) + ' ' + f1(y + Math.sin(a1) * rad);
+        }
+        return '<path d="' + d + ' Z" fill="' + col + '" stroke="' + ink + '" stroke-width="1.8" stroke-linejoin="round"/>' + C(x, y, r * 0.35, '#2b2f36', 1.4) + C(x, y, r * 0.12, '#c9d0d8', 0);
+      };
+      shoulderEnds.forEach((e, k) => { w += harness(toShoulder(headCx + (k ? 10 : -10), hubY, k), strandSets[k], [0.5]); });
+      const gR = Math.min(cw * 0.42, cH * 0.28), g1x = headCx - cw * 0.28, g1y = cMid - 4, g2r = gR * 0.62;
+      const g2x = g1x + gR * 0.8 + g2r * 0.8 + 1, g2y = g1y + gR * 0.35, g3r = gR * 0.5, g3x = g1x - 2, g3y = g1y + gR + g3r - 1;
+      hipEnds.forEach((e, k) => { w += harness(toHip(k ? g2x : g3x, k ? g2y + g2r : g3y + g3r, k), strandSets[k + 2], []); });
+      // drive belt to a motor near the top
+      const mx = headCx + cw * 0.55, my = cTop + 12;
+      w += L([[g2x, g2y - g2r * 0.5], [mx, my - 4]], '#1a1a1a', 3) + L([[g2x + g2r * 0.5, g2y], [mx + 5, my + 2]], '#1a1a1a', 3);
+      w += gear(g1x, g1y, gR, 10, '#c9a227', 0.1) + gear(g2x, g2y, g2r, 8, '#9aa3ad', 0.35) + gear(g3x, g3y, g3r, 7, '#b4532a', 0.2);
+      w += R(mx - 9, my - 8, 18, 16, 3, '#2a6fd6', 1.8) + C(mx, my, 4, '#c9d0d8', 1.2) + L([[mx - 6, my - 8], [mx - 6, my + 8]], '#1a3f80', 1.4) + L([[mx + 6, my - 8], [mx + 6, my + 8]], '#1a3f80', 1.4);
+    } else if (kind === 'coolant') {
+      // two glass coolant tanks with bubbling liquid, a finned radiator, coolant pipes out
+      const tw = Math.min(14, cw * 0.36), th = cH * 0.7, ty = cTop + cH * 0.12, liquid = glowCol;
+      const pipes = [];
+      for (const sd of [-1, 1]) {
+        const x = headCx + sd * cw * 0.62;
+        pipes.push(pipe(toShoulder(x, ty + 4, sd < 0 ? 0 : 1).map((p, i) => i ? p : [x, ty + 2]), '#2fb7c9', 4));
+        if (hipEnds.length) pipes.push(pipe(toHip(x, ty + th - 2, sd < 0 ? 0 : 1), '#2fb7c9', 4));
+      }
+      w += pipes.join('');
+      for (const sd of [-1, 1]) {
+        const x = headCx + sd * cw * 0.62;
+        w += R(x - tw / 2, ty, tw, th, tw / 2, '#2a3038', 2);
+        w += R(x - tw / 2 + 2, ty + th * 0.3, tw - 4, th * 0.7 - 2, (tw - 4) / 2, liquid, 0, ' opacity=".85"');
+        for (let k = 0; k < 4; k++) w += C(x + (k % 2 ? 2 : -2), ty + th * (0.45 + k * 0.12), 1.3 + (k % 2) * 0.6, '#ffffff', 0, ' opacity=".7"');
+        w += L([[x - tw / 2 + 2.5, ty + 4], [x - tw / 2 + 2.5, ty + th - 4]], '#ffffff', 1.2, ' opacity=".35"');
+        w += R(x - tw / 2 - 1.5, ty - 3, tw + 3, 5, 1.5, '#8a929c', 1.3) + R(x - tw / 2 - 1.5, ty + th - 2, tw + 3, 5, 1.5, '#8a929c', 1.3);
+      }
+      const rw = cw * 0.62, rh = cH * 0.5, rx0 = headCx - rw / 2, ry0 = cMid - rh / 2;
+      w += pipe([[headCx, hubY + 4], [headCx, hubY + 12], [headCx, ry0 - 8], [headCx, ry0]], '#2fb7c9', 4);
+      w += R(rx0, ry0, rw, rh, 2, '#3a4250', 2);
+      for (let x = rx0 + 3; x < rx0 + rw - 2; x += 3.2) w += L([[x, ry0 + 2], [x, ry0 + rh - 2]], '#9aa3ad', 1.1);
+      w += C(headCx, ry0 + rh + 7, 4.5, '#1d2026', 1.4) + L([[headCx - 3, ry0 + rh + 7], [headCx + 3, ry0 + rh + 7]], '#7dff3a', 1.4);
     }
-    // power cell with charge bars
-    w += R(headCx - cellW / 2, cellY, cellW, 10, 2, '#2b2f36', 1.8) + R(headCx + cellW / 2, cellY + 3, 2.5, 4, 0.8, '#c9d0d8', 0);
-    for (let k = 0; k < 4; k++) w += R(headCx - cellW / 2 + 3 + k * ((cellW - 6) / 4), cellY + 2.5, (cellW - 6) / 4 - 1.5, 5, 0.8, k < 3 ? '#7dff3a' : '#3a3f46', 0);
-    // --- harnesses: junction box -> shoulders, power cell -> hips
-    shoulderEnds.forEach(([ex, ey], k) => {
-      const sx = headCx + (k ? 1 : -1) * 10;
-      w += harness([[sx, hubY], [sx + (ex - sx) * 0.3, hubY + (ey - hubY) * 0.2], [ex - (ex - sx) * 0.3, ey], [ex, ey]], strandSets[k], [0.5]);
-    });
-    hipEnds.forEach(([ex, ey], k) => {
-      const sx = headCx + (k ? 1 : -1) * (cellW / 2 - 4);
-      w += harness([[sx, cellY + 10], [sx, cellY + 18], [ex, ey - 12], [ex, ey]], strandSets[k + 2], []);
-    });
     body += '<g clip-path="url(#' + cid + ')">' + w + '</g>';
     // junction box the neck conduit feeds into
     body += '<rect x="' + (headCx - 13) + '" y="' + (hubY - 8) + '" width="26" height="14" rx="3" fill="#3a3f46" stroke="' + ink + '" stroke-width="2.4"/>' +
@@ -1308,10 +1381,10 @@ const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
     background: 'black', hair: 'cables', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fang_grille',
-    hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching', legColor: 'matching', handColor: 'matching'
+    internals: 'reactor', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching', legColor: 'matching', handColor: 'matching'
   }
 ];
-const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor', 'headShape', 'bodyShape', 'arms', 'headColor', 'legColor', 'handColor'];
+const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'internals', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor', 'headShape', 'bodyShape', 'arms', 'headColor', 'legColor', 'handColor'];
 function resolveSignatureCombo(sig) {
   const out = {};
   SIGNATURE_TRAIT_KEYS.forEach((k) => { out[k] = TRAITS[k].find((t) => t.id === sig[k]); });
@@ -1351,6 +1424,7 @@ const ONE_OF_ONE_WEIGHTS = {
   eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }, { id: 'glare', weight: 24 }, { id: 'cracked', weight: 18 }],
   eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }, { id: 'toxic', weight: 26 }],
   mouth: [{ id: 'fang_grille', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'led_bar', weight: 24 }, { id: 'vent', weight: 20 }, { id: 'jaws', weight: 28 }],
+  internals: [{ id: 'reactor', weight: 30 }, { id: 'coolant', weight: 24 }, { id: 'gearbox', weight: 22 }, { id: 'hydraulics', weight: 14 }, { id: 'circuit', weight: 10 }],
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
@@ -1491,6 +1565,8 @@ function generatePiece(index, seed, tier, opts) {
     for (let k = 0; k < 8 && picks[cat].id !== 'matching' && tooClose(picks[cat], picks.bodyColor); k++) picks[cat] = pick(cat);
     if (picks[cat].id !== 'matching' && tooClose(picks[cat], picks.bodyColor)) picks[cat] = TRAITS[cat][0];
   }
+  // internals picked last so every earlier roll is unchanged for a given seed
+  picks.internals = sigOverride && sigOverride.internals ? sigOverride.internals : pick('internals');
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
 
   // opts.render === false: traits only (fast, tiny); draw later with renderPiece()

@@ -118,7 +118,7 @@ with knee bolts and riveted plates — often joined by a small companion creatur
 | bodyColor | 16 — incl. steel, gunmetal and black (black heads/bodies only on dark backgrounds) — plus separate head / leg / hand colour traits (15 each, or "matching") |
 | arms · hands · feet | 7 · 7 · 4 — spring, telescopic, floating… · claw, pincer, hook, magnet, plug… · pointed, robot blocks, claw feet, peg legs |
 | topper · ears · eyes · eyeColor · mouth | 5 (antenna, twin antenna, cables, fin, none) · 6 · 5 camera-lens optics (+ glare, cracked) · 4 (+ toxic) · 5 (grille, vent, zipper, LED bar, fang grille; + jaws) |
-| internals | every body has an open, bolted service hatch: brainbox (CPU) with heat sink and LEDs, ribbon cable from the neck, IC chips, capacitor bank, power cell, copper traces, braided harnesses to shoulder and hip sockets (no chest marks) |
+| internals | 5 — circuit board (brainbox, ICs, capacitors, power cell, braided harnesses), hydraulics (pump, pressure gauge, pistons, valve pipes), gearbox (meshing gears, belt, motor), coolant (glass tanks, radiator, coolant pipes), reactor (glowing core, copper coils, armoured cables); shown in an open bolted service hatch |
 | companion · companionColor | 7 (cat, dog, bird, ghost cat, bunny, robo-dog) · 11 (incl. rust, teal, crimson) |
 | background · sky · ground · grassColor | 10 — cream, white, concrete, ash, sand, smog, rust haze, black, deep black, midnight (+ blood night) · 3 (+ blood moon) · 4 · 3 |
 
