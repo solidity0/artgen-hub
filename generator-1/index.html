@@ -465,17 +465,6 @@ const TRAITS = {
     { id: 'scanlines',    weight: 24, rarity: 'uncommon' },
     { id: 'tears',        weight: 16, rarity: 'rare' },
     { id: 'ash_fall',     weight: 12, rarity: 'rare' }
-  ],
-  // v9: DRAMA. Scene lighting layered over the flat figure — rolled on its own
-  // rng stream (dramaRng) so every other trait stays seed-stable.
-  lighting: [
-    { id: 'none',      weight: 20, rarity: 'common' },
-    { id: 'spotlight', weight: 20, rarity: 'common' },
-    { id: 'backlit',   weight: 18, rarity: 'common' },
-    { id: 'uplight',   weight: 13, rarity: 'uncommon' },
-    { id: 'eye_bloom', weight: 13, rarity: 'uncommon' },
-    { id: 'red_alert', weight: 9,  rarity: 'uncommon' },
-    { id: 'storm',     weight: 7,  rarity: 'rare' }
   ]
 };
 
@@ -1499,56 +1488,6 @@ function accessoryMarkup(rng, accId, eyeCtx) {
 // opts (optional): { animate: boolean } — when true, eyes get inscription-safe
 // SMIL animation. Animation timing uses a SEPARATE seeded stream so toggling it
 // never changes which traits are picked (the art stays identical, only motion is added).
-// ---------- drama: scene lighting ----------
-// Separate stream so adding/changing lighting never shifts the original traits.
-function dramaRng(seed, index) { return mulberry32((seed ?? 0) * 31337 + index * 7919 + 5); }
-// Back layer: drawn over the background, behind the figure.
-// Front layer: drawn over body + head but UNDER the eyes, so the eyes burn through the shadow.
-function lightingMarkup(lightId, eyeHex, uid, rng) {
-  const id = (k) => k + uid;
-  const vignette = (op, col) => `<radialGradient id="${id('vg')}" cx="300" cy="290" r="430" gradientUnits="userSpaceOnUse">` +
-    `<stop offset="0.42" stop-color="${col || '#000'}" stop-opacity="0"/><stop offset="1" stop-color="${col || '#000'}" stop-opacity="${op}"/></radialGradient>`;
-  const vigRect = `<rect width="600" height="600" fill="url(#${id('vg')})"/>`;
-  let back = '', front = '', defs = '';
-  if (lightId === 'spotlight') {
-    // hard light from straight above: a pale cone, everything outside it sinks into shadow
-    back = `<polygon points="238,0 362,0 500,600 100,600" fill="#fff6dc" opacity="0.08"/>`;
-    defs = `<radialGradient id="${id('sp')}" cx="300" cy="250" r="360" gradientUnits="userSpaceOnUse"><stop offset="0.38" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.78"/></radialGradient>`;
-    front = `<rect width="600" height="600" fill="url(#${id('sp')})"/>`;
-  } else if (lightId === 'backlit') {
-    // strong light behind the head: a hot halo and a bright rim around the silhouette
-    defs = `<radialGradient id="${id('hl')}" cx="300" cy="215" r="270" gradientUnits="userSpaceOnUse"><stop offset="0.3" stop-color="${eyeHex}" stop-opacity="0.75"/><stop offset="1" stop-color="${eyeHex}" stop-opacity="0"/></radialGradient>` +
-      `<linearGradient id="${id('bd')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0.3" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></linearGradient>` + vignette(0.55);
-    back = `<rect width="600" height="600" fill="url(#${id('hl')})"/><ellipse cx="300" cy="215" rx="126" ry="136" fill="none" stroke="${eyeHex}" stroke-width="7" opacity="0.9"/>`;
-    front = `<rect width="600" height="600" fill="url(#${id('bd')})"/>` + vigRect;
-  } else if (lightId === 'uplight') {
-    // campfire / horror-torch light from below, dark from above
-    defs = `<linearGradient id="${id('up')}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a1f" stop-opacity="0.45"/><stop offset="0.5" stop-color="#ff5a1f" stop-opacity="0"/></linearGradient>` +
-      `<linearGradient id="${id('tp')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0.6"/><stop offset="0.45" stop-color="#000" stop-opacity="0"/></linearGradient>`;
-    front = `<rect width="600" height="600" fill="url(#${id('tp')})"/><rect width="600" height="600" fill="url(#${id('up')})"/>`;
-  } else if (lightId === 'eye_bloom') {
-    // the eyes are the only light source: their colour floods the face, the rest goes dark
-    defs = `<radialGradient id="${id('eb')}" cx="300" cy="205" r="210" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${eyeHex}" stop-opacity="0.5"/><stop offset="1" stop-color="${eyeHex}" stop-opacity="0"/></radialGradient>` + vignette(0.7);
-    front = vigRect + `<rect width="600" height="600" fill="url(#${id('eb')})"/>`;
-  } else if (lightId === 'red_alert') {
-    // emergency light: everything washed red with a hard dark-red falloff and alarm stripes up top
-    defs = vignette(0.75, '#2a0000');
-    front = `<rect width="600" height="600" fill="#ff1a1a" opacity="0.18"/>` + vigRect;
-    back = `<g opacity="0.22">` + [0, 1, 2, 3, 4, 5, 6].map((k) => `<polygon points="${k * 100 - 40},0 ${k * 100 + 10},0 ${k * 100 - 30},40 ${k * 100 - 80},40" fill="#ff2a2a"/>`).join('') + `</g>`;
-  } else if (lightId === 'storm') {
-    // a lightning strike splits the sky, cold flash over the scene
-    const side = rng() < 0.5 ? 1 : -1, x0 = 300 + side * (150 + rng() * 80);
-    let pts = [[x0, 0]], x = x0, y = 0;
-    while (y < 250) { y += 30 + rng() * 25; x += (rng() - 0.5) * 70; pts.push([x, y]); }
-    const d = 'M' + pts.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
-    back = `<path d="${d}" fill="none" stroke="#bfe0ff" stroke-width="14" opacity="0.25" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>`;
-    defs = vignette(0.6, '#020616');
-    front = `<rect width="600" height="600" fill="#9cc6ff" opacity="0.12"/>` + vigRect;
-  }
-  if (defs) back = `<defs>${defs}</defs>` + back;
-  return { back, front };
-}
-
 function generatePiece(index, seed, tier, opts) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const t = tier || 'any';
@@ -1591,17 +1530,11 @@ function generatePiece(index, seed, tier, opts) {
   const eyeOpts = { noMouth: mouth.id === 'none' };
   if (animate) { eyeOpts.animate = true; eyeOpts.rng = animRng; eyeOpts.headColor = headColor.hex; }
 
-  const dRng = dramaRng(seed, index);
-  const lighting = pickByRarity(dRng, TRAITS.lighting, t);
-  const light = lightingMarkup(lighting.id, eyeColor.hex, `${seed ?? 0}_${index}`, dRng);
-
   const svg = `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <rect width="600" height="600" fill="${background.fill}"/>
 ${backgroundOverlay(rng, background.pattern)}
-${light.back}
 ${bodyMarkup(body.id, bodyColor.hex, background.fill)}
 ${headMarkup(headShape.id, headColor.hex, rng, background.fill)}
-${light.front}
 ${eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, eyeOpts)}
 ${mouthMarkup(mouth.id, headShape.id)}
 ${accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth: eyeOpts.noMouth })}
@@ -1615,13 +1548,13 @@ ${accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, n
       background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id,
       headShape: headShape.id, headColor: headColor.id,
       eyeShape: eyeShape.id, eyeColor: eyeColor.id,
-      mouth: mouth.id, accessory: accessory.id, lighting: lighting.id
+      mouth: mouth.id, accessory: accessory.id
     },
     rarity: {
       background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity,
       headShape: headShape.rarity, headColor: headColor.rarity,
       eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity,
-      mouth: mouth.rarity, accessory: accessory.rarity, lighting: lighting.rarity
+      mouth: mouth.rarity, accessory: accessory.rarity
     }
   };
 }
@@ -1636,7 +1569,7 @@ function generateBatch(count, seed, tier, opts) {
 const api = {
   generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
   mulberry32, weightedPick, pickByRarity, shade,
-  bodyMarkup, headMarkup, eyesMarkup, mouthMarkup, backgroundOverlay, accessoryMarkup, lightingMarkup, dramaRng,
+  bodyMarkup, headMarkup, eyesMarkup, mouthMarkup, backgroundOverlay, accessoryMarkup,
   BLACK_HEAD_COLORS, BLACK_BODY_COLORS, DARK_BACKGROUNDS_FOR_BLACK_COMBO
 };
 if (typeof module !== 'undefined' && module.exports) {
@@ -1787,14 +1720,10 @@ function generateOne(index, seed, opts) {
   let accessory = pickTrait(rng, 'accessory', tierOverride);
   accessory = rerollTraitIfClashing(rng, { headShape: headShape.id, size: size.id, eyeShape: eyeShape.id, mouth: mouth.id }, 'accessory', accessory, TRAITS.accessory, tierOverride || currentTier);
 
-  // drama: scene lighting on its own stream so every other trait stays seed-stable
-  const dRng = dramaRng(seed | 0, index);
-  const lighting = pickTrait(dRng, 'lighting', tierOverride);
-
   if (!(opts && opts.render)) return lazyPiece({
     index, isOneOfOne,
-    traits: { background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id, headShape: headShape.id, headColor: headColor.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id, mouth: mouth.id, accessory: accessory.id, lighting: lighting.id },
-    rarity: { background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity, headShape: headShape.rarity, headColor: headColor.rarity, eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity, mouth: mouth.rarity, accessory: accessory.rarity, lighting: lighting.rarity }
+    traits: { background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id, headShape: headShape.id, headColor: headColor.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id, mouth: mouth.id, accessory: accessory.id },
+    rarity: { background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity, headShape: headShape.rarity, headColor: headColor.rarity, eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity, mouth: mouth.rarity, accessory: accessory.rarity }
   }, index, seed, opts);
   // Build every non-eye layer exactly ONCE. These all consume rng internally
   // (cracked-head jitter, dot scatter, background texture) — calling them a
@@ -1807,7 +1736,6 @@ function generateOne(index, seed, opts) {
   const mouthPart = mouthMarkup(mouth.id);
   const noMouth = mouth.id === 'none';
   const accessoryPart = accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth });
-  const light = lightingMarkup(lighting.id, eyeColor.hex, `${seed | 0}_${index}`, dRng);
   const eyesStatic = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, { noMouth });
 
   // Animation timing draws from a SEPARATE seeded stream so toggling animation
@@ -1822,10 +1750,8 @@ function generateOne(index, seed, opts) {
   const wrap = eyesPart => `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <rect width="600" height="600" fill="${background.fill}"/>
 ${bgOverlay}
-${light.back}
 ${bodyPart}
 ${headPart}
-${light.front}
 ${eyesPart}
 ${mouthPart}
 ${accessoryPart}
@@ -1851,13 +1777,13 @@ ${accessoryPart}
       background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id,
       headShape: headShape.id, headColor: headColor.id,
       eyeShape: eyeShape.id, eyeColor: eyeColor.id,
-      mouth: mouth.id, accessory: accessory.id, lighting: lighting.id
+      mouth: mouth.id, accessory: accessory.id
     },
     rarity: {
       background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity,
       headShape: headShape.rarity, headColor: headColor.rarity,
       eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity,
-      mouth: mouth.rarity, accessory: accessory.rarity, lighting: lighting.rarity
+      mouth: mouth.rarity, accessory: accessory.rarity
     },
     tier: tierOverride || currentTier
   };
@@ -1873,8 +1799,7 @@ const CATEGORY_META = [
   { key: 'eyeShape', label: 'Eye shape' },
   { key: 'eyeColor', label: 'Eye color', swatch: 'hex' },
   { key: 'mouth', label: 'Mouth' },
-  { key: 'accessory', label: 'Accessory' },
-  { key: 'lighting', label: 'Lighting' }
+  { key: 'accessory', label: 'Accessory' }
 ];
 
 // Seed/supply are large numbers (supply especially — no cap), and a plain
