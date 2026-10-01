@@ -1144,7 +1144,10 @@ function renderFromTraits(picks, index, seed, opts) {
   body += drawHead(skinTone.hex);
   // small seeded jitter so eyes aren't pinned to the exact same spot on
   // every piece; shared with brows and glasses so they stay aligned.
-  const jx = jitterRng() < 0.3 ? (jitterRng() < 0.5 ? -1 : 1) : 0;
+  // eyes sit symmetrically on the face centre line, lined up with the nose and mouth
+  // (the old sideways jitter pushed them off-centre); rng draws kept for seed stability
+  if (jitterRng() < 0.3) jitterRng();
+  const jx = 0;
   body += drawFacialHair(facialHair && facialHair.id, hairColor, skinTone.hex);
   body += drawSunken(jx, skinTone.hex);
   body += drawEyes(eyeStyle.id, jx, skinTone.hex);
