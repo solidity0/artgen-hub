@@ -905,7 +905,7 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
   const leg = (lx, top, len) => '<path d="' + pathD(chalkLine([[lx, top], [lx, top + len]], rng, 0.6)) + '" stroke="' + ink + '" stroke-width="9" stroke-linecap="round" fill="none"/>' +
     '<path d="' + pathD([[lx, top], [lx, top + len]]) + '" stroke="' + fill + '" stroke-width="4.5" stroke-linecap="round" fill="none"/>';
   let o = '<g transform="translate(' + x + ',' + y + ') scale(1.3)">';
-  o += '<ellipse cx="4" cy="1" rx="' + (style === 'bird' ? 20 : style === 'drone' ? 22 : 38) + '" ry="' + (style === 'drone' ? 3.5 : 5) + '" fill="#000" opacity="' + (dark ? 0.45 : style === 'drone' ? 0.08 : 0.12) + '"/>';
+  o += '<ellipse cx="' + (style === 'drone' ? 30 : 4) + '" cy="1" rx="' + (style === 'bird' ? 20 : style === 'drone' ? 22 : 38) + '" ry="' + (style === 'drone' ? 3.5 : 5) + '" fill="#000" opacity="' + (dark ? 0.45 : style === 'drone' ? 0.08 : 0.12) + '"/>';
 
   if (style === 'cat' || style === 'cat_ghost') {
     if (ghost) o += '<ellipse cx="6" cy="-26" rx="46" ry="34" fill="#C9BCFF" opacity=".25"/>';
@@ -942,7 +942,9 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
     o += '<path d="M -2 -45 Q 2 -54 6 -46 Q 8 -54 12 -45" stroke="' + ink + '" stroke-width="2" fill="none" stroke-linecap="round"/>';
     o += eye(9, -34, 3.4) + cheek(8, -26);
   } else if (style === 'drone') {
-    // hovering quad-drone: body pod, two rotor arms, camera eye, landing skids
+    // hovering quad-drone: body pod, two rotor arms, camera eye, landing skids.
+    // Hovers low and a little further out, clear of the bot's hands.
+    o += '<g transform="translate(26 34)">';
     const rect = (x0, y0, w, h, f) => poly([[x0, y0], [x0 + w, y0], [x0 + w, y0 + h], [x0, y0 + h]], f);
     const metal = '#6b737d';
     for (const sd of [-1, 1]) {
@@ -956,6 +958,7 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
     o += '<circle cx="0" cy="-58" r="7.5" fill="#2b2f36" stroke="' + ink + '" stroke-width="2.2"/><circle cx="0" cy="-58" r="4.2" fill="#0b0d12"/><circle cx="0" cy="-58" r="2" fill="#ff3b3b"/><circle cx="-1.6" cy="-59.8" r="0.9" fill="#ffffff"/>';
     o += '<path d="M -14 -60 L -18 -50 M 14 -60 L 18 -50 M -24 -50 L -10 -50 M 10 -50 L 24 -50" stroke="' + ink + '" stroke-width="2.6" stroke-linecap="round"/>';
     o += '<circle cx="0" cy="-86" r="2.4" fill="#7dff3a" stroke="' + ink + '" stroke-width="1.2"/>';
+    o += '</g>';
   } else if (style === 'robo_dog') {
     // mechanical quadruped: riveted torso, jointed legs, visor head, antenna tail
     const rect = (x0, y0, w, h, f) => poly([[x0, y0], [x0 + w, y0], [x0 + w, y0 + h], [x0, y0 + h]], f);
