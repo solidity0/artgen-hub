@@ -253,10 +253,10 @@ const TRAITS = {
     { id: 'petrol',    hex: '#0B6F8F', weight: 4, rarity: 'uncommon' },
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
     { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon' },
-    { id: 'steel',     hex: '#7D8A96', weight: 6, rarity: 'common' },
+    { id: 'steel',     hex: '#56789A', weight: 6, rarity: 'common' },
     { id: 'gunmetal',  hex: '#4E5660', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
-    { id: 'gold',      hex: '#F2C14E', weight: 1.5, rarity: 'rare' },
+    { id: 'gold',      hex: '#E8A512', weight: 1.5, rarity: 'rare' },
     { id: 'purple',    hex: '#6B3FD1', weight: 1.2, rarity: 'rare' },
     { id: 'obsidian',  hex: '#2B2640', weight: 1,   rarity: 'rare' }
   ],
@@ -968,7 +968,7 @@ function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const gid = 'bf' + (suffix || '') + uid;
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
-  if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#9a6a12', shoe: '#c9922a', glow: '#ffd970', defs: grad(['#fff1b8', '#e9b340', '#fbe08a', '#c98f1e', '#f6d06a']) };
+  if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#7a4a00', shoe: '#b8790a', glow: '#ffc21f', defs: grad(['#ffcf3a', '#d4900a', '#ffbe1a', '#a86a04', '#f0a912']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
   return { fill: bodyColor.hex, shade: shadeColor(bodyColor.hex, -34), shoe: shadeColor(bodyColor.hex, -22), glow: bodyColor.hex, defs: '' };
 }
@@ -1091,8 +1091,11 @@ function renderFromTraits(picks, index, seed, opts) {
   const headPaint = headColor ? bodyPaint(headColor, bg, uid, dark, 'h') : paint;
   const legC = picks.legColor && picks.legColor.id !== 'matching' ? TRAITS.legColor.find((o) => o.id === picks.legColor.id) : null;
   const handC = picks.handColor && picks.handColor.id !== 'matching' ? TRAITS.handColor.find((o) => o.id === picks.handColor.id) : null;
-  const legFill = legC ? legC.hex : paint.fill, legShoe = legC ? shadeColor(legC.hex, -22) : paint.shoe;
-  const handFill = handC ? handC.hex : paint.fill;
+  // gradient finishes (gold, obsidian) don't render on thin straight limbs (zero-width bounding box),
+  // so limbs, neck and hands use the finish's solid colour instead
+  const solidFill = paint.fill.startsWith('url(') ? ((bodyColor && bodyColor.hex) || paint.glow) : paint.fill;
+  const legFill = legC ? legC.hex : solidFill, legShoe = legC ? shadeColor(legC.hex, -22) : paint.shoe;
+  const handFill = handC ? handC.hex : solidFill;
 
   // ---- proportions: chunkier than v1 (bigger head + chest, shorter legs) ----
   const headSize = 164, headTop = 98, headCx = cx, headCy = headTop + headSize / 2;
@@ -1175,25 +1178,25 @@ function renderFromTraits(picks, index, seed, opts) {
   // ---- limbs, drawn under head/chest ----
   const limb = (pts, jit, thin, col) => {
     const p = chalkLine(pts, rng, jit);
-    return tube(p, thin ? 15 : 22, ink) + tube(p, thin ? 8 : 14, col || paint.fill);
+    return tube(p, thin ? 15 : 22, ink) + tube(p, thin ? 8 : 14, col || solidFill);
   };
   const joint = (x, y, r) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r + '" fill="' + paint.shoe + '" stroke="' + ink + '" stroke-width="3.2"/>' +
     '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * 0.32).toFixed(1) + '" fill="' + ink + '"/>';
   for (const a of arms) {
     if (a.kind === 'jointed') {
-      body += tube(a.pts, 12, ink) + tube(a.pts, 6.5, paint.fill);
+      body += tube(a.pts, 12, ink) + tube(a.pts, 6.5, solidFill);
       body += joint(a.pts[1][0], a.pts[1][1], 8) + joint(a.pts[2][0], a.pts[2][1], 6);
     } else if (a.kind === 'telescopic') {
       // three nested sleeves, thinner toward the hand, with a metal collar at each join
       const [p0, p1, p2] = a.pts;
       const pm = [p1[0] + (p2[0] - p1[0]) * 0.5, p1[1] + (p2[1] - p1[1]) * 0.5];
       const segs = [[p0, p1, 18], [p1, pm, 14], [pm, p2, 10]];
-      for (const [s0, s1, w] of segs) body += tube([s0, s1], w, ink) + tube([s0, s1], w - 6.5, paint.fill);
+      for (const [s0, s1, w] of segs) body += tube([s0, s1], w, ink) + tube([s0, s1], w - 6.5, solidFill);
       for (const [c, r] of [[p1, 10], [pm, 8]]) body += '<circle cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + r + '" fill="' + paint.shoe + '" stroke="' + ink + '" stroke-width="3"/>' +
         '<path d="M ' + (c[0] - r * 0.55).toFixed(1) + ' ' + c[1].toFixed(1) + ' L ' + (c[0] + r * 0.55).toFixed(1) + ' ' + c[1].toFixed(1) + '" stroke="' + ink + '" stroke-width="1.6" opacity=".7"/>';
     } else if (a.kind === 'spring') {
       const c = coilPts(a.pts, 7, 6);
-      body += tube(c, 6, ink) + tube(c, 2.6, paint.fill);
+      body += tube(c, 6, ink) + tube(c, 2.6, solidFill);
     } else if (a.kind === 'stub') {
       body += limb(a.pts, 1.2);
       const [x, y] = a.pts[1];
@@ -1308,7 +1311,7 @@ function renderFromTraits(picks, index, seed, opts) {
 
   // ---- neck + chest ----
   const neck = chalkLine([[headCx, neckTop - 2], [headCx, neckTop + neckLen + 2]], rng, 0.8);
-  body += tube(neck, 17, ink) + tube(neck, 10, paint.fill);
+  body += tube(neck, 17, ink) + tube(neck, 10, solidFill);
   body += block(bodyPts, 'b');
   bodyRivets = rivets(bodyPts, headCx, chestCy, ink);
   body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink, bodyKind === 'box' ? null : closeLoop(bodyPts));
