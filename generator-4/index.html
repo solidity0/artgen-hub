@@ -296,10 +296,10 @@ const TRAITS = {
   ],
   eyeColor: [
     { id: 'default', weight: 60, rarity: 'common', vibe: 'friendly' },
-    { id: 'blue',    hex: '#3aa0ff', weight: 16, rarity: 'uncommon', vibe: 'friendly' },
-    { id: 'red',     hex: '#ff3b3b', weight: 14, rarity: 'uncommon' },
-    { id: 'orange',  hex: '#ff8c1a', weight: 10, rarity: 'rare' },
-    { id: 'toxic',   hex: '#7dff3a', weight: 10, rarity: 'rare', vibe: 'scary' }
+    { id: 'blue',    hex: '#1a6dff', weight: 16, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'red',     hex: '#ff1a2a', weight: 14, rarity: 'uncommon' },
+    { id: 'orange',  hex: '#ff7400', weight: 10, rarity: 'rare' },
+    { id: 'toxic',   hex: '#3de016', weight: 10, rarity: 'rare', vibe: 'scary' }
   ],
   mouth: [
     { id: 'grille',   weight: 32, rarity: 'common', vibe: 'friendly' },
@@ -601,8 +601,8 @@ function renderEyes(cx, cy, style, rng, ink, eyeColor, uid, dark) {
     const col = eyeColor || '#15151c';
     return '<circle cx="' + x + '" cy="' + y + '" r="' + (R + 1) + '" fill="url(#vg' + uid + ')"/>' +
       doubleStroke(ellipsePtsAt(x, y, R + 1, R + 1, 18), rng, 0.8, 'stroke') +
-      '<ellipse cx="' + (x - 5) + '" cy="' + (y - 7) + '" rx="6.5" ry="4" fill="#ffffff" opacity=".9" transform="rotate(-30 ' + (x - 5) + ' ' + (y - 7) + ')"/>' +
-      '<circle cx="' + (x + 6) + '" cy="' + (y + 6) + '" r="2" fill="#ffffff" opacity=".7"/>';
+      '<ellipse cx="' + (x - 5) + '" cy="' + (y - 7) + '" rx="4" ry="2.4" fill="#ffffff" opacity=".85" transform="rotate(-30 ' + (x - 5) + ' ' + (y - 7) + ')"/>' +
+      '<circle cx="' + (x + 6) + '" cy="' + (y + 6) + '" r="1.4" fill="#ffffff" opacity=".6"/>';
   };
   // scary: an angry, lidded black socket with a small burning iris
   const glareEye = (x, y, side) => {
@@ -628,7 +628,7 @@ function renderEyes(cx, cy, style, rng, ink, eyeColor, uid, dark) {
   else if (style === 'cracked') out += crackedEye(lx, cy, false) + crackedEye(rx, cy, true);
   else if (style === 'void') {
     const col = eyeColor || '#15151c';
-    out += '<defs><radialGradient id="vg' + uid + '" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="' + shadeColor(col, 35) + '"/><stop offset="0.55" stop-color="' + col + '"/><stop offset="1" stop-color="' + shadeColor(col, -55) + '"/></radialGradient></defs>';
+    out += '<defs><radialGradient id="vg' + uid + '" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="' + shadeColor(col, 12) + '"/><stop offset="0.5" stop-color="' + col + '"/><stop offset="1" stop-color="' + shadeColor(col, -62) + '"/></radialGradient></defs>';
     out += voidEye(lx, cy) + voidEye(rx, cy);
   } else if (style === 'spiral') out += spiralEye(lx, cy) + spiralEye(rx, cy);
   else if (style === 'ring_double') out += ringEye(lx, cy, true) + ringEye(rx, cy, true);
@@ -1288,7 +1288,7 @@ function renderFromTraits(picks, index, seed, opts) {
   }
   const eyeColorHex = picks.eyeColor.hex || null;
   if (eyeColorHex) {
-    defs += '<radialGradient id="eg' + uid + '"><stop offset="0.5" stop-color="' + eyeColorHex + '" stop-opacity="0.9"/><stop offset="1" stop-color="' + eyeColorHex + '" stop-opacity="0"/></radialGradient>';
+    defs += '<radialGradient id="eg' + uid + '"><stop offset="0.5" stop-color="' + eyeColorHex + '" stop-opacity="0.6"/><stop offset="1" stop-color="' + eyeColorHex + '" stop-opacity="0"/></radialGradient>';
     body += '<circle cx="' + (headCx - 32) + '" cy="' + (headCy - 12) + '" r="27" fill="url(#eg' + uid + ')"/>';
     body += '<circle cx="' + (headCx + 32) + '" cy="' + (headCy - 12) + '" r="27" fill="url(#eg' + uid + ')"/>';
   }
