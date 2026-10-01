@@ -524,7 +524,7 @@ const CX = 200;                 // character center line
 const HEAD = { cx: 200, cy: 150, rx: 85, ry: 78 };
 const EYE_Y = 165, EYE_LX = 165, EYE_RX = 235, EYE_JITTER = 8;
 const GROUND_Y = 332;
-const STROKE_W = 4.6;
+const STROKE_W = 5;
 const CROP = { x: 32, y: 12, size: 336 };
 
 // Darkens/lightens a hex color by percent — used for shading and for the
@@ -537,7 +537,7 @@ function shadePixel(hex, percent) {
   r=Math.round((t-r)*p)+r; g=Math.round((t-g)*p)+g; b=Math.round((t-b)*p)+b;
   return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
 }
-function outlineOf(hex) { return shadePixel(hex, -68); }
+function outlineOf(hex) { return shadePixel(hex, -78); }
 
 // Perceptual brightness of a hex color (0-255) — used to decide whether
 // face-feature ink (eyes/mouth/glasses) needs to flip to a light tone, so
@@ -609,10 +609,8 @@ function formShade(d, fill, box, opts) {
   const dark = fill.startsWith('url(') ? '#000000' : shadePixel(fill, -28);
   const hatchInk = fill.startsWith('url(') ? '#000000' : outlineOf(fill);
   let g = ellipse(x0 + w * (o.sx || 0.9), y0 + h * (o.sy || 0.78), w * 0.62, h * 0.8, dark, { stroke: false, opacity: o.shadow ?? 0.5 });
-  if (o.hatch !== false && !_lite) {
-    const step = 7;
-    for (let x = x0 + w * 0.55; x < x1 + h; x += step) g += line(`M${fmt(x)} ${y1} L${fmt(x - h)} ${y0}`, hatchInk, 1.1, 0.08);
-  }
+  // (no fine hatching: faint 1px lines read as haze, so shading is clean cel shading only)
+  void hatchInk;
   if (o.highlight !== false) g += ellipse(x0 + w * 0.3, y0 + h * 0.2, w * 0.24, h * 0.13, '#ffffff', { stroke: false, opacity: o.hl ?? 0.2 });
   return `<clipPath id="${id}"><path d="${d}"/></clipPath><g clip-path="url(#${id})">${g}</g>`;
 }
@@ -1205,7 +1203,7 @@ function drawAtmosphere(bgHex, rng) {
     `<stop offset="0" stop-color="${shadePixel(bgHex, 30)}"/><stop offset="0.55" stop-color="${bgHex}"/><stop offset="1" stop-color="${shadePixel(bgHex, -22)}"/>` +
     `</radialGradient></defs><rect width="${VB}" height="${VB}" fill="url(#${id})"/>`;
   const speck = shadePixel(bgHex, -40), light = shadePixel(bgHex, 45);
-  for (let i = 0; i < (_lite ? 0 : 70); i++) {
+  for (let i = 0; i < 0; i++) { // paper-grain specks removed: they read as noise/haze
     const x = CROP.x + rng() * CROP.size, y = CROP.y + rng() * (GROUND_Y - CROP.y), r = 0.6 + rng() * 1.6;
     s += circle(fmt(x), fmt(y), fmt(r), rng() < 0.6 ? speck : light, { stroke: false, opacity: fmt(0.15 + rng() * 0.25) });
   }
@@ -1230,7 +1228,7 @@ function drawFog(rng) {
   let s = '';
   for (let i = 0; i < 4; i++) {
     const x = 40 + rng() * 320, y = GROUND_Y - 14 + rng() * 22;
-    s += ellipse(fmt(x), fmt(y), fmt(90 + rng() * 70), fmt(9 + rng() * 7), '#d8dde2', { stroke: false, opacity: fmt(0.1 + rng() * 0.1) });
+    s += ellipse(fmt(x), fmt(y), fmt(90 + rng() * 70), fmt(9 + rng() * 7), '#d8dde2', { stroke: false, opacity: fmt(0.06 + rng() * 0.06) });
   }
   return s;
 }
@@ -1272,8 +1270,6 @@ function renderFromTraits(picks, index, seed, opts) {
   body += drawGround(bgHex, fxRng);
   // low fog rolls across the street behind the figure (drawn over him it hazed the legs)
   body += drawFog(fxRng);
-  // faint aura behind the figure, tinted by the outfit color
-  body += ellipse(CX, 200, 118, 150, shadePixel(outfitColor.hex, _cute ? 40 : 20), { stroke: false, opacity: _cute ? 0.1 : 0.1 });
   // a cap sits over an afro's crown, so skip the big afro back layer then
   if (!(capped && hairStyle.id === 'afro')) body += drawHairBack(hairStyle.id, hairColor, gradId);
   body += drawBodyAndOutfit(skinTone.hex, outfitType.id, outfitColor.hex);
