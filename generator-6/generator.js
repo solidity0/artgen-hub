@@ -576,7 +576,8 @@ function drawMouth(style, skinHex, rng, centred) {
   const ox = 0;
   const x = CX + ox;
   // under a mustache the mouth drops a little so the mustache doesn't sit on the lip / teeth
-  if (centred && style !== 'fangs') return `<g transform="translate(0 5)">` + drawMouth(style, skinHex, () => 0.9, false) + '</g>';
+  // with a goatee/beard it stays up in the gap between mustache and chin hair, so it doesn't vanish into the beard
+  if (centred && style !== 'fangs') return `<g transform="translate(0 ${centred === 'beard' || centred === 'goatee' ? 1 : 5})">` + drawMouth(style, skinHex, () => 0.9, false) + '</g>';
   const { ink } = faceInk(skinHex);
   const lip = luma(skinHex) < 60 ? shadePixel(skinHex, 40) : shadePixel(skinHex, -50);
   const rim = { stroke: luma(skinHex) < 60 ? '#6a6a6a' : outlineOf(skinHex), sw: 2.5 };
@@ -776,9 +777,9 @@ function drawFacialHair(style, hairColor, skinHex) {
   } else if (style === 'mustache') {
     return mustache;
   } else if (style === 'goatee') {
-    return mustache + path('M186 210 Q200 206 214 210 L210 226 Q200 232 190 226 Z', c, { stroke: false });
+    return mustache + path('M187 214 Q200 211 213 214 L209 227 Q200 232 191 227 Z', c, { stroke: false });
   } else if (style === 'beard') {
-    const beard = 'M122 160 Q122 226 200 234 Q278 226 278 160 L266 164 Q262 212 222 214 Q210 206 200 206 Q190 206 178 214 Q138 212 134 164 Z';
+    const beard = 'M122 160 Q122 226 200 234 Q278 226 278 160 L266 164 Q262 212 224 216 Q212 211 200 211 Q188 211 176 216 Q138 212 134 164 Z';
     return shaded(beard, c, bboxOfD(beard), { shadow: 0.4, hl: 0.12 }) + mustache;
   }
   return '';
@@ -1151,7 +1152,7 @@ function renderFromTraits(picks, index, seed, opts) {
   body += drawFacialHair(facialHair && facialHair.id, hairColor, skinTone.hex);
   body += drawSunken(jx, skinTone.hex);
   body += drawEyes(eyeStyle.id, jx, skinTone.hex);
-  body += drawMouth((mouth && mouth.id) || (_cute ? 'smile' : 'stitched'), skinTone.hex, jitterRng, !!facialHair && ['mustache', 'goatee', 'beard'].includes(facialHair.id));
+  body += drawMouth((mouth && mouth.id) || (_cute ? 'smile' : 'stitched'), skinTone.hex, jitterRng, !!facialHair && ['mustache', 'goatee', 'beard'].includes(facialHair.id) && facialHair.id);
   body += drawHairFront(hairStyle.id, hairColor, gradId, capped);
   body += drawBrows(eyeStyle.id, jx, skinTone.hex);
   body += drawScars(scars && scars.id, skinTone.hex, jx);
@@ -1228,12 +1229,13 @@ function warmGrade(hex) {
 
 
 // ---------- main composer ----------
-// A goatee/beard under fangs or an open gaping mouth collide on the chin: fangs keep just the
-// mustache, a gaping mouth goes clean-shaven. Pure remap (no rng draws) so the rest stays seed-stable.
+// A goatee/beard under fangs, a grin, bared teeth, a stitched or bloody mouth collides on the chin (those keep
+// just the mustache); a gaping mouth goes clean-shaven. Pure remap (no rng draws) so the rest stays seed-stable.
 function fixFaceCombo(facialHair, mouth) {
   const FH = (id) => TRAITS.facialHair.find((f) => f.id === id);
   if (!facialHair || !mouth) return facialHair;
-  if (mouth.id === 'fangs' && (facialHair.id === 'goatee' || facialHair.id === 'beard')) return FH('mustache');
+  // big / toothy mouths (and blood drips) would run into a beard or goatee on the chin: keep only the mustache
+  if (['fangs', 'grin', 'teeth', 'bloody', 'stitched'].includes(mouth.id) && (facialHair.id === 'goatee' || facialHair.id === 'beard')) return FH('mustache');
   if (mouth.id === 'gape' && ['mustache', 'goatee', 'beard'].includes(facialHair.id)) return FH('none');
   return facialHair;
 }

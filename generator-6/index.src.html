@@ -258,7 +258,7 @@ function generateOne(index,seed,opts) {
   const bgColor=(isOneOfOne&&!locked('background'))?G.pickOneOfOneBgColor(rng,V):pickTrait(rng,'background',tierOverride,V);
   let facialHair=pickTrait(rng,'facialHair',tierOverride,V);
   const mouth=pickTrait(rng,'mouth',tierOverride,V);
-  // goatee/beard + fangs or gape collide on the chin; a facial-hair lock always wins
+  // goatee/beard + big mouths collide on the chin; a facial-hair lock always wins
   if(!locked('facialHair')) facialHair=G.fixFaceCombo(facialHair,mouth);
   const scars=pickTrait(rng,'scars',tierOverride,V);
   const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair,mouth,scars,vibe};
