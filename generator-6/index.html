@@ -750,9 +750,9 @@ function drawBrows(eyeStyle, jx, skinHex) {
 // same spot on every face.
 const CAVITY = '#1a0406', BLOOD = '#a3000f', TOOTH = '#f2ecd8';
 function drawMouth(style, skinHex, rng, centred) {
-  let ox = rng() < 0.4 ? (rng() < 0.5 ? -4 : 4) : 0;
-  // fangs, and any mouth under a mustache/goatee/beard, sit dead-centre so they line up with the face
-  if (centred || style === 'fangs') ox = 0;
+  // rng draws kept for seed stability, but every mouth now sits dead-centre under the nose
+  if (rng() < 0.4) rng();
+  const ox = 0;
   const x = CX + ox;
   // under a mustache the mouth drops a little so the mustache doesn't sit on the lip / teeth
   if (centred && style !== 'fangs') return `<g transform="translate(0 5)">` + drawMouth(style, skinHex, () => 0.9, false) + '</g>';
@@ -1404,6 +1404,16 @@ function warmGrade(hex) {
 
 
 // ---------- main composer ----------
+// A goatee/beard under fangs or an open gaping mouth collide on the chin: fangs keep just the
+// mustache, a gaping mouth goes clean-shaven. Pure remap (no rng draws) so the rest stays seed-stable.
+function fixFaceCombo(facialHair, mouth) {
+  const FH = (id) => TRAITS.facialHair.find((f) => f.id === id);
+  if (!facialHair || !mouth) return facialHair;
+  if (mouth.id === 'fangs' && (facialHair.id === 'goatee' || facialHair.id === 'beard')) return FH('mustache');
+  if (mouth.id === 'gape' && ['mustache', 'goatee', 'beard'].includes(facialHair.id)) return FH('none');
+  return facialHair;
+}
+
 function generatePiece(index, seed, tier, opts) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const t = tier || 'any';
@@ -1420,8 +1430,9 @@ function generatePiece(index, seed, tier, opts) {
   const accessory  = pickByRarity(rng, P('accessory'), t);
   const backdrop   = isOneOfOne ? pickOneOfOneBackdrop(rng, V) : pickByRarity(rng, P('backdrop'), t);
   const bgColor    = isOneOfOne ? pickOneOfOneBgColor(rng, V) : pickByRarity(rng, P('background'), t);
-  const facialHair = pickByRarity(rng, P('facialHair'), t); // rolled after the originals so earlier traits stay seed-stable
+  let facialHair   = pickByRarity(rng, P('facialHair'), t); // rolled after the originals so earlier traits stay seed-stable
   const mouth      = pickByRarity(rng, P('mouth'), t);
+  facialHair = fixFaceCombo(facialHair, mouth);
   const scars      = pickByRarity(rng, P('scars'), t);
 
   const picks = { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair, mouth, scars, vibe };
@@ -1461,7 +1472,7 @@ const CHAIN_THEMES = { bitcoin: '#f7931a', ethereum: '#627eea', robinhood: '#00c
 const api = {
   generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
   mulberry32, weightedPick, pickByRarity, shadeColor, vibePool, vibeRng,
-  renderFromTraits, BG_COLOR, CHAIN_THEMES,
+  renderFromTraits, fixFaceCombo, BG_COLOR, CHAIN_THEMES,
   RAINBOW_HAIR, ONE_OF_ONE_HAIR_WEIGHTS, pickOneOfOneHairColor,
   ONE_OF_ONE_SKIN_TONE_WEIGHTS, pickOneOfOneSkinTone,
   ONE_OF_ONE_OUTFIT_WEIGHTS, pickOneOfOneOutfitType,
@@ -1557,8 +1568,10 @@ function generateOne(index,seed,opts) {
   const accessory=pickTrait(rng,'accessory',tierOverride,V);
   const backdrop=(isOneOfOne&&!locked('backdrop'))?G.pickOneOfOneBackdrop(rng,V):pickTrait(rng,'backdrop',tierOverride,V);
   const bgColor=(isOneOfOne&&!locked('background'))?G.pickOneOfOneBgColor(rng,V):pickTrait(rng,'background',tierOverride,V);
-  const facialHair=pickTrait(rng,'facialHair',tierOverride,V);
+  let facialHair=pickTrait(rng,'facialHair',tierOverride,V);
   const mouth=pickTrait(rng,'mouth',tierOverride,V);
+  // goatee/beard + fangs or gape collide on the chin; a facial-hair lock always wins
+  if(!locked('facialHair')) facialHair=G.fixFaceCombo(facialHair,mouth);
   const scars=pickTrait(rng,'scars',tierOverride,V);
   const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair,mouth,scars,vibe};
   const traits={}, rarity={};
