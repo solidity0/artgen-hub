@@ -1147,9 +1147,22 @@ function renderFromTraits(picks, index, seed, opts) {
   }
 
   // ---- neck + chest ----
-  const neck = chalkLine([[headCx, neckTop - 2], [headCx, neckTop + neckLen + 2]], rng, 0.8);
-  body += tube(neck, 17, ink) + tube(neck, 10, solidFill);
+  const neck = chalkLine([[headCx, neckTop - 2], [headCx, neckTop + neckLen + 2]], rng, 0.8); // rng draw kept
+  void neck;
+  // mechanical neck: ribbed metal conduit, two wires looping from head to body, bolted collars
+  const nT = neckTop - 2, nB = neckTop + neckLen + 4;
+  body += '<rect x="' + (headCx - 7) + '" y="' + nT + '" width="14" height="' + (nB - nT) + '" rx="3" fill="#3a3f46" stroke="' + ink + '" stroke-width="3"/>';
+  for (let y = nT + 4; y < nB - 1; y += 4) body += '<path d="M ' + (headCx - 6) + ' ' + y + ' L ' + (headCx + 6) + ' ' + y + '" stroke="#8a929c" stroke-width="1.6" stroke-linecap="round"/>';
+  for (const [sd, wc] of [[-1, '#c8302a'], [1, '#2a6fd6']]) {
+    const wd = 'M ' + (headCx + sd * 11) + ' ' + (neckTop + 1) + ' C ' + (headCx + sd * 19) + ' ' + (neckTop + 7) + ' ' + (headCx + sd * 19) + ' ' + (neckTop + neckLen - 4) + ' ' + (headCx + sd * 12) + ' ' + (neckTop + neckLen + 3);
+    body += '<path d="' + wd + '" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/><path d="' + wd + '" fill="none" stroke="' + wc + '" stroke-width="2.6" stroke-linecap="round"/>';
+  }
+  const collar = (y) => '<rect x="' + (headCx - 16) + '" y="' + (y - 3) + '" width="32" height="6" rx="2" fill="#59616b" stroke="' + ink + '" stroke-width="2.2"/>' +
+    '<circle cx="' + (headCx - 11) + '" cy="' + y + '" r="1.4" fill="#c9d0d8"/><circle cx="' + (headCx + 11) + '" cy="' + y + '" r="1.4" fill="#c9d0d8"/>';
+  body += collar(neckTop);
   body += block(bodyPts, 'b');
+  // lower collar sits on the body plate (drawn after it so it stays visible)
+  body += collar(topYAt(bodyPts, headCx) + 2 || (neckTop + neckLen + 2));
   bodyRivets = rivets(bodyPts, headCx, chestCy, ink);
   body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink, bodyKind === 'box' ? null : closeLoop(bodyPts));
   body += bodyRivets;
