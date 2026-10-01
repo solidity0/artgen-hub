@@ -125,12 +125,8 @@ const TRAITS = {
     { id: 'x_cross',       weight: 32, rarity: 'common' },
     { id: 'slash',         weight: 16, rarity: 'uncommon' },
     { id: 'circle_target', weight: 12, rarity: 'uncommon', vibe: 'friendly' },
-    { id: 'emoji_fire',    weight: 10, rarity: 'uncommon', emoji: '\u{1F525}' },
     { id: 'blank',         weight: 6,  rarity: 'rare' },
     { id: 'skull_small',   weight: 4,  rarity: 'rare' },
-    { id: 'emoji_skull',   weight: 4,  rarity: 'rare', emoji: '\u{1F480}' },
-    { id: 'emoji_broken_heart', weight: 3, rarity: 'rare', emoji: '\u{1F494}' },
-    { id: 'emoji_blast',        weight: 3, rarity: 'rare', emoji: '\u{1F4A5}' },
     { id: 'vent',          weight: 16, rarity: 'common' },
     { id: 'hazard',        weight: 10, rarity: 'uncommon' },
     { id: 'barcode',       weight: 8,  rarity: 'uncommon' }
@@ -1184,14 +1180,46 @@ function renderFromTraits(picks, index, seed, opts) {
     const hubY = bodyTopY + 15, ends = [];
     if (Number.isFinite(hw)) for (const sd of [-1, 1]) ends.push([headCx + sd * (hw - 2), sy, 9]);
     for (const lx of [headCx - legX, headCx + legX]) { const by = bottomYAt(bodyPts, lx); if (Number.isFinite(by)) ends.push([lx, by - 3, 10]); }
-    const wireCols = ['#c8302a', '#2a6fd6', '#e8b020', '#2e9e4f'];
     const cid = 'iw' + uid;
     defs += '<clipPath id="' + cid + '"><path d="' + pathD(bodyPts) + ' Z"/></clipPath>';
     let w = '';
+    // circuit board along the lower plate: a chip, two capacitors and copper traces with solder pads
+    const yL = chestCy + ch * 0.68, hwL = halfWidthAt(bodyPts, headCx, yL);
+    if (Number.isFinite(hwL) && hwL > 40) {
+      const chipX = headCx - hwL * 0.68, capX = headCx + hwL * 0.64, copper = '#d9a441';
+      const trace = (pts) => '<path d="M ' + pts.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L ') + '" fill="none" stroke="' + copper + '" stroke-width="1.8" stroke-linejoin="round"/>';
+      const pad = (x, y) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.4" fill="' + copper + '" stroke="#5a3a10" stroke-width="0.8"/>';
+      w += trace([[chipX + 9, yL - 3], [chipX + 18, yL - 3], [chipX + 18, yL + 9], [headCx - 12, yL + 9]]) + pad(headCx - 12, yL + 9);
+      w += trace([[chipX + 9, yL + 3], [chipX + 13, yL + 3], [chipX + 13, yL + 15], [headCx - 4, yL + 15]]) + pad(headCx - 4, yL + 15);
+      w += trace([[capX, yL + 7], [capX, yL + 13], [headCx + 10, yL + 13]]) + pad(headCx + 10, yL + 13);
+      w += trace([[capX - 10, yL + 7], [capX - 10, yL + 19], [headCx + 2, yL + 19]]) + pad(headCx + 2, yL + 19);
+      let chip = '<rect x="' + (chipX - 9) + '" y="' + (yL - 7) + '" width="18" height="14" rx="1.5" fill="#1d2026" stroke="' + ink + '" stroke-width="1.8"/>';
+      for (let k = 0; k < 4; k++) { const px = chipX - 6 + k * 4; chip += '<path d="M ' + px + ' ' + (yL - 7) + ' L ' + px + ' ' + (yL - 10) + ' M ' + px + ' ' + (yL + 7) + ' L ' + px + ' ' + (yL + 10) + '" stroke="#c9d0d8" stroke-width="1.4"/>'; }
+      chip += '<circle cx="' + (chipX - 5) + '" cy="' + (yL - 3) + '" r="1.1" fill="#8a929c"/>';
+      w += chip;
+      for (const [dx, col] of [[0, '#2a6fd6'], [-10, '#1d2026']]) {
+        const x = capX + dx;
+        w += '<rect x="' + (x - 3.5) + '" y="' + (yL - 6) + '" width="7" height="13" rx="2" fill="' + col + '" stroke="' + ink + '" stroke-width="1.5"/>' +
+          '<rect x="' + (x - 3.5) + '" y="' + (yL - 6) + '" width="7" height="3" rx="1" fill="#c9d0d8"/>';
+      }
+    }
+    // braided harnesses: three coloured strands in a dark sheath, held by cable ties
+    const strandSets = [['#c8302a', '#1a1a1a', '#e8b020'], ['#2a6fd6', '#e8e8e8', '#c8302a'], ['#e8b020', '#2e9e4f', '#1a1a1a'], ['#2e9e4f', '#2a6fd6', '#e8e8e8']];
+    const cub = (p0, p1, p2, p3, t) => { const u = 1 - t; return [u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0], u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]]; };
     ends.forEach(([ex, ey], k) => {
       const sx = headCx + (k % 2 ? 1 : -1) * (4 + (k >> 1) * 4);
-      const d = 'M ' + sx.toFixed(1) + ' ' + hubY + ' C ' + sx.toFixed(1) + ' ' + (hubY + (ey - hubY) * 0.55).toFixed(1) + ' ' + (ex + (headCx - ex) * 0.35).toFixed(1) + ' ' + ey.toFixed(1) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1);
-      w += '<path d="' + d + '" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/><path d="' + d + '" fill="none" stroke="' + wireCols[k % 4] + '" stroke-width="2.6" stroke-linecap="round"/>';
+      const P = [[sx, hubY], [sx, hubY + (ey - hubY) * 0.55], [ex + (headCx - ex) * 0.35, ey], [ex, ey]];
+      const dpath = (ox, oy) => 'M ' + P.map((p, i) => (i === 1 ? 'C ' : '') + (p[0] + ox).toFixed(1) + ' ' + (p[1] + oy).toFixed(1)).join(' ');
+      const len = Math.hypot(ex - sx, ey - hubY) || 1, nx = -(ey - hubY) / len, ny = (ex - sx) / len;
+      w += '<path d="' + dpath(0, 0) + '" fill="none" stroke="' + ink + '" stroke-width="10" stroke-linecap="round"/>';
+      w += '<path d="' + dpath(0, 0) + '" fill="none" stroke="#2a2d33" stroke-width="7.4" stroke-linecap="round"/>';
+      strandSets[k % 4].forEach((c, j) => { const o = (j - 1) * 2.2; w += '<path d="' + dpath(nx * o, ny * o) + '" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linecap="round"/>'; });
+      for (const t of [0.35, 0.7]) {
+        const a = cub(P[0], P[1], P[2], P[3], t), b = cub(P[0], P[1], P[2], P[3], t + 0.02);
+        const tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, qx = -(b[1] - a[1]) / tl * 6, qy = (b[0] - a[0]) / tl * 6;
+        w += '<path d="M ' + (a[0] - qx).toFixed(1) + ' ' + (a[1] - qy).toFixed(1) + ' L ' + (a[0] + qx).toFixed(1) + ' ' + (a[1] + qy).toFixed(1) + '" stroke="' + ink + '" stroke-width="3.6" stroke-linecap="round"/>' +
+          '<path d="M ' + (a[0] - qx * 0.8).toFixed(1) + ' ' + (a[1] - qy * 0.8).toFixed(1) + ' L ' + (a[0] + qx * 0.8).toFixed(1) + ' ' + (a[1] + qy * 0.8).toFixed(1) + '" stroke="#e8e8e8" stroke-width="1.6" stroke-linecap="round"/>';
+      }
     });
     body += '<g clip-path="url(#' + cid + ')">' + w + '</g>';
     // junction box the neck conduit feeds into
@@ -1298,7 +1326,7 @@ const ONE_OF_ONE_WEIGHTS = {
   eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }, { id: 'glare', weight: 24 }, { id: 'cracked', weight: 18 }],
   eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }, { id: 'toxic', weight: 26 }],
   mouth: [{ id: 'fang_grille', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'led_bar', weight: 24 }, { id: 'vent', weight: 20 }, { id: 'jaws', weight: 28 }],
-  chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'hazard', weight: 10 }, { id: 'barcode', weight: 10 }, { id: 'vent', weight: 6 }, { id: 'blank', weight: 12 }, { id: 'emoji_skull', weight: 11 }, { id: 'emoji_broken_heart', weight: 9 }, { id: 'emoji_blast', weight: 9 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
+  chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'hazard', weight: 10 }, { id: 'barcode', weight: 10 }, { id: 'vent', weight: 6 }, { id: 'blank', weight: 12 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
@@ -1330,7 +1358,7 @@ function pickOneOfOne(category, rng, vibe) {
 // but any non-1/1 draw that lands on one rerolls to a different value from
 // the same tier fallback — unless the user explicitly locked it themselves,
 // which always wins.
-const ONE_OF_ONE_ONLY_CHESTMARK = ['emoji_broken_heart', 'emoji_blast'];
+const ONE_OF_ONE_ONLY_CHESTMARK = []; // chest emoji removed
 const ONE_OF_ONE_ONLY_GRASSCOLOR = ['green'];
 const ONE_OF_ONE_ONLY_BY_CATEGORY = { chestMark: ONE_OF_ONE_ONLY_CHESTMARK, grassColor: ONE_OF_ONE_ONLY_GRASSCOLOR };
 
