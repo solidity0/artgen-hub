@@ -761,7 +761,9 @@ function drawMouth(style, skinHex, rng, centred) {
   const lip = luma(skinHex) < 60 ? shadePixel(skinHex, 40) : shadePixel(skinHex, -50);
   const rim = { stroke: luma(skinHex) < 60 ? '#6a6a6a' : outlineOf(skinHex), sw: 2.5 };
   let s = '';
-  if (style === 'smile') {
+  if (style === 'covered') {
+    // hidden under a goatee / beard
+  } else if (style === 'smile') {
     s += line(`M${x-10} 200 Q${x} 206 ${x+10} 200`, lip, 4);
   } else if (style === 'beam') {
     s += line(`M${x-15} 200 Q${x} 210 ${x+15} 200`, lip, 4);
@@ -1408,15 +1410,19 @@ function warmGrade(hex) {
 
 
 // ---------- main composer ----------
-// A goatee/beard under fangs, a grin, bared teeth, a stitched or bloody mouth collides on the chin (those keep
-// just the mustache); a gaping mouth goes clean-shaven. Pure remap (no rng draws) so the rest stays seed-stable.
-function fixFaceCombo(facialHair, mouth) {
+// A goatee or full beard never shares the face with a mouth: the chin hair covers it, so the
+// mouth trait becomes 'covered' (nothing drawn). If the mouth is the thing that must stay (a
+// locked mouth), the beard is trimmed to just a mustache instead. A gaping mouth goes
+// clean-shaven. Pure remaps, no rng draws, so every other trait stays seed-stable.
+const MOUTH_COVERED = { id: 'covered', weight: 0, rarity: 'common' };
+function fixFaceCombo(facialHair, mouth, keepMouth) {
   const FH = (id) => TRAITS.facialHair.find((f) => f.id === id);
-  if (!facialHair || !mouth) return facialHair;
-  // big / toothy mouths (and blood drips) would run into a beard or goatee on the chin: keep only the mustache
-  if (['fangs', 'grin', 'teeth', 'bloody', 'stitched'].includes(mouth.id) && (facialHair.id === 'goatee' || facialHair.id === 'beard')) return FH('mustache');
-  if (mouth.id === 'gape' && ['mustache', 'goatee', 'beard'].includes(facialHair.id)) return FH('none');
-  return facialHair;
+  if (!facialHair || !mouth) return { facialHair, mouth };
+  if (mouth.id === 'gape' && ['mustache', 'goatee', 'beard'].includes(facialHair.id)) return { facialHair: FH('none'), mouth };
+  if (facialHair.id === 'goatee' || facialHair.id === 'beard') {
+    return keepMouth ? { facialHair: FH('mustache'), mouth } : { facialHair, mouth: MOUTH_COVERED };
+  }
+  return { facialHair, mouth };
 }
 
 function generatePiece(index, seed, tier, opts) {
@@ -1436,8 +1442,8 @@ function generatePiece(index, seed, tier, opts) {
   const backdrop   = isOneOfOne ? pickOneOfOneBackdrop(rng, V) : pickByRarity(rng, P('backdrop'), t);
   const bgColor    = isOneOfOne ? pickOneOfOneBgColor(rng, V) : pickByRarity(rng, P('background'), t);
   let facialHair   = pickByRarity(rng, P('facialHair'), t); // rolled after the originals so earlier traits stay seed-stable
-  const mouth      = pickByRarity(rng, P('mouth'), t);
-  facialHair = fixFaceCombo(facialHair, mouth);
+  let mouth        = pickByRarity(rng, P('mouth'), t);
+  ({ facialHair, mouth } = fixFaceCombo(facialHair, mouth));
   const scars      = pickByRarity(rng, P('scars'), t);
 
   const picks = { skinTone, hairColor, hairStyle, outfitType, outfitColor, eyeStyle, accessory, backdrop, bgColor, facialHair, mouth, scars, vibe };
@@ -1574,9 +1580,9 @@ function generateOne(index,seed,opts) {
   const backdrop=(isOneOfOne&&!locked('backdrop'))?G.pickOneOfOneBackdrop(rng,V):pickTrait(rng,'backdrop',tierOverride,V);
   const bgColor=(isOneOfOne&&!locked('background'))?G.pickOneOfOneBgColor(rng,V):pickTrait(rng,'background',tierOverride,V);
   let facialHair=pickTrait(rng,'facialHair',tierOverride,V);
-  const mouth=pickTrait(rng,'mouth',tierOverride,V);
-  // goatee/beard + big mouths collide on the chin; a facial-hair lock always wins
-  if(!locked('facialHair')) facialHair=G.fixFaceCombo(facialHair,mouth);
+  let mouth=pickTrait(rng,'mouth',tierOverride,V);
+  // a goatee/beard covers the mouth; a locked mouth keeps it (beard trimmed to a mustache), locking both keeps both
+  if(!(locked('facialHair')&&locked('mouth'))){const fh0=facialHair;({facialHair,mouth}=G.fixFaceCombo(facialHair,mouth,locked('mouth')));if(locked('facialHair'))facialHair=fh0;}
   const scars=pickTrait(rng,'scars',tierOverride,V);
   const picks={skinTone,hairColor,hairStyle,outfitType,outfitColor,eyeStyle,accessory,backdrop,bgColor,facialHair,mouth,scars,vibe};
   const traits={}, rarity={};
