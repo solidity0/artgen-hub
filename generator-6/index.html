@@ -766,9 +766,10 @@ function drawMouth(style, skinHex, rng) {
     s += line(`M${x-24} 202 Q${x} 206 ${x+24} 200`, lip, 4);
     for (let i = -18; i <= 18; i += 9) s += line(`M${x+i} 195 L${x+i+1} 210`, lip, 2.5);
   } else if (style === 'fangs') {
-    s += line(`M${x-18} 198 Q${x} 206 ${x+18} 196`, lip, 4);
-    s += path(`M${x-11} 200 L${x-7} 214 L${x-4} 201 Z`, TOOTH, { stroke: ink, sw: 1.8 });
-    s += path(`M${x+5} 199 L${x+8} 213 L${x+11} 198 Z`, TOOTH, { stroke: ink, sw: 1.8 });
+    // mirrored pair: same size, same height, hanging straight from a level lip
+    s += path(`M${x-12} 200 L${x-8} 214 L${x-4} 200 Z`, TOOTH, { stroke: ink, sw: 1.8 });
+    s += path(`M${x+4} 200 L${x+8} 214 L${x+12} 200 Z`, TOOTH, { stroke: ink, sw: 1.8 });
+    s += line(`M${x-18} 198 Q${x} 204 ${x+18} 198`, lip, 4);
   } else if (style === 'grin') {
     // wide jack-o'-lantern grin with jagged teeth
     s += path(`M${x-32} 192 Q${x} 206 ${x+32} 192 Q${x+22} 222 ${x} 222 Q${x-22} 222 ${x-32} 192 Z`, CAVITY, rim);
