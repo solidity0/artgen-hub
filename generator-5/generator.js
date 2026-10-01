@@ -978,7 +978,40 @@
     return s;
   }
 
-  const api = {
+
+// ---------- unique character names ----------
+// Every piece in a collection gets its own name. Names are a bijective shuffle of
+// FIRST x LAST (an affine permutation mod N, keyed by the seed), so within one
+// collection no two pieces can ever share a name. Past N pieces a roman numeral
+// is appended (II, III, ...), which keeps them unique at any supply.
+const NAME_PARTS = (function () {
+  const uniq = (a) => Array.from(new Set(a));
+  const BLOCK = ['Isis'];
+  const join = (pre, suf) => uniq([].concat(...pre.map((p) => suf.filter((s) => p.slice(-1).toLowerCase() !== s[0]).map((s) => p + s)))).filter((w) => !BLOCK.includes(w));
+  const FIRST = join(['Brim','Cin','Char','Scor','Grim','Ash','Sul','Mal','Bal','Fang','Gnash','Grow','Howl','Ruk','Skor','Tar','Vul','Wrath','Zar','Bane','Cerb','Gor','Kur','Mor','Rag','Snar','Thra','Ug','Yow','Soot'], ['ky','gar','bo','rus','ox','ie','ter','mo','oth','ix','ug','ra']);
+  const LAST = ['Bonechewer','Hellpup','Gravedigger','Soulsniffer','Emberpaw','Ashtail','Cindermaw','Brimstone','Nightfang','Doomhowl','Gutterhound','Skullgnaw','Coalnose','Smokefur','Pitborn','Ghostbiter','Ratcatcher','Tombsniffer','Fleabane','Ironjaw','Bloodfang','Scorchtail','Ashmuzzle','Gloomhowl','Rotbark','Hexhound','Sootpaw','Gravehound','Mudtooth','Boneyard','Wraithpup','Snarlback','Cursebark','Firewhelp','Grimgnasher','Duskhowl','Shadowpaw','Ironcollar','Moonbiter','Crowchaser'];
+  return { first: uniq(FIRST), last: uniq(LAST) };
+})();
+function characterName(index, seed) {
+  const F = NAME_PARTS.first, L = NAME_PARTS.last, N = F.length * L.length;
+  let h = ((seed >>> 0) ^ 0x9e3779b9) >>> 0;
+  const next = () => { h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0; h = (h ^ (h + Math.imul(h ^ (h >>> 7), 0x297a2d39))) >>> 0; return (h ^ (h >>> 14)) >>> 0; };
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  let a = (next() % (N - 1)) + 1; while (gcd(a, N) !== 1) a = (a % (N - 1)) + 1;
+  const b = next() % N;
+  const i0 = Math.max(0, (index | 0) - 1), k = i0 % N, cycle = Math.floor(i0 / N);
+  const m = (a * k + b) % N;
+  // second mixing round (bijective per row/column) so neighbouring pieces don't read alphabetically
+  const nF = F.length, nL = L.length;
+  let c = (next() % (nF - 1)) + 1; while (gcd(c, nF) !== 1) c = (c % (nF - 1)) + 1;
+  let d = (next() % (nL - 1)) + 1; while (gcd(d, nL) !== 1) d = (d % (nL - 1)) + 1;
+  const fi = (c * (m % nF) + 31 * Math.floor(m / nF) + b) % nF;
+  const li = (d * Math.floor(m / nF) + 17 * fi) % nL;
+  const roman = (n) => { let r = '', v = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']]; for (const [x, s] of v) while (n >= x) { r += s; n -= x; } return r; };
+  return F[fi] + ' ' + L[li] + (cycle ? ' ' + roman(cycle + 1) : '');
+}
+
+  const api = { characterName,
     VERSION, SIZE, WIDTH, HEIGHT, TRAITS, weightedPick, mulberry32, CATEGORY_ORDER, CATEGORY_META, ONE_OF_ONE_EXCLUSIVES, ONE_OF_ONE_PICKERS,
     TIER_FALLBACK, findTrait, traitName, pickByRarity, rollTraits, generateUnique, generateBatch, generateBatchAsync,
     estimateComboSpace, comboKey, renderSVG, toMetadata, pieceRarityScore, hashSeed, luma, isDarkBg

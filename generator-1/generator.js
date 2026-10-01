@@ -1322,7 +1322,40 @@ function generateBatch(count, seed, tier, opts) {
 }
 
 // ---------- export ----------
-const api = {
+
+// ---------- unique character names ----------
+// Every piece in a collection gets its own name. Names are a bijective shuffle of
+// FIRST x LAST (an affine permutation mod N, keyed by the seed), so within one
+// collection no two pieces can ever share a name. Past N pieces a roman numeral
+// is appended (II, III, ...), which keeps them unique at any supply.
+const NAME_PARTS = (function () {
+  const uniq = (a) => Array.from(new Set(a));
+  const BLOCK = ['Isis'];
+  const join = (pre, suf) => uniq([].concat(...pre.map((p) => suf.filter((s) => p.slice(-1).toLowerCase() !== s[0]).map((s) => p + s)))).filter((w) => !BLOCK.includes(w));
+  const FIRST = join(['Ash','Vel','Mor','Sil','Nyx','Or','Cal','Ves','Thal','Is','Wren','Lum','Sab','Eld','Hal','Quil','Rav','Sol','Tem','Ul','Vey','Zor','Bri','Cor','Dra','Fen','Gal','Ir','Jun','Kel'], ['a','en','is','or','eth','yn','ara','el','ion','iel','us','ix','ane','wyn','os']);
+  const LAST = ['the Quiet','the Hollow','the Unseen','the Pale','the Drifter','the Lost','the Silent','the Faded','of the Static','of the Fog','of the Ash','of the Deep','of the Long Night','of No Name','Who Waits','Who Wanders','Who Listens','Who Forgot','the Watcher','the Stray','the Echo','the Last','the Unlit','the Still','of the Eclipse','of the Cave','of the Rain','of the Hush','the Sleepless','the Distant','the Dim','the Late','the Wayward','the Nameless','Who Stares','of the Void','of the Dust','the Shade','the Murmur','the Glow'];
+  return { first: uniq(FIRST), last: uniq(LAST) };
+})();
+function characterName(index, seed) {
+  const F = NAME_PARTS.first, L = NAME_PARTS.last, N = F.length * L.length;
+  let h = ((seed >>> 0) ^ 0x9e3779b9) >>> 0;
+  const next = () => { h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0; h = (h ^ (h + Math.imul(h ^ (h >>> 7), 0x297a2d39))) >>> 0; return (h ^ (h >>> 14)) >>> 0; };
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  let a = (next() % (N - 1)) + 1; while (gcd(a, N) !== 1) a = (a % (N - 1)) + 1;
+  const b = next() % N;
+  const i0 = Math.max(0, (index | 0) - 1), k = i0 % N, cycle = Math.floor(i0 / N);
+  const m = (a * k + b) % N;
+  // second mixing round (bijective per row/column) so neighbouring pieces don't read alphabetically
+  const nF = F.length, nL = L.length;
+  let c = (next() % (nF - 1)) + 1; while (gcd(c, nF) !== 1) c = (c % (nF - 1)) + 1;
+  let d = (next() % (nL - 1)) + 1; while (gcd(d, nL) !== 1) d = (d % (nL - 1)) + 1;
+  const fi = (c * (m % nF) + 31 * Math.floor(m / nF) + b) % nF;
+  const li = (d * Math.floor(m / nF) + 17 * fi) % nL;
+  const roman = (n) => { let r = '', v = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']]; for (const [x, s] of v) while (n >= x) { r += s; n -= x; } return r; };
+  return F[fi] + ' ' + L[li] + (cycle ? ' ' + roman(cycle + 1) : '');
+}
+
+const api = { characterName,
   generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
   mulberry32, weightedPick, pickByRarity, shade,
   bodyMarkup, headMarkup, eyesMarkup, mouthMarkup, backgroundOverlay, accessoryMarkup,

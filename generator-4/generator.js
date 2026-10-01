@@ -1587,7 +1587,40 @@ function generateBatch(count, seed, tier, opts) {
   return out;
 }
 
-const api = {
+
+// ---------- unique character names ----------
+// Every piece in a collection gets its own name. Names are a bijective shuffle of
+// FIRST x LAST (an affine permutation mod N, keyed by the seed), so within one
+// collection no two pieces can ever share a name. Past N pieces a roman numeral
+// is appended (II, III, ...), which keeps them unique at any supply.
+const NAME_PARTS = (function () {
+  const uniq = (a) => Array.from(new Set(a));
+  const BLOCK = ['Isis'];
+  const join = (pre, suf) => uniq([].concat(...pre.map((p) => suf.filter((s) => p.slice(-1).toLowerCase() !== s[0]).map((s) => p + s)))).filter((w) => !BLOCK.includes(w));
+  const FIRST = join(['Cog','Volt','Rivet','Bolt','Gear','Servo','Piston','Sprock','Dyna','Flux','Mag','Turbo','Ohm','Amp','Watt','Torq','Krank','Zap','Byte','Chrome','Diode','Relay','Coil','Gizmo','Tank','Widget','Clank','Ratch','Spark','Nano'], ['o','ix','er','on','us','a','y','ex','ot','ar']);
+  const LAST = []; { const A = 'BCDFGHJKLMNPRSTVWXZ'; let s = 7; for (let i = 0; LAST.length < 160; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; const c = A[s % A.length] + A[(s >> 8) % A.length] + '-' + String(10 + (s >> 16) % 90); if (!LAST.includes(c)) LAST.push(c); } }
+  return { first: uniq(FIRST), last: uniq(LAST) };
+})();
+function characterName(index, seed) {
+  const F = NAME_PARTS.first, L = NAME_PARTS.last, N = F.length * L.length;
+  let h = ((seed >>> 0) ^ 0x9e3779b9) >>> 0;
+  const next = () => { h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0; h = (h ^ (h + Math.imul(h ^ (h >>> 7), 0x297a2d39))) >>> 0; return (h ^ (h >>> 14)) >>> 0; };
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  let a = (next() % (N - 1)) + 1; while (gcd(a, N) !== 1) a = (a % (N - 1)) + 1;
+  const b = next() % N;
+  const i0 = Math.max(0, (index | 0) - 1), k = i0 % N, cycle = Math.floor(i0 / N);
+  const m = (a * k + b) % N;
+  // second mixing round (bijective per row/column) so neighbouring pieces don't read alphabetically
+  const nF = F.length, nL = L.length;
+  let c = (next() % (nF - 1)) + 1; while (gcd(c, nF) !== 1) c = (c % (nF - 1)) + 1;
+  let d = (next() % (nL - 1)) + 1; while (gcd(d, nL) !== 1) d = (d % (nL - 1)) + 1;
+  const fi = (c * (m % nF) + 31 * Math.floor(m / nF) + b) % nF;
+  const li = (d * Math.floor(m / nF) + 17 * fi) % nL;
+  const roman = (n) => { let r = '', v = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']]; for (const [x, s] of v) while (n >= x) { r += s; n -= x; } return r; };
+  return F[fi] + ' ' + L[li] + (cycle ? ' ' + roman(cycle + 1) : '');
+}
+
+const api = { characterName,
   TRAITS, TIER_FALLBACK, CHAIN_THEMES,
   mulberry32, weightedPick, pickByRarity, shadeColor, vibePool, vibeRng,
   renderFromTraits, renderPiece, generatePiece, generateBatch,

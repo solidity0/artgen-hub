@@ -54,7 +54,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .tile:focus-visible { outline:2px solid var(--acid); outline-offset:1px; }
 .tile:hover { border-color:var(--acid); }
 .tile svg, .tile .art img { display:block; width:100%; height:100%; image-rendering:auto; }
-.tile-label { height:24px; display:flex; align-items:center; padding:0 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
+.tile-label { height:24px; line-height:24px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 7px; font-family:'Space Mono',monospace; font-size:10px; color:var(--white); }
 .tile-label.is-1of1 { color:var(--acid); font-weight:700; }
 .lightbox { display:none; position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.88); align-items:center; justify-content:center; padding:20px; }
 .lightbox.open { display:flex; }
@@ -85,7 +85,7 @@ main { padding:24px; max-width:1280px; margin:0 auto; }
 .lb-preview { position:relative; }
 .lb-preview svg { height:auto; }
 .copy-hint { position:absolute; left:8px; right:8px; bottom:8px; background:rgba(0,0,0,.78); color:#fff; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.04em; padding:7px 9px; border-left:3px solid var(--acid); pointer-events:none; }
-@media(max-width:600px) { .tile-label { height:20px; font-size:9px; padding:0 5px; } }
+@media(max-width:600px) { .tile-label { height:20px; line-height:20px; font-size:9px; padding:0 5px; } }
 @media(max-width:600px) { .lightbox { padding:12px; } .lb-left { position:static; } .lb-inner { max-height:calc(100vh - 24px); max-height:calc(100dvh - 24px); } .lb-body { grid-template-columns:1fr; } .lb-close { width:38px; height:38px; font-size:16px; } .lb-actions .btn { font-size:10px; letter-spacing:.06em; } }
 /* iOS Safari zooms into any focused field under 16px; keep fields at 16px on touch screens */
 @media (hover:none) and (pointer:coarse) { input, textarea, select { font-size:16px !important; } .run-row { display:grid !important; grid-template-columns:1fr 1fr; gap:12px !important; align-items:end; } .run-row .field { display:flex; flex-direction:column; align-items:stretch; gap:6px; } .run-row .field input { width:100% !important; padding:7px 10px !important; line-height:1.2; } .run-row .btn, .run-row .chip { width:100%; min-height:40px; justify-content:center; text-align:center; } .run-row #download-batch-btn, .run-row #csv-btn { grid-column:1/-1; } .run-row #reset-btn { grid-column:1/-1; } }
@@ -201,6 +201,10 @@ Object.keys(GTRAITS).forEach(k => locks[k] = []);
 let currentPieces = [], currentTier = 'any', currentChain = 'ethereum', currentAnimate = false;
 
 function getDisplayName() { return document.getElementById('collection-name-input').value.trim() || 'Untitled Collection'; }
+// Every piece gets its own name, unique within the collection (seeded by the batch seed).
+let batchSeed = 0;
+function charName(i) { return G.characterName(i, batchSeed); }
+function pieceName(i) { return getDisplayName() + ' #' + i + ' — ' + charName(i); }
 function getFileSafeName() { return (document.getElementById('collection-name-input').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')) || 'collection'; }
 function getSymbol() { return document.getElementById('collection-symbol-input').value.trim().toUpperCase(); }
 function getDescription() { return document.getElementById('collection-description-input').value.trim(); }
@@ -385,7 +389,7 @@ let _renderGen=0, _isRendering=false;
 function render(){
   const myGen=++_renderGen;
   _svgCacheOrder.length=0;
-  const seed=parseFormattedInt(document.getElementById('seed-input').value)||0;
+  const seed=parseFormattedInt(document.getElementById('seed-input').value)||0; batchSeed = seed;
   let count=parseFormattedInt(document.getElementById('count-input').value);
   if(!count||count<1)count=1;
   document.getElementById('count-input').value=formatWithCommas(count);
@@ -459,7 +463,7 @@ async function downloadBatchZipOne(_zp) {
       if (!_zipMetaOnly) vectors.file(p.index+'.svg',getDisplaySVG(p));
       const attrs=Object.keys(p.traits).map(k=>({trait_type:traitTypeLabel(k),value:p.traits[k],rarity:p.rarity[k]}));
       if(p.isOneOfOne)attrs.push({trait_type:'Tier',value:'1/1'});
-      const meta={name:getDisplayName()+' #'+p.index,description:getDescription()||'Generative ink character from '+getDisplayName()+'.',image:'images/'+p.index+'.png',vector:'vectors/'+p.index+'.svg',chain:currentChain,isOneOfOne:!!p.isOneOfOne,attributes:attrs};
+      const meta={name:pieceName(p.index),description:getDescription()||'Generative ink character from '+getDisplayName()+'.',image:'images/'+p.index+'.png',vector:'vectors/'+p.index+'.svg',chain:currentChain,isOneOfOne:!!p.isOneOfOne,attributes:attrs};
       const sym=getSymbol();if(sym)meta.symbol=sym;if(currentChain!=='bitcoin')meta.external_url='';
       launchItems.push({ index: p.index, attrs: attrs });
     }
@@ -495,7 +499,7 @@ function openLightbox(idx){
   lbIdx = idx;
   const p=currentPieces[idx];
   document.getElementById('lb-preview').innerHTML=getDisplaySVG(p);
-  const lt=document.getElementById('lb-title');lt.textContent=getDisplayName()+' #'+p.index + (p.isOneOfOne ? ' · 1/1' : '');lt.classList.toggle('is-1of1',!!p.isOneOfOne);
+  const lt=document.getElementById('lb-title');lt.textContent=pieceName(p.index) + (p.isOneOfOne ? ' · 1/1' : '');lt.classList.toggle('is-1of1',!!p.isOneOfOne);
   document.getElementById('lb-traits').innerHTML=Object.entries(p.traits).map(([k,v])=>`<div class="lb-trait"><div class="lb-trait-k">${k}</div><div class="lb-trait-v">${String(v).replace(/_/g,' ')} <span style="font-size:9px;color:${rarityColor(p.rarity[k])};text-transform:uppercase;">${p.rarity[k]}</span></div></div>`).join('');
   document.getElementById('lb-download-png').onclick=()=>downloadPNG(p);
   document.getElementById('lb-download').onclick=()=>downloadSVG(p);
@@ -598,7 +602,7 @@ function writeLaunchFiles(zip, items) {
     let csv = ['tokenID', 'name', 'description', 'file_name', 'external_url'].concat(traitTypes.map(t => 'attributes[' + t + ']')).map(csvCell).join(',') + '\n';
     for (const it of items) {
       const attrs = cleanAttrs(it.attrs);
-      const meta = { name: name + ' #' + it.index, description: desc, image: base + it.index + '.png', attributes: attrs };
+      const meta = { name: pieceName(it.index), description: desc, image: base + it.index + '.png', attributes: attrs };
       if (site) meta.external_url = site;
       const j = JSON.stringify(meta, null, 2);
       md.file(it.index + '.json', j);
@@ -631,8 +635,8 @@ function writeLaunchFiles(zip, items) {
     const coll = [], order = ['index,png,svg'];
     for (const it of items) {
       const attrs = cleanAttrs(it.attrs);
-      md.file(it.index + '.json', JSON.stringify({ name: name + ' #' + it.index, attributes: attrs }, null, 2));
-      coll.push({ id: 'REPLACE_WITH_INSCRIPTION_ID_' + it.index, meta: { name: name + ' #' + it.index, attributes: attrs } });
+      md.file(it.index + '.json', JSON.stringify({ name: pieceName(it.index), attributes: attrs }, null, 2));
+      coll.push({ id: 'REPLACE_WITH_INSCRIPTION_ID_' + it.index, meta: { name: pieceName(it.index), attributes: attrs } });
       order.push(it.index + ',images/' + it.index + '.png,vectors/' + it.index + '.svg');
     }
     zip.file('ordinals-collection.json', JSON.stringify(coll, null, 2));
@@ -677,7 +681,7 @@ const VG = (function(){
     const el = document.createElement('div');
     el.className = 'tile'; el.dataset.idx = i; el.tabIndex = 0;
     el.setAttribute('role', 'button'); el.setAttribute('aria-label', 'Open #' + p.index);
-    el.innerHTML = `<div class="art"></div><div class="${p.isOneOfOne ? 'tile-label is-1of1' : 'tile-label'}">#${p.index}${p.isOneOfOne ? ' · 1/1' : ''}</div>`;
+    el.innerHTML = `<div class="art"></div><div class="${p.isOneOfOne ? 'tile-label is-1of1' : 'tile-label'}">#${p.index} · ${charName(p.index)}${p.isOneOfOne ? ' · 1/1' : ''}</div>`;
     place(el, i);
     return el;
   }
@@ -753,7 +757,7 @@ async function copyImage(p){
     const src = await blobToDataUrl(await pngPromise);
     const prev = document.getElementById('lb-preview');
     prev.innerHTML = '';
-    const img = new Image(); img.src = src; img.alt = getDisplayName() + ' #' + p.index;
+    const img = new Image(); img.src = src; img.alt = pieceName(p.index);
     img.style.cssText = 'display:block;width:100%;height:auto;';
     prev.appendChild(img);
     const hint = document.createElement('div');
