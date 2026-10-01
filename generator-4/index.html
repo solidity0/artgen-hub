@@ -646,14 +646,14 @@ function renderMouth(cx, cy, style, rng, led) {
   const plate = (w, h) => '<rect x="' + (cx - w / 2) + '" y="' + (cy - h / 2) + '" width="' + w + '" height="' + h + '" rx="4" fill="#1a1c20" class="stroke" style="stroke-width:3.5px"/>';
   if (style === 'grille' || style === 'fang_grille') {
     // speaker grille: vertical slats in a dark plate
-    out += plate(50, 18);
-    for (let k = 0; k < 7; k++) out += '<path d="M ' + (cx - 18 + k * 6) + ' ' + (cy - 5) + ' L ' + (cx - 18 + k * 6) + ' ' + (cy + 5) + '" stroke="#7b8490" stroke-width="2.2" stroke-linecap="round"/>';
+    out += plate(52, 20);
+    for (let k = 0; k < 6; k++) out += '<path d="M ' + (cx - 17.5 + k * 7) + ' ' + (cy - 5.5) + ' L ' + (cx - 17.5 + k * 7) + ' ' + (cy + 5.5) + '" stroke="#e3e8ee" stroke-width="3.2" stroke-linecap="round"/>';
     if (style === 'fang_grille') for (const sd of [-1, 1]) out += '<path d="M ' + (cx + sd * 14) + ' ' + (cy + 8) + ' L ' + (cx + sd * 10) + ' ' + (cy + 20) + ' L ' + (cx + sd * 6) + ' ' + (cy + 8) + ' Z" fill="#f4efe2" class="stroke" style="stroke-width:2.5px;stroke-linejoin:round"/>';
     rng(); rng();
   } else if (style === 'vent') {
     // horizontal vent slots
-    out += plate(50, 22);
-    for (let k = -1; k <= 1; k++) out += '<path d="M ' + (cx - 17) + ' ' + (cy + k * 6) + ' L ' + (cx + 17) + ' ' + (cy + k * 6) + '" stroke="#7b8490" stroke-width="2.6" stroke-linecap="round"/>';
+    out += plate(52, 24);
+    for (let k = -1; k <= 1; k++) out += '<path d="M ' + (cx - 17) + ' ' + (cy + k * 6.5) + ' L ' + (cx + 17) + ' ' + (cy + k * 6.5) + '" stroke="#e3e8ee" stroke-width="3.4" stroke-linecap="round"/>';
     rng(); rng();
   } else if (style === 'zipper') {
     const w = 46;
