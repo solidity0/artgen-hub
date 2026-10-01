@@ -1260,13 +1260,6 @@ function renderFromTraits(picks, index, seed, opts) {
   body += limb(legL, 1.2, peg, legFill) + limb(legR, 1.2, peg, legFill);
   // knee bolts
   for (const lx of [headCx - legX, headCx + legX]) body += joint(lx, (legTop + legEnd) / 2 + 6, peg ? 6 : 8);
-  // ankle collars above the feet and wrist collars where the hands attach
-  if (!peg) for (const lx of [headCx - legX, headCx + legX]) body += '<rect x="' + (lx - 12) + '" y="' + (legEnd - 9) + '" width="24" height="7" rx="2.5" fill="#59616b" stroke="' + ink + '" stroke-width="2.4"/>';
-  for (const a of arms) {
-    if (a.kind === 'stub') continue;
-    const e = a.pts[a.pts.length - 1];
-    body += socketAt(e[0], e[1], 6.5, ink);
-  }
   for (const h of hands) {
     let g = renderHand(h.x, h.y, picks.hands.id, rng, h.flip, handFill, ink);
     // hands read at thumbnail size (hands resting on the floor stay 1x so they sit on the ground)
@@ -1370,21 +1363,37 @@ function renderFromTraits(picks, index, seed, opts) {
   const nT = headBot - 3, nB = bodyTopY + 4, nMid = (headBot + bodyTopY) / 2, nH = bodyTopY - headBot;
   body += '<rect x="' + (headCx - 7) + '" y="' + nT + '" width="14" height="' + (nB - nT) + '" rx="3" fill="#3a3f46" stroke="' + ink + '" stroke-width="3"/>';
   for (let y = nT + 4; y < nB - 1; y += 4) body += '<path d="M ' + (headCx - 6) + ' ' + y + ' L ' + (headCx + 6) + ' ' + y + '" stroke="#8a929c" stroke-width="1.6" stroke-linecap="round"/>';
-  for (const [sd, wc] of [[-1, '#c8302a'], [1, '#2a6fd6']]) {
-    const wd = 'M ' + (headCx + sd * 11) + ' ' + (headBot + 1) + ' C ' + (headCx + sd * 19) + ' ' + (headBot + nH * 0.3).toFixed(1) + ' ' + (headCx + sd * 19) + ' ' + (bodyTopY - nH * 0.3).toFixed(1) + ' ' + (headCx + sd * 12) + ' ' + (bodyTopY + 2);
-    body += '<path d="' + wd + '" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/><path d="' + wd + '" fill="none" stroke="' + wc + '" stroke-width="2.6" stroke-linecap="round"/>';
-  }
   const collar = (y) => '<rect x="' + (headCx - 16) + '" y="' + (y - 3) + '" width="32" height="6" rx="2" fill="#59616b" stroke="' + ink + '" stroke-width="2.2"/>' +
     '<circle cx="' + (headCx - 11) + '" cy="' + y + '" r="1.4" fill="#c9d0d8"/><circle cx="' + (headCx + 11) + '" cy="' + y + '" r="1.4" fill="#c9d0d8"/>';
   body += collar(headBot + 1);
   body += block(bodyPts, 'b');
   // lower collar sits on the body plate (drawn after it so it stays visible)
-  body += collar(bodyTopY + 2);
   void nMid;
-  // shoulder sockets where the arms leave the body, hip sockets where the legs do
+  // internal wiring, seen on the body plate only: a junction box under the neck feeds the
+  // shoulder sockets (arms) and hip sockets (legs); clipped to the body so nothing leaks outside
   { const sy = shoulderY + 4, hw = halfWidthAt(bodyPts, headCx, sy);
-    if (Number.isFinite(hw)) for (const sd of [-1, 1]) body += socketAt(headCx + sd * (hw - 2), sy, 9, ink);
-    for (const lx of [headCx - legX, headCx + legX]) { const by = bottomYAt(bodyPts, lx); if (Number.isFinite(by)) body += socketAt(lx, by - 3, 10, ink); } }
+    const hubY = bodyTopY + 15, ends = [];
+    if (Number.isFinite(hw)) for (const sd of [-1, 1]) ends.push([headCx + sd * (hw - 2), sy, 9]);
+    for (const lx of [headCx - legX, headCx + legX]) { const by = bottomYAt(bodyPts, lx); if (Number.isFinite(by)) ends.push([lx, by - 3, 10]); }
+    const wireCols = ['#c8302a', '#2a6fd6', '#e8b020', '#2e9e4f'];
+    const cid = 'iw' + uid;
+    defs += '<clipPath id="' + cid + '"><path d="' + pathD(bodyPts) + ' Z"/></clipPath>';
+    let w = '';
+    ends.forEach(([ex, ey], k) => {
+      const sx = headCx + (k % 2 ? 1 : -1) * (4 + (k >> 1) * 4);
+      const d = 'M ' + sx.toFixed(1) + ' ' + hubY + ' C ' + sx.toFixed(1) + ' ' + (hubY + (ey - hubY) * 0.55).toFixed(1) + ' ' + (ex + (headCx - ex) * 0.35).toFixed(1) + ' ' + ey.toFixed(1) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1);
+      w += '<path d="' + d + '" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/><path d="' + d + '" fill="none" stroke="' + wireCols[k % 4] + '" stroke-width="2.6" stroke-linecap="round"/>';
+    });
+    body += '<g clip-path="url(#' + cid + ')">' + w + '</g>';
+    // junction box the neck conduit feeds into
+    body += '<rect x="' + (headCx - 13) + '" y="' + (hubY - 8) + '" width="26" height="14" rx="3" fill="#3a3f46" stroke="' + ink + '" stroke-width="2.4"/>' +
+      '<circle cx="' + (headCx - 6) + '" cy="' + (hubY - 1) + '" r="1.8" fill="#7dff3a"/><circle cx="' + (headCx + 1) + '" cy="' + (hubY - 1) + '" r="1.8" fill="#ffb020"/>' +
+      '<path d="M ' + (headCx + 6) + ' ' + (hubY - 4) + ' L ' + (headCx + 9) + ' ' + (hubY - 4) + ' M ' + (headCx + 6) + ' ' + (hubY + 1) + ' L ' + (headCx + 9) + ' ' + (hubY + 1) + '" stroke="#c9d0d8" stroke-width="1.4"/>';
+    // conduit runs down into the box
+    body += '<rect x="' + (headCx - 7) + '" y="' + (bodyTopY - 2) + '" width="14" height="' + (hubY - 8 - bodyTopY + 4) + '" fill="#3a3f46" stroke="' + ink + '" stroke-width="2.4"/>';
+    body += collar(bodyTopY + 2);
+    for (const [ex, ey, r] of ends) body += socketAt(ex, ey, r, ink);
+  }
   bodyRivets = rivets(bodyPts, headCx, chestCy, ink);
   body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink, bodyKind === 'box' ? null : closeLoop(bodyPts));
   body += bodyRivets;
