@@ -382,10 +382,14 @@ function generateOne(index, seed, opts) {
   let accessory = pickTrait(rng, 'accessory', tierOverride);
   accessory = rerollTraitIfClashing(rng, { headShape: headShape.id, size: size.id, eyeShape: eyeShape.id, mouth: mouth.id }, 'accessory', accessory, TRAITS.accessory, tierOverride || currentTier);
 
+  // drama: scene lighting on its own stream so every other trait stays seed-stable
+  const dRng = dramaRng(seed | 0, index);
+  const lighting = pickTrait(dRng, 'lighting', tierOverride);
+
   if (!(opts && opts.render)) return lazyPiece({
     index, isOneOfOne,
-    traits: { background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id, headShape: headShape.id, headColor: headColor.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id, mouth: mouth.id, accessory: accessory.id },
-    rarity: { background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity, headShape: headShape.rarity, headColor: headColor.rarity, eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity, mouth: mouth.rarity, accessory: accessory.rarity }
+    traits: { background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id, headShape: headShape.id, headColor: headColor.id, eyeShape: eyeShape.id, eyeColor: eyeColor.id, mouth: mouth.id, accessory: accessory.id, lighting: lighting.id },
+    rarity: { background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity, headShape: headShape.rarity, headColor: headColor.rarity, eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity, mouth: mouth.rarity, accessory: accessory.rarity, lighting: lighting.rarity }
   }, index, seed, opts);
   // Build every non-eye layer exactly ONCE. These all consume rng internally
   // (cracked-head jitter, dot scatter, background texture) — calling them a
@@ -398,6 +402,7 @@ function generateOne(index, seed, opts) {
   const mouthPart = mouthMarkup(mouth.id);
   const noMouth = mouth.id === 'none';
   const accessoryPart = accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth });
+  const light = lightingMarkup(lighting.id, eyeColor.hex, `${seed | 0}_${index}`, dRng);
   const eyesStatic = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, { noMouth });
 
   // Animation timing draws from a SEPARATE seeded stream so toggling animation
@@ -412,8 +417,10 @@ function generateOne(index, seed, opts) {
   const wrap = eyesPart => `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <rect width="600" height="600" fill="${background.fill}"/>
 ${bgOverlay}
+${light.back}
 ${bodyPart}
 ${headPart}
+${light.front}
 ${eyesPart}
 ${mouthPart}
 ${accessoryPart}
@@ -439,13 +446,13 @@ ${accessoryPart}
       background: background.id, body: body.id, bodyColor: bodyColor.id, size: size.id,
       headShape: headShape.id, headColor: headColor.id,
       eyeShape: eyeShape.id, eyeColor: eyeColor.id,
-      mouth: mouth.id, accessory: accessory.id
+      mouth: mouth.id, accessory: accessory.id, lighting: lighting.id
     },
     rarity: {
       background: background.rarity, body: body.rarity, bodyColor: bodyColor.rarity, size: size.rarity,
       headShape: headShape.rarity, headColor: headColor.rarity,
       eyeShape: eyeShape.rarity, eyeColor: eyeColor.rarity,
-      mouth: mouth.rarity, accessory: accessory.rarity
+      mouth: mouth.rarity, accessory: accessory.rarity, lighting: lighting.rarity
     },
     tier: tierOverride || currentTier
   };
@@ -461,7 +468,8 @@ const CATEGORY_META = [
   { key: 'eyeShape', label: 'Eye shape' },
   { key: 'eyeColor', label: 'Eye color', swatch: 'hex' },
   { key: 'mouth', label: 'Mouth' },
-  { key: 'accessory', label: 'Accessory' }
+  { key: 'accessory', label: 'Accessory' },
+  { key: 'lighting', label: 'Lighting' }
 ];
 
 // Seed/supply are large numbers (supply especially — no cap), and a plain

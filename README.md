@@ -65,6 +65,7 @@ bodies from suits to exosuits, set against 25 scene backgrounds.
 | eyeColor | 12 |
 | mouth | 9 — waveform, grin, shout, stitched, fangs, zipper, circuit grid, … |
 | accessory | 5 — none, scatter dots, scanlines, tears, ash fall |
+| lighting | 7 — none, spotlight, backlit, uplight, eye bloom, red alert, storm (scene drama; rolled on its own stream so other traits stay seed-stable) |
 
 ### 2 — Glyphs
 `generator-2/` · engine **v3 "Firmware Glyph"** · `window.GlyphGen` · page ≈ 92 KB
