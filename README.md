@@ -107,8 +107,9 @@ backgrounds for dark ones.
 ### 4 — AfterBots
 `generator-4/` · engine **v2 "Riso Chalk"** · `window.AfterBotsGen` · page ≈ 124 KB
 
-Chalk-line robots with riso-style offset colour fills and swappable parts,
-often joined by a small companion creature.
+Chalk-line robots with riso-style offset colour fills and swappable parts —
+camera-lens optics, antennas or cable bundles, grille mouths, hydraulic limbs
+with knee bolts and riveted plates — often joined by a small companion creature.
 
 | Trait | Values |
 |-------|--------|
@@ -116,7 +117,7 @@ often joined by a small companion creature.
 | headShape · bodyShape | 7 each — box, round, TV, dome, capsule, hex, octagon · barrel, trapezoid, bell, … |
 | bodyColor | 17 — incl. steel, gunmetal, white and black (black heads/bodies only on dark backgrounds) — plus separate head / leg / hand colour traits (16 each, or "matching") |
 | arms · hands · feet | 7 · 7 · 4 — spring, telescopic, floating… · claw, pincer, hook, magnet, plug… · pointed, robot blocks, claw feet, peg legs |
-| hair · ears · eyes · eyeColor · mouth | 5 · 6 · 5 (+ glare, cracked) · 4 (+ toxic) · 5 (+ jaws) |
+| topper · ears · eyes · eyeColor · mouth | 5 (antenna, twin antenna, cables, fin, none) · 6 · 5 camera-lens optics (+ glare, cracked) · 4 (+ toxic) · 5 (grille, vent, zipper, LED bar, fang grille; + jaws) |
 | chestMark | 12 — x cross, slash, target, vent, hazard, barcode, skull, emoji fire/skull, … |
 | companion · companionColor | 6 (cat, dog, bird, ghost cat, bunny) · 8 |
 | background · sky · ground · grassColor | 10 — cream, white, concrete, ash, sand, smog, rust haze, black, deep black, midnight (+ blood night) · 3 (+ blood moon) · 4 · 3 |

@@ -81,10 +81,10 @@ const TRAITS = {
     { id: 'golden', hex: '#F7C948', weight: 4,  rarity: 'rare' }
   ],
   hair: [
-    { id: 'short_spike',  weight: 30, rarity: 'common' },
-    { id: 'tall_spike',   weight: 25, rarity: 'common' },
-    { id: 'wild_spike',   weight: 20, rarity: 'uncommon' },
-    { id: 'mohawk_spike', weight: 15, rarity: 'uncommon' },
+    { id: 'antenna',  weight: 30, rarity: 'common' },
+    { id: 'twin_antenna',   weight: 25, rarity: 'common' },
+    { id: 'cables',   weight: 20, rarity: 'uncommon' },
+    { id: 'fin', weight: 15, rarity: 'uncommon' },
     { id: 'none',         weight: 10, rarity: 'rare' }
   ],
   ears: [
@@ -112,11 +112,11 @@ const TRAITS = {
     { id: 'toxic',   hex: '#7dff3a', weight: 10, rarity: 'rare', vibe: 'scary' }
   ],
   mouth: [
-    { id: 'stitches_even',   weight: 32, rarity: 'common', vibe: 'friendly' },
-    { id: 'stitches_uneven', weight: 26, rarity: 'common' },
+    { id: 'grille',   weight: 32, rarity: 'common', vibe: 'friendly' },
+    { id: 'vent', weight: 26, rarity: 'common' },
     { id: 'zipper',          weight: 18, rarity: 'uncommon' },
-    { id: 'single_line',     weight: 14, rarity: 'uncommon', vibe: 'friendly' },
-    { id: 'fangs_stitch',    weight: 10, rarity: 'rare' },
+    { id: 'led_bar',     weight: 14, rarity: 'uncommon', vibe: 'friendly' },
+    { id: 'fang_grille',    weight: 10, rarity: 'rare' },
     { id: 'jaws',            weight: 24, rarity: 'common', vibe: 'scary' }
   ],
   chestMark: [
@@ -327,24 +327,43 @@ function renderStarfield(W, H, rng) {
 }
 
 function renderHair(cx, top, style, rng, topAt) {
+  // robot toppers (the category was hair): antenna, twin antennae, loose cables or a crest fin
   if (style === 'none') return '';
-  const counts = { short_spike: 13, tall_spike: 15, wild_spike: 20, mohawk_spike: 10 };
-  const lens = { short_spike: 20, tall_spike: 36, wild_spike: 30, mohawk_spike: 38 };
-  const spread = style === 'mohawk_spike' ? 32 : 96;
-  const n = counts[style] || 13;
-  const len = lens[style] || 22;
+  const t = (x) => (topAt ? topAt(x) : top);
+  const rod = (x0, y0, x1, y1, w) => '<path d="M ' + x0.toFixed(1) + ' ' + y0.toFixed(1) + ' L ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + '" class="stroke" style="stroke-width:' + (w + 4.5) + 'px;stroke-linecap:round"/>' +
+    '<path d="M ' + x0.toFixed(1) + ' ' + y0.toFixed(1) + ' L ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + '" stroke="#9aa3ad" stroke-width="' + w + '" stroke-linecap="round"/>';
+  const bulb = (x, y, r, c) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r + 4) + '" fill="' + c + '" opacity=".22"/>' +
+    '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r + '" fill="' + c + '" class="stroke" style="stroke-width:3px"/>' +
+    '<circle cx="' + (x - r * 0.35).toFixed(1) + '" cy="' + (y - r * 0.35).toFixed(1) + '" r="' + (r * 0.3).toFixed(1) + '" fill="#ffffff" opacity=".8"/>';
+  const base = (x, y) => '<rect x="' + (x - 9).toFixed(1) + '" y="' + (y - 5).toFixed(1) + '" width="18" height="8" rx="2" fill="#6b737d" class="stroke" style="stroke-width:3px"/>';
+  const led = ['#ff3b3b', '#ffb020', '#5fe1ff', '#7dff3a'][Math.floor(rng() * 4)];
   let out = '';
-  for (let i = 0; i < n; i++) {
-    const t = n === 1 ? 0.5 : i / (n - 1);
-    const x = cx - spread / 2 + t * spread + rj(rng, 4);
-    const wobble = style === 'wild_spike' ? rj(rng, 16) : rj(rng, 8);
-    const l = len * (0.65 + rng() * 0.7);
-    // A slight mid-point kink instead of a dead-straight spike — real chalk
-    // strands rarely travel in one perfectly straight line.
-    const midX = x + wobble * 0.4 + rj(rng, 5);
-    const t0 = topAt ? topAt(x) : top;
-    const midY = t0 - l * 0.55;
-    out += doubleStroke([[x, t0], [midX, midY], [x + wobble, t0 - l]], rng, 2.5, 'stroke');
+  if (style === 'antenna') {
+    const x = cx + rj(rng, 10), y0 = t(x), len = 34 + rng() * 10;
+    out += rod(x, y0, x, y0 - len, 4) + base(x, y0 + 1) + bulb(x, y0 - len - 4, 6, led);
+  } else if (style === 'twin_antenna') {
+    for (const sd of [-1, 1]) {
+      const x = cx + sd * 26, y0 = t(x), len = 30 + rng() * 10, x1 = x + sd * 12;
+      out += rod(x, y0, x1, y0 - len, 3.5) + base(x, y0 + 1) + bulb(x1, y0 - len - 3, 5, led);
+    }
+  } else if (style === 'cables') {
+    // loose wires sprouting from a port, frayed copper ends
+    const cols = ['#c8302a', '#2a6fd6', '#e8c020', '#3a3a3a', '#2e9e4f'];
+    const n = 4 + Math.floor(rng() * 2);
+    for (let k = 0; k < n; k++) {
+      const x = cx - 26 + k * (52 / (n - 1)) + rj(rng, 3), y0 = t(x);
+      const ex = x + rj(rng, 26), ey = y0 - 26 - rng() * 22, mx = x + rj(rng, 22), my = y0 - 18;
+      const d = 'M ' + x.toFixed(1) + ' ' + y0.toFixed(1) + ' Q ' + mx.toFixed(1) + ' ' + my.toFixed(1) + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1);
+      out += '<path d="' + d + '" class="stroke" fill="none" style="stroke-width:7px;stroke-linecap:round"/><path d="' + d + '" fill="none" stroke="' + cols[k % cols.length] + '" stroke-width="3.2" stroke-linecap="round"/>';
+      out += '<path d="M ' + ex.toFixed(1) + ' ' + ey.toFixed(1) + ' l -3 -5 M ' + ex.toFixed(1) + ' ' + ey.toFixed(1) + ' l 0 -6 M ' + ex.toFixed(1) + ' ' + ey.toFixed(1) + ' l 3 -5" stroke="#d98a3a" stroke-width="1.6" stroke-linecap="round"/>';
+    }
+    out += '<rect x="' + (cx - 32) + '" y="' + (t(cx) - 4) + '" width="64" height="9" rx="3" fill="#4a5059" class="stroke" style="stroke-width:3px"/>';
+  } else if (style === 'fin') {
+    // riveted crest plate along the crown
+    const y0 = t(cx), pts = [[cx - 36, t(cx - 36) + 2], [cx - 22, y0 - 30], [cx + 20, y0 - 38], [cx + 36, t(cx + 36) + 2]];
+    out += '<path d="M ' + pts.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L ') + ' Z" fill="#8a929c" class="stroke" style="stroke-width:4px;stroke-linejoin:round"/>';
+    out += '<path d="M ' + (cx - 20) + ' ' + (y0 - 22) + ' L ' + (cx + 18) + ' ' + (y0 - 29) + '" stroke="#c9d0d8" stroke-width="2.5" stroke-linecap="round"/>';
+    for (const k of [-0.6, 0, 0.6]) out += '<circle cx="' + (cx + k * 26).toFixed(1) + '" cy="' + (y0 - 9 - k * 2).toFixed(1) + '" r="2.6" fill="#3a3f46"/>';
   }
   return out;
 }
@@ -354,24 +373,28 @@ function renderHair(cx, top, style, rng, topAt) {
 function renderEyes(cx, cy, style, rng, ink, eyeColor, uid, dark) {
   const spacing = 30;
   const lx = cx - spacing, rx = cx + spacing;
-  const iris = eyeColor || (dark ? '#2a2f45' : '#1c1c1c');
+  const iris = eyeColor || '#5fe1ff'; // LED optics: cyan when no eye colour is set
   const gx = rj(rng, 3.2), gy = rj(rng, 2.4); // shared gaze direction
   const pupil = '#0d0d0d';
   const R = 16;
+  // camera-lens housing: steel bezel with four screws around a dark glass lens
   const sclera = (x, y) =>
-    '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" fill="#ffffff"/>' +
-    '<path d="M ' + (x - R + 3) + ' ' + (y + 5) + ' A ' + R + ' ' + R + ' 0 0 0 ' + (x + R - 3) + ' ' + (y + 5) + '" fill="none" stroke="#000" stroke-opacity=".08" stroke-width="5"/>' +
-    doubleStroke(ellipsePtsAt(x, y, R, R, 18), rng, 0.8, 'stroke');
+    '<circle cx="' + x + '" cy="' + y + '" r="' + (R + 3) + '" fill="#59616b"/>' +
+    doubleStroke(ellipsePtsAt(x, y, R + 3, R + 3, 18), rng, 0.8, 'stroke') +
+    '<circle cx="' + x + '" cy="' + y + '" r="' + (R - 2) + '" fill="#0b0d12"/>' +
+    [45, 135, 225, 315].map((a) => '<circle cx="' + (x + Math.cos(a * Math.PI / 180) * (R + 0.5)).toFixed(1) + '" cy="' + (y + Math.sin(a * Math.PI / 180) * (R + 0.5)).toFixed(1) + '" r="1.3" fill="#c9d0d8"/>').join('');
   const shine = (x, y, s) =>
     '<circle cx="' + (x - 4.5 * s).toFixed(1) + '" cy="' + (y - 4.5 * s).toFixed(1) + '" r="' + (3.4 * s).toFixed(1) + '" fill="#ffffff"/>' +
     '<circle cx="' + (x + 3.2 * s).toFixed(1) + '" cy="' + (y + 3.4 * s).toFixed(1) + '" r="' + (1.5 * s).toFixed(1) + '" fill="#ffffff" opacity=".85"/>';
   const ringEye = (x, y, dbl) => {
     const ix = x + gx, iy = y + gy;
     let o = sclera(x, y);
-    o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="9.5" fill="' + iris + '"/>';
-    if (dbl) o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="6.8" fill="none" stroke="#ffffff" stroke-opacity=".55" stroke-width="1.4"/>';
-    o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="' + (dbl ? 3.6 : 4.6) + '" fill="' + pupil + '"/>';
-    return o + shine(ix, iy, 1);
+    // glowing iris ring + aperture pupil inside the lens
+    o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="9" fill="' + iris + '" opacity=".25"/>';
+    o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="7.5" fill="none" stroke="' + iris + '" stroke-width="2.6"/>';
+    if (dbl) o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="4.6" fill="none" stroke="' + iris + '" stroke-width="1.6"/>';
+    o += '<circle cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="' + (dbl ? 2.2 : 3.2) + '" fill="' + iris + '"/>';
+    return o + '<circle cx="' + (ix - 5).toFixed(1) + '" cy="' + (iy - 6).toFixed(1) + '" r="2" fill="#ffffff" opacity=".85"/>';
   };
   const spiralEye = (x, y) => {
     let o = sclera(x, y);
@@ -381,8 +404,8 @@ function renderEyes(cx, cy, style, rng, ink, eyeColor, uid, dark) {
       const rr = 1 + (i / 26) * 11;
       pts.push([x + gx * 0.5 + Math.cos(a) * rr, y + gy * 0.5 + Math.sin(a) * rr]);
     }
-    o += '<path d="' + pathD(pts) + '" fill="none" stroke="' + iris + '" stroke-width="3" stroke-linecap="round"/>';
-    return o + shine(x + gx * 0.5, y + gy * 0.5, 0.8);
+    o += '<path d="' + pathD(pts.map((p) => [x + (p[0] - x) * 0.8, y + (p[1] - y) * 0.8])) + '" fill="none" stroke="' + iris + '" stroke-width="2.4" stroke-linecap="round"/>';
+    return o + '<circle cx="' + (x - 5).toFixed(1) + '" cy="' + (y - 6).toFixed(1) + '" r="2" fill="#ffffff" opacity=".85"/>';
   };
   const voidEye = (x, y) => {
     const col = eyeColor || '#15151c';
@@ -407,7 +430,7 @@ function renderEyes(cx, cy, style, rng, ink, eyeColor, uid, dark) {
     let o = ringEye(x, y, false);
     const f = flip ? -1 : 1;
     o += '<path d="M ' + (x - 3 * f) + ' ' + (y - R + 1) + ' L ' + (x + 2 * f) + ' ' + (y - 5) + ' L ' + (x - 4 * f) + ' ' + (y + 1) + ' L ' + (x + 5 * f) + ' ' + (y + 8) + ' L ' + (x + 1 * f) + ' ' + (y + R - 1) +
-      ' M ' + (x + 2 * f) + ' ' + (y - 5) + ' L ' + (x + 11 * f) + ' ' + (y - 9) + ' M ' + (x - 4 * f) + ' ' + (y + 1) + ' L ' + (x - 13 * f) + ' ' + (y + 5) + '" fill="none" stroke="#1c1c1c" stroke-width="1.8" stroke-linejoin="round"/>';
+      ' M ' + (x + 2 * f) + ' ' + (y - 5) + ' L ' + (x + 11 * f) + ' ' + (y - 9) + ' M ' + (x - 4 * f) + ' ' + (y + 1) + ' L ' + (x - 13 * f) + ' ' + (y + 5) + '" fill="none" stroke="#d8dee6" stroke-width="1.8" stroke-linejoin="round"/>';
     return o;
   };
   let out = '';
@@ -424,16 +447,20 @@ function renderEyes(cx, cy, style, rng, ink, eyeColor, uid, dark) {
   return out;
 }
 
-function renderMouth(cx, cy, style, rng) {
+function renderMouth(cx, cy, style, rng, led) {
   let out = '';
-  if (style === 'stitches_even' || style === 'stitches_uneven') {
-    const n = 6, w = 46;
-    out += doubleStroke([[cx - w / 2, cy], [cx + w / 2, cy]], rng, 1.5, 'stroke');
-    for (let i = 0; i < n; i++) {
-      const x = cx - w / 2 + (i + 0.5) * (w / n);
-      const jy = style === 'stitches_uneven' ? rj(rng, 8) : rj(rng, 3);
-      out += doubleStroke([[x, cy - 6 + jy / 2], [x, cy + 6 + jy / 2]], rng, 1, 'stroke');
-    }
+  const plate = (w, h) => '<rect x="' + (cx - w / 2) + '" y="' + (cy - h / 2) + '" width="' + w + '" height="' + h + '" rx="4" fill="#1a1c20" class="stroke" style="stroke-width:3.5px"/>';
+  if (style === 'grille' || style === 'fang_grille') {
+    // speaker grille: vertical slats in a dark plate
+    out += plate(50, 18);
+    for (let k = 0; k < 7; k++) out += '<path d="M ' + (cx - 18 + k * 6) + ' ' + (cy - 5) + ' L ' + (cx - 18 + k * 6) + ' ' + (cy + 5) + '" stroke="#7b8490" stroke-width="2.2" stroke-linecap="round"/>';
+    if (style === 'fang_grille') for (const sd of [-1, 1]) out += '<path d="M ' + (cx + sd * 14) + ' ' + (cy + 8) + ' L ' + (cx + sd * 10) + ' ' + (cy + 20) + ' L ' + (cx + sd * 6) + ' ' + (cy + 8) + ' Z" fill="#f4efe2" class="stroke" style="stroke-width:2.5px;stroke-linejoin:round"/>';
+    rng(); rng();
+  } else if (style === 'vent') {
+    // horizontal vent slots
+    out += plate(50, 22);
+    for (let k = -1; k <= 1; k++) out += '<path d="M ' + (cx - 17) + ' ' + (cy + k * 6) + ' L ' + (cx + 17) + ' ' + (cy + k * 6) + '" stroke="#7b8490" stroke-width="2.6" stroke-linecap="round"/>';
+    rng(); rng();
   } else if (style === 'zipper') {
     const w = 46;
     out += doubleStroke([[cx - w / 2, cy], [cx + w / 2, cy]], rng, 1.5, 'stroke');
@@ -442,8 +469,10 @@ function renderMouth(cx, cy, style, rng) {
       const dir = i % 2 === 0 ? 1 : -1;
       out += '<path d="' + pathD(chalkLine([[x, cy], [x + 4 * dir, cy + 7]], rng, 1)) + '" class="stroke"/>';
     }
-  } else if (style === 'single_line') {
-    out += doubleStroke([[cx - 20, cy], [cx + 20, cy]], rng, 2, 'stroke');
+  } else if (style === 'led_bar') {
+    // a single glowing LED strip
+    out += plate(48, 14) + '<rect x="' + (cx - 18) + '" y="' + (cy - 2.5) + '" width="36" height="5" rx="2.5" fill="' + (led || '#5fe1ff') + '"/>' +
+      '<rect x="' + (cx - 21) + '" y="' + (cy - 5) + '" width="42" height="10" rx="5" fill="' + (led || '#5fe1ff') + '" opacity=".25"/>';
   } else if (style === 'jaws') {
     // jagged steel-trap teeth in a dark maw
     const w = 58, top = cy - 9, bot = cy + 11;
@@ -454,11 +483,7 @@ function renderMouth(cx, cy, style, rng) {
     for (let i = 0; i < 6; i++) { const x0 = cx - w / 2 + 6 + (i + 0.5) * ((w - 12) / 6); dn.push([x0, cy + 1], [cx - w / 2 + 6 + (i + 1) * ((w - 12) / 6), bot]); }
     out += fillPath(up.concat([[cx + w / 2, top + 4]]), '#f4efe2') + fillPath(dn, '#f4efe2');
     out += doubleStroke(closeLoop([[cx - w / 2, top + 4], [cx + w / 2, top + 4], [cx + w / 2 - 6, bot], [cx - w / 2 + 6, bot]]), rng, 1, 'stroke');
-  } else if (style === 'fangs_stitch') {
-    const w = 40;
-    out += doubleStroke([[cx - w / 2, cy], [cx + w / 2, cy]], rng, 1.5, 'stroke');
-    out += '<path d="' + pathD(chalkLine([[cx - 10, cy], [cx - 14, cy + 12], [cx - 6, cy + 3]], rng, 1)) + '" class="stroke" fill="none"/>';
-    out += '<path d="' + pathD(chalkLine([[cx + 10, cy], [cx + 14, cy + 12], [cx + 6, cy + 3]], rng, 1)) + '" class="stroke" fill="none"/>';
+
   }
   return out;
 }
@@ -841,6 +866,19 @@ function coilPts(path, amp, step) {
 // How far below the wrist point each hand shape reaches (for hands resting on the floor).
 const HAND_REACH = { claw: 12, broken_stub: 10, pincer: 21, three_finger: 20, hook: 21, magnet: 21, plug: 21 };
 
+// four rivets just inside a plate's outline, on the diagonals (works for any head/body shape)
+function rivets(pts, cx, cy, ink) {
+  let out = '';
+  for (const a of [-135, -45, 45, 135]) {
+    const dx = Math.cos(a * Math.PI / 180), dy = Math.sin(a * Math.PI / 180);
+    let best = pts[0], bd = -Infinity;
+    for (const p of pts) { const d = (p[0] - cx) * dx + (p[1] - cy) * dy; if (d > bd) { bd = d; best = p; } }
+    const x = cx + (best[0] - cx) * 0.82, y = cy + (best[1] - cy) * 0.82;
+    out += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.4" fill="#c9d0d8" stroke="' + ink + '" stroke-width="1.8"/>';
+  }
+  return out;
+}
+
 function renderFromTraits(picks, index, seed, opts) {
   const isOneOfOne = !!(opts && opts.isOneOfOne);
   const scary = !!(picks.vibe && picks.vibe.id === 'scary');
@@ -913,7 +951,7 @@ function renderFromTraits(picks, index, seed, opts) {
     for (const side of [-1, 1]) { const p = armPath(side); arms.push({ pts: p, kind: armStyle === 'jointed' || armStyle === 'spring' || armStyle === 'telescopic' ? armStyle : 'tube' }); hands.push({ x: p[2][0], y: p[2][1] + 8, flip: side < 0 }); }
   }
 
-  let defs = paint.defs;
+  let defs = paint.defs, bodyRivets = '';
   let back = '';
   // ---- backdrop: soft halo behind the head + paper grain ----
   const haloFill = scary ? '#ff2a2a' : dark ? (paint.classic ? '#ffffff' : paint.glow) : (bg.id === 'white' ? '#f3f1ec' : '#ffffff');
@@ -940,14 +978,14 @@ function renderFromTraits(picks, index, seed, opts) {
   const sdx = 9, sdy = 7, sOp = dark ? 0.45 : 0.12;
   const tube = (pts, w, col, extra) => '<path d="' + pathD(pts) + '" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"' + (extra || '') + '/>';
   let sil = '<path d="' + pathD(headPts) + ' Z"/><path d="' + pathD(bodyPts) + ' Z"/>';
-  for (const a of arms) if (a.pts[0][1] < groundY - 20) sil += tube(a.pts, 14, shadowCol);
-  sil += tube(legL, 14, shadowCol) + tube(legR, 14, shadowCol);
+  for (const a of arms) if (a.pts[0][1] < groundY - 20) sil += tube(a.pts, 20, shadowCol);
+  sil += tube(legL, 20, shadowCol) + tube(legR, 20, shadowCol);
   body += '<g transform="translate(' + sdx + ' ' + sdy + ')" fill="' + shadowCol + '" opacity="' + sOp + '">' + sil + '</g>';
 
   // ---- limbs, drawn under head/chest ----
   const limb = (pts, jit, thin, col) => {
     const p = chalkLine(pts, rng, jit);
-    return tube(p, thin ? 11 : 15, ink) + tube(p, thin ? 5 : 8.5, col || paint.fill);
+    return tube(p, thin ? 15 : 22, ink) + tube(p, thin ? 8 : 14, col || paint.fill);
   };
   const joint = (x, y, r) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r + '" fill="' + paint.shoe + '" stroke="' + ink + '" stroke-width="3.2"/>' +
     '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (r * 0.32).toFixed(1) + '" fill="' + ink + '"/>';
@@ -984,6 +1022,8 @@ function renderFromTraits(picks, index, seed, opts) {
     body += '<circle cx="' + sx + '" cy="' + sy + '" r="4" fill="#FFE27A"/>';
   }
   body += limb(legL, 1.2, peg, legFill) + limb(legR, 1.2, peg, legFill);
+  // knee bolts
+  for (const lx of [headCx - legX, headCx + legX]) body += joint(lx, (legTop + legEnd) / 2 + 6, peg ? 6 : 8);
   for (const h of hands) {
     let g = renderHand(h.x, h.y, picks.hands.id, rng, h.flip, handFill, ink);
     // hands read at thumbnail size (hands resting on the floor stay 1x so they sit on the ground)
@@ -1025,6 +1065,7 @@ function renderFromTraits(picks, index, seed, opts) {
   body += block(headPts, 'h', headPaint);
   const headOutline = closeLoop(headPts);
   body += doubleStroke(headOutline, rng, 2.5, 'strokeThick');
+  body += rivets(headPts, headCx, headCy, ink);
   body += chalkGrain(headOutline, rng, ink, 0.12);
   if (headKind === 'tv') {
     // screen bezel + two little dials: reads instantly as a CRT head
@@ -1060,7 +1101,7 @@ function renderFromTraits(picks, index, seed, opts) {
   }
   body += '<g transform="translate(' + headCx + ' ' + (headCy - 12) + ') scale(1.06) translate(' + -headCx + ' ' + -(headCy - 12) + ')">' +
     renderEyes(headCx, headCy - 12, picks.eyes.id, rng, ink, eyeColorHex, uid, dark) + '</g>';
-  body += renderMouth(headCx, headCy + 44, picks.mouth.id, rng);
+  body += renderMouth(headCx, headCy + 44, picks.mouth.id, rng, eyeColorHex || '#5fe1ff');
   if (scary) {
     // heavy brow plates slanting down to the nose: the angry glare
     const by = headCy - 12 - 26;
@@ -1079,7 +1120,9 @@ function renderFromTraits(picks, index, seed, opts) {
   const neck = chalkLine([[headCx, neckTop - 2], [headCx, neckTop + neckLen + 2]], rng, 0.8);
   body += tube(neck, 17, ink) + tube(neck, 10, paint.fill);
   body += block(bodyPts, 'b');
+  bodyRivets = rivets(bodyPts, headCx, chestCy, ink);
   body += renderChest(headCx, chestCy, chestSize, picks.chestMark.id, rng, ink, bodyKind === 'box' ? null : closeLoop(bodyPts));
+  body += bodyRivets;
   if (scary) {
     // three claw scratches across the chest plate
     const sx = headCx + (fear() < 0.5 ? -1 : 1) * (30 + fear() * 14), sy = chestCy - 30;
@@ -1128,7 +1171,7 @@ function renderFromTraits(picks, index, seed, opts) {
 const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
-    background: 'black', hair: 'wild_spike', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fangs_stitch',
+    background: 'black', hair: 'cables', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fang_grille',
     chestMark: 'skull_small', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching', legColor: 'matching', handColor: 'matching'
   }
 ];
@@ -1167,11 +1210,11 @@ const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'blood_night', weight: 14 }, { id: 'concrete', weight: 8 }, { id: 'ash', weight: 8 }, { id: 'sand', weight: 8 }, { id: 'smog', weight: 8 }, { id: 'rust_haze', weight: 8 }],
   bodyColor: [{ id: 'steel', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'white', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'ink', weight: 20 }],
-  hair: [{ id: 'wild_spike', weight: 30 }, { id: 'mohawk_spike', weight: 26 }, { id: 'none', weight: 24 }, { id: 'tall_spike', weight: 20 }],
+  hair: [{ id: 'cables', weight: 30 }, { id: 'fin', weight: 26 }, { id: 'none', weight: 24 }, { id: 'twin_antenna', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
   eyes: [{ id: 'void', weight: 32 }, { id: 'asymmetric', weight: 26 }, { id: 'ring_double', weight: 24 }, { id: 'spiral', weight: 18 }, { id: 'glare', weight: 24 }, { id: 'cracked', weight: 18 }],
   eyeColor: [{ id: 'orange', weight: 34 }, { id: 'red', weight: 30 }, { id: 'blue', weight: 26 }, { id: 'default', weight: 10 }, { id: 'toxic', weight: 26 }],
-  mouth: [{ id: 'fangs_stitch', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'single_line', weight: 24 }, { id: 'stitches_uneven', weight: 20 }, { id: 'jaws', weight: 28 }],
+  mouth: [{ id: 'fang_grille', weight: 30 }, { id: 'zipper', weight: 26 }, { id: 'led_bar', weight: 24 }, { id: 'vent', weight: 20 }, { id: 'jaws', weight: 28 }],
   chestMark: [{ id: 'skull_small', weight: 14 }, { id: 'hazard', weight: 10 }, { id: 'barcode', weight: 10 }, { id: 'vent', weight: 6 }, { id: 'blank', weight: 12 }, { id: 'emoji_skull', weight: 11 }, { id: 'emoji_broken_heart', weight: 9 }, { id: 'emoji_blast', weight: 9 }, { id: 'circle_target', weight: 7 }, { id: 'slash', weight: 7 }],
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
