@@ -754,6 +754,8 @@ function drawMouth(style, skinHex, rng, centred) {
   // fangs, and any mouth under a mustache/goatee/beard, sit dead-centre so they line up with the face
   if (centred || style === 'fangs') ox = 0;
   const x = CX + ox;
+  // under a mustache the mouth drops a little so the mustache doesn't sit on the lip / teeth
+  if (centred && style !== 'fangs') return `<g transform="translate(0 5)">` + drawMouth(style, skinHex, () => 0.9, false) + '</g>';
   const { ink } = faceInk(skinHex);
   const lip = luma(skinHex) < 60 ? shadePixel(skinHex, 40) : shadePixel(skinHex, -50);
   const rim = { stroke: luma(skinHex) < 60 ? '#6a6a6a' : outlineOf(skinHex), sw: 2.5 };
@@ -769,19 +771,27 @@ function drawMouth(style, skinHex, rng, centred) {
     for (let i = -18; i <= 18; i += 9) s += line(`M${x+i} 195 L${x+i+1} 210`, lip, 2.5);
   } else if (style === 'fangs') {
     // mirrored pair: same size, same height, hanging straight from a level lip
-    s += path(`M${x-12} 200 L${x-8} 214 L${x-4} 200 Z`, TOOTH, { stroke: ink, sw: 1.8 });
-    s += path(`M${x+4} 200 L${x+8} 214 L${x+12} 200 Z`, TOOTH, { stroke: ink, sw: 1.8 });
-    s += line(`M${x-18} 198 Q${x} 204 ${x+18} 198`, lip, 4);
+    // (under a mustache the mustache itself is the lip, so the fangs hang just below it)
+    const fy = centred ? 197 : 200;
+    s += path(`M${x-12} ${fy} L${x-8} ${fy+14} L${x-4} ${fy} Z`, TOOTH, { stroke: ink, sw: 1.8 });
+    s += path(`M${x+4} ${fy} L${x+8} ${fy+14} L${x+12} ${fy} Z`, TOOTH, { stroke: ink, sw: 1.8 });
+    if (!centred) s += line(`M${x-18} ${fy-2} Q${x} ${fy+4} ${x+18} ${fy-2}`, lip, 4);
   } else if (style === 'grin') {
     // wide jack-o'-lantern grin with jagged teeth
-    s += path(`M${x-32} 192 Q${x} 206 ${x+32} 192 Q${x+22} 222 ${x} 222 Q${x-22} 222 ${x-32} 192 Z`, CAVITY, rim);
+    const cav = `M${x-32} 192 Q${x} 206 ${x+32} 192 Q${x+22} 222 ${x} 222 Q${x-22} 222 ${x-32} 192 Z`;
     let t = `M${x-28} 195`;
     for (let i = -28; i < 28; i += 8) t += ` L${x+i+4} ${i % 16 === 0 ? 208 : 205} L${x+i+8} ${197 + Math.abs(i) * 0.08}`;
-    s += path(t + ` Q${x} 203 ${x-28} 195 Z`, TOOTH, { stroke: false });
-    s += path(`M${x-14} 219 L${x-10} 212 L${x-6} 219 Z M${x+6} 219 L${x+10} 212 L${x+14} 219 Z`, TOOTH, { stroke: false });
+    // teeth are clipped to the mouth so none poke out past the lips at the corners
+    const gid = `${_sid}k${_clipN++}`;
+    s += path(cav, CAVITY, { stroke: false });
+    s += `<clipPath id="${gid}"><path d="${cav}"/></clipPath><g clip-path="url(#${gid})">` +
+      path(t + ` Q${x} 203 ${x-28} 195 Z`, TOOTH, { stroke: false }) +
+      path(`M${x-14} 222 L${x-10} 212 L${x-6} 222 Z M${x+6} 222 L${x+10} 212 L${x+14} 222 Z`, TOOTH, { stroke: false }) + '</g>';
+    s += path(cav, 'none', rim);
   } else if (style === 'gape') {
-    s += ellipse(x, 208, 11, 15, CAVITY, rim);
-    s += path(`M${x+4} 221 Q${x+6} 232 ${x+5} 240 Q${x+2} 244 ${x+1} 238 Q${x+1} 230 ${x+1} 222 Z`, '#c8e8b0', { stroke: false, opacity: 0.8 });
+    s += ellipse(x, 205, 10, 13, CAVITY, rim);
+    // short drip that ends on the chin (it used to run down past the head onto the shirt)
+    s += path(`M${x+3} 216 Q${x+5} 221 ${x+4.5} 225 Q${x+3} 228.5 ${x+1.5} 225 Q${x+1} 221 ${x+1} 217 Z`, '#c8e8b0', { stroke: false, opacity: 0.85 });
   } else if (style === 'bloody') {
     s += line(`M${x-16} 202 Q${x} 198 ${x+16} 202`, lip, 4);
     s += path(`M${x+10} 202 Q${x+14} 212 ${x+13} 224 Q${x+13} 232 ${x+9} 232 Q${x+6} 230 ${x+7} 222 Q${x+8} 212 ${x+10} 202 Z`, BLOOD, { stroke: false });
@@ -933,8 +943,15 @@ function drawFacialHair(style, hairColor, skinHex) {
   if (Math.abs(luma(c) - luma(skinHex)) < 30) c = luma(skinHex) < 60 ? '#4a4a4a' : shadePixel(c, -40);
   const mustache = path('M182 194 Q191 186 200 191 Q209 186 218 194 Q210 199 200 196 Q190 199 182 194 Z', c, { stroke: false });
   if (style === 'stubble') {
-    return path('M132 186 Q140 228 200 230 Q260 228 268 186 Q252 214 200 214 Q148 214 132 186 Z', c, { stroke: false, opacity: 0.3 }) +
-      path('M180 192 Q200 184 220 192 L220 197 Q200 191 180 197 Z', c, { stroke: false, opacity: 0.3 });
+    // fine stipple (a flat translucent patch read as a dirty smudge)
+    const area = 'M152 202 Q158 223 200 225 Q242 223 248 202 Q236 215 200 215 Q164 215 152 202 Z M184 191 Q200 186 216 191 L216 195 Q200 191 184 195 Z';
+    const sid = `${_sid}k${_clipN++}`;
+    let dots = '';
+    for (let yy = 185; yy <= 226; yy += 3.1) for (let xx = 150; xx <= 250; xx += 3.3) {
+      const h = Math.sin(xx * 12.9898 + yy * 78.233) * 43758.5453, f = h - Math.floor(h);
+      dots += `M${(xx + f * 1.3).toFixed(1)} ${(yy + ((f * 7) % 1) * 1.3).toFixed(1)}h0.01`;
+    }
+    return `<clipPath id="${sid}"><path d="${area}"/></clipPath><path d="${dots}" stroke="${c}" stroke-width="1.2" stroke-linecap="round" opacity="0.45" clip-path="url(#${sid})"/>`;
   } else if (style === 'mustache') {
     return mustache;
   } else if (style === 'goatee') {
