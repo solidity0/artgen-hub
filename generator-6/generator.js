@@ -570,8 +570,10 @@ function drawBrows(eyeStyle, jx, skinHex) {
 // Horror mouths. A small seeded offset keeps them from sitting on exactly the
 // same spot on every face.
 const CAVITY = '#1a0406', BLOOD = '#a3000f', TOOTH = '#f2ecd8';
-function drawMouth(style, skinHex, rng) {
-  const ox = rng() < 0.4 ? (rng() < 0.5 ? -4 : 4) : 0;
+function drawMouth(style, skinHex, rng, centred) {
+  let ox = rng() < 0.4 ? (rng() < 0.5 ? -4 : 4) : 0;
+  // fangs, and any mouth under a mustache/goatee/beard, sit dead-centre so they line up with the face
+  if (centred || style === 'fangs') ox = 0;
   const x = CX + ox;
   const { ink } = faceInk(skinHex);
   const lip = luma(skinHex) < 60 ? shadePixel(skinHex, 40) : shadePixel(skinHex, -50);
@@ -1129,7 +1131,7 @@ function renderFromTraits(picks, index, seed, opts) {
   body += drawFacialHair(facialHair && facialHair.id, hairColor, skinTone.hex);
   body += drawSunken(jx, skinTone.hex);
   body += drawEyes(eyeStyle.id, jx, skinTone.hex);
-  body += drawMouth((mouth && mouth.id) || (_cute ? 'smile' : 'stitched'), skinTone.hex, jitterRng);
+  body += drawMouth((mouth && mouth.id) || (_cute ? 'smile' : 'stitched'), skinTone.hex, jitterRng, !!facialHair && ['mustache', 'goatee', 'beard'].includes(facialHair.id));
   body += drawHairFront(hairStyle.id, hairColor, gradId, capped);
   body += drawBrows(eyeStyle.id, jx, skinTone.hex);
   body += drawScars(scars && scars.id, skinTone.hex, jx);
