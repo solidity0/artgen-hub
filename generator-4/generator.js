@@ -289,7 +289,9 @@ function doubleStroke(points, rng, amt, cls, colorOverride) {
   const pts = chalkLine(points, rng, amt * 0.3);
   const op = (0.16 + rng() * 0.12).toFixed(2);
   const w = (base * 0.5).toFixed(2);
-  out += '<path d="' + pathD(pts) + '" class="' + cls + '" fill="none" style="' + colorCss + 'opacity:' + op + ';stroke-width:' + w + 'px"/>';
+  // (accent pass no longer drawn: a faint doubled line reads as fuzz; rng draws above are kept
+  // so every shape still lands exactly where it did)
+  void pts; void op; void w;
   return out;
 }
 // Scattered chalk-dust grain along a path — tiny low-opacity dots, the
@@ -300,7 +302,7 @@ function chalkGrain(points, rng, ink, density = 0.4) {
   for (const p of pts) {
     if (rng() > density) continue;
     const [x, y] = jitterPt(p, rng, 4);
-    out += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (0.5 + rng() * 0.9).toFixed(1) + '" fill="' + ink + '" opacity="' + (0.15 + rng() * 0.25).toFixed(2) + '"/>';
+    rng(); rng(); void x; void y; // grain dots dropped for sharpness; rng draws kept
   }
   return out;
 }
@@ -919,7 +921,7 @@ function renderFromTraits(picks, index, seed, opts) {
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="196" fill="' + haloFill + '" opacity="' + haloOp + '"/>';
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="228" fill="' + haloFill + '" opacity="' + (haloOp * 0.35).toFixed(2) + '"/>';
   let grain = '';
-  for (let i = 0; i < 170; i++) {
+  for (let i = 0; i < 0; i++) { // paper grain removed for sharpness
     grain += '<circle cx="' + (deco() * SW - OX).toFixed(1) + '" cy="' + (deco() * H).toFixed(1) + '" r="' + (0.5 + deco() * 1.1).toFixed(1) + '" fill="' + ink + '" opacity="' + (0.03 + deco() * 0.04).toFixed(2) + '"/>';
   }
   back += grain;
@@ -1052,9 +1054,9 @@ function renderFromTraits(picks, index, seed, opts) {
   }
   const eyeColorHex = picks.eyeColor.hex || null;
   if (eyeColorHex) {
-    defs += '<radialGradient id="eg' + uid + '"><stop offset="0.35" stop-color="' + eyeColorHex + '" stop-opacity="0.9"/><stop offset="1" stop-color="' + eyeColorHex + '" stop-opacity="0"/></radialGradient>';
-    body += '<circle cx="' + (headCx - 32) + '" cy="' + (headCy - 12) + '" r="36" fill="url(#eg' + uid + ')"/>';
-    body += '<circle cx="' + (headCx + 32) + '" cy="' + (headCy - 12) + '" r="36" fill="url(#eg' + uid + ')"/>';
+    defs += '<radialGradient id="eg' + uid + '"><stop offset="0.5" stop-color="' + eyeColorHex + '" stop-opacity="0.9"/><stop offset="1" stop-color="' + eyeColorHex + '" stop-opacity="0"/></radialGradient>';
+    body += '<circle cx="' + (headCx - 32) + '" cy="' + (headCy - 12) + '" r="27" fill="url(#eg' + uid + ')"/>';
+    body += '<circle cx="' + (headCx + 32) + '" cy="' + (headCy - 12) + '" r="27" fill="url(#eg' + uid + ')"/>';
   }
   body += '<g transform="translate(' + headCx + ' ' + (headCy - 12) + ') scale(1.06) translate(' + -headCx + ' ' + -(headCy - 12) + ')">' +
     renderEyes(headCx, headCy - 12, picks.eyes.id, rng, ink, eyeColorHex, uid, dark) + '</g>';

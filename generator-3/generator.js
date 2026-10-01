@@ -409,8 +409,8 @@ function wrapEyeAnim(inner, style, cx, cy, animOpts) {
 
 function starburstEye(cx,cy,r,spikes,eyeColor,eyeGlow,rng,hollow=false,style='starburst',ink='#e8e8e8',animOpts=null) {
   let out='';
-  const glowR=r+8;
-  out+=`<circle cx="${cx}" cy="${cy}" r="${glowR+6}" fill="${eyeGlow}" opacity="0.15"/>`;
+  const glowR=r+5;
+  out+=`<circle cx="${cx}" cy="${cy}" r="${glowR+3}" fill="${eyeGlow}" opacity="0.15"/>`;
   out+=`<circle cx="${cx}" cy="${cy}" r="${glowR}" fill="${eyeGlow}" opacity="0.25"/>`;
   if(style==='spiral'){
     for(let i=0;i<3;i++){
@@ -1029,7 +1029,8 @@ function renderFromTraits(picks, index, seed, opts) {
   // shadow / glow without SVG filters (filters render soft inside <img> on mobile Safari):
   // stacked offset copies of the head silhouette with widening strokes read as a soft shadow
   { const sc = lightBg ? '#3b2f22' : accent, dx = lightBg ? 7 : 0, dy = lightBg ? 9 : 0;
-    const layers = lightBg ? [[18,0.05],[10,0.07],[3,0.1]] : [[26,0.06],[16,0.09],[8,0.14]];
+    // one crisp offset silhouette (the old stack of wide faint strokes read as blur)
+    const layers = lightBg ? [[0,0.13]] : [[6,0.2]];
     for (const [w,o] of layers) svg+=`<path d="${headPath}" fill="${sc}" stroke="${sc}" stroke-width="${w}" stroke-linejoin="round" opacity="${o}" transform="translate(${dx} ${dy})"/>`; }
   svg+=`<g>`;
   // v3.1 body: solid neck + rounded shoulders matching the head (same base fill, wash shading,
@@ -1040,7 +1041,7 @@ function renderFromTraits(picks, index, seed, opts) {
     const bust = `M${(cx-Wb).toFixed(1)},${bot} L${(cx-Wb).toFixed(1)},${(sy+r).toFixed(1)} Q${(cx-Wb).toFixed(1)},${sy} ${(cx-Wb+r).toFixed(1)},${sy} L${(cx+Wb-r).toFixed(1)},${sy} Q${(cx+Wb).toFixed(1)},${sy} ${(cx+Wb).toFixed(1)},${(sy+r).toFixed(1)} L${(cx+Wb).toFixed(1)},${bot} Z`;
     const neck = `M${(cx-nw).toFixed(1)},${(neckY-8).toFixed(1)} L${(cx+nw).toFixed(1)},${(neckY-8).toFixed(1)} L${(cx+nw+3).toFixed(1)},${(sy+6).toFixed(1)} L${(cx-nw-3).toFixed(1)},${(sy+6).toFixed(1)} Z`;
     const sc = lightBg ? '#3b2f22' : accent, dx = lightBg ? 7 : 0, dy = lightBg ? 9 : 0;
-    for (const [w,o] of (lightBg ? [[18,0.05],[10,0.07],[3,0.1]] : [[26,0.05],[16,0.08],[8,0.12]])) svg+=`<path d="${bust}" fill="${sc}" stroke="${sc}" stroke-width="${w}" stroke-linejoin="round" opacity="${o}" transform="translate(${dx} ${dy})"/>`;
+    for (const [w,o] of (lightBg ? [[0,0.12]] : [[6,0.18]])) svg+=`<path d="${bust}" fill="${sc}" stroke="${sc}" stroke-width="${w}" stroke-linejoin="round" opacity="${o}" transform="translate(${dx} ${dy})"/>`;
     svg+=`<path d="${bust}" fill="none" stroke="${accent}" stroke-width="${(sw*3.2).toFixed(1)}" stroke-linejoin="round" opacity="0.75" transform="translate(-3.5 -2.5)"/>`;
     svg+=`<path d="${bust}" fill="${skin}"/><path d="${neck}" fill="${skin}"/>`;
     svg+=`<clipPath id="bw${sid}"><path d="${bust}"/><path d="${neck}"/></clipPath><g clip-path="url(#bw${sid})">`
