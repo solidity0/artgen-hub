@@ -161,7 +161,7 @@ street. Glows are stacked translucent shapes (no SVG filters).
 | eyeStyle | 7 — hollow, glowing, void, bleeding, stitched, button, demon (cute: dot, wide, sleepy, wink, sparkle) |
 | mouth | 6 — stitched, fangs, grin, gape, bloody, teeth (cute: smile, beam, smirk) |
 | scars | 5 — none, scar, cracks, splatter, stitches |
-| accessory | 6 — none, cap, glasses, earring, gold chain, horns |
+| accessory | 11 — none, cap, glasses, earring, gold chain; horns intact / broken / cracked, each in blood red or black |
 | backdrop | 6 — none, brownstones, tenements (fire escapes + water towers), tenement + corner store, graves, bats |
 | background | 6 — midnight, blood, fog, toxic, bruise, ember; 1/1s use pitch, blood moon (red moon), void, toxic (cute: warm sand, seafoam, cream, lime, lavender, sunflower; 1/1s ETH blue, red, punchy blue, rich lime) |
 

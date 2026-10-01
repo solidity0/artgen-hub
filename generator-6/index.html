@@ -315,7 +315,12 @@ const TRAITS = {
     { id: 'glasses',   weight: 14, rarity: 'uncommon' },
     { id: 'earring',   weight: 8,  rarity: 'rare' },
     { id: 'chain',     weight: 8,  rarity: 'rare' },
-    { id: 'horns',     weight: 8,  rarity: 'rare', vibe: 'scary' }
+    { id: 'horns',               weight: 3, rarity: 'rare', vibe: 'scary' },
+    { id: 'black_horns',         weight: 3, rarity: 'rare', vibe: 'scary' },
+    { id: 'broken_horns',        weight: 2, rarity: 'rare', vibe: 'scary' },
+    { id: 'broken_black_horns',  weight: 2, rarity: 'rare', vibe: 'scary' },
+    { id: 'cracked_horns',       weight: 2, rarity: 'rare', vibe: 'scary' },
+    { id: 'cracked_black_horns', weight: 2, rarity: 'rare', vibe: 'scary' }
   ],
   facialHair: [
     { id: 'none',      weight: 50, rarity: 'common' },
@@ -1031,12 +1036,33 @@ function drawAccessory(style, jx, skinHex) {
       line(`M${lx+22} ${EYE_Y-6} L${rx-22} ${EYE_Y-6}`, rim, 5);
   } else if (style === 'earring') {
     return circle(HEAD.cx - HEAD.rx + 1, 180, 5, '#f5d020') + circle(HEAD.cx + HEAD.rx - 1, 180, 5, '#f5d020');
-  } else if (style === 'horns') {
-    const hornC = '#3a0c0c';
+  } else if (/horns$/.test(style)) {
+    // horns: intact, broken (right horn snapped off) or cracked, in blood red or black
+    const black = style.includes('black');
+    const hornC = black ? '#1d1b22' : '#8e0c14';
+    const ridge = black ? '#ffffff' : '#000000', ridgeOp = black ? 0.22 : 0.4;
+    const crackC = black ? '#8a8694' : '#000000';
     const hornL = 'M150 88 Q126 62 108 38 Q142 50 166 76 Z';
     const hornR = 'M250 88 Q274 62 292 38 Q258 50 234 76 Z';
-    return shaded(hornL, hornC, bboxOfD(hornL), { shadow: 0.45, hl: 0.35 }) + shaded(hornR, hornC, bboxOfD(hornR), { shadow: 0.45, hl: 0.35 }) +
-      line('M142 72 L154 67 M128 57 L139 52', '#000000', 2, 0.4) + line('M258 72 L246 67 M272 57 L261 52', '#000000', 2, 0.4);
+    // stump of the right horn, broken off with a jagged end
+    const stumpR = 'M250 88 Q267 70 278 56 L271 53 L277 47 L267 48 L264 42 L257 50 Q245 62 234 76 Z';
+    const opt = { shadow: 0.45, hl: black ? 0.28 : 0.35 };
+    const broken = style.startsWith('broken'), cracked = style.startsWith('cracked');
+    let s = shaded(hornL, hornC, bboxOfD(hornL), opt) + line('M142 72 L154 67 M128 57 L139 52', ridge, 2, ridgeOp);
+    if (broken) {
+      s += shaded(stumpR, hornC, bboxOfD(stumpR), opt) + line('M258 72 L246 67', ridge, 2, ridgeOp) +
+        // splintered break face + a couple of chips falling away
+        line('M271 53 L266 57 M264 42 L262 51', crackC, 1.8, 0.9) +
+        path('M288 44 L295 40 L296 47 Z', hornC) + path('M282 32 L287 29 L288 35 Z', hornC);
+    } else {
+      s += shaded(hornR, hornC, bboxOfD(hornR), opt) + line('M258 72 L246 67 M272 57 L261 52', ridge, 2, ridgeOp);
+    }
+    if (cracked) {
+      // jagged cracks running up both horns
+      s += line('M156 82 L148 72 L152 66 L140 58 L136 50 L126 46', crackC, 2.8) + line('M148 72 L141 74 M140 58 L134 61', crackC, 2) +
+        line('M244 82 L252 72 L248 66 L260 58 L264 50 L274 46', crackC, 2.8) + line('M252 72 L259 74 M260 58 L266 61', crackC, 2);
+    }
+    return s;
   } else if (style === 'chain') {
     const gold = '#f5c518';
     return line('M168 224 Q200 272 232 224', outlineOf(gold), 9) + line('M168 224 Q200 272 232 224', gold, 5) +
