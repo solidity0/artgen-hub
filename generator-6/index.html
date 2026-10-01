@@ -1042,25 +1042,26 @@ function drawAccessory(style, jx, skinHex) {
     const hornC = black ? '#1d1b22' : '#8e0c14';
     const ridge = black ? '#ffffff' : '#000000', ridgeOp = black ? 0.22 : 0.4;
     const crackC = black ? '#8a8694' : '#000000';
-    const hornL = 'M150 88 Q126 62 108 38 Q142 50 166 76 Z';
-    const hornR = 'M250 88 Q274 62 292 38 Q258 50 234 76 Z';
+    // crescent horns: sweep out from the head, then hook up and slightly inward at the tip
+    const hornL = 'M150 88 C130 80 104 66 112 32 C122 50 146 62 166 76 Z';
+    const hornR = 'M250 88 C270 80 296 66 288 32 C278 50 254 62 234 76 Z';
     // stump of the right horn, broken off with a jagged end
-    const stumpR = 'M250 88 Q267 70 278 56 L271 53 L277 47 L267 48 L264 42 L257 50 Q245 62 234 76 Z';
+    const stumpR = 'M250 88 C266 82 281 74 283 63 L276 60 L281 54 L271 55 L268 49 L263 57 C257 64 246 70 234 76 Z';
     const opt = { shadow: 0.45, hl: black ? 0.28 : 0.35 };
     const broken = style.startsWith('broken'), cracked = style.startsWith('cracked');
-    let s = shaded(hornL, hornC, bboxOfD(hornL), opt) + line('M142 72 L154 67 M128 57 L139 52', ridge, 2, ridgeOp);
+    let s = shaded(hornL, hornC, bboxOfD(hornL), opt) + line('M133 79 Q141 71 151 67 M118 64 Q125 57 133 54', ridge, 2, ridgeOp);
     if (broken) {
-      s += shaded(stumpR, hornC, bboxOfD(stumpR), opt) + line('M258 72 L246 67', ridge, 2, ridgeOp) +
+      s += shaded(stumpR, hornC, bboxOfD(stumpR), opt) + line('M267 79 Q259 71 249 67', ridge, 2, ridgeOp) +
         // splintered break face + a couple of chips falling away
-        line('M271 53 L266 57 M264 42 L262 51', crackC, 1.8, 0.9) +
-        path('M288 44 L295 40 L296 47 Z', hornC) + path('M282 32 L287 29 L288 35 Z', hornC);
+        line('M276 60 L270 63 M268 49 L265 57', crackC, 1.8, 0.9) +
+        path('M293 48 L300 44 L301 51 Z', hornC) + path('M288 36 L293 33 L294 39 Z', hornC);
     } else {
-      s += shaded(hornR, hornC, bboxOfD(hornR), opt) + line('M258 72 L246 67 M272 57 L261 52', ridge, 2, ridgeOp);
+      s += shaded(hornR, hornC, bboxOfD(hornR), opt) + line('M267 79 Q259 71 249 67 M282 64 Q275 57 267 54', ridge, 2, ridgeOp);
     }
     if (cracked) {
       // jagged cracks running up both horns
-      s += line('M156 82 L148 72 L152 66 L140 58 L136 50 L126 46', crackC, 2.8) + line('M148 72 L141 74 M140 58 L134 61', crackC, 2) +
-        line('M244 82 L252 72 L248 66 L260 58 L264 50 L274 46', crackC, 2.8) + line('M252 72 L259 74 M260 58 L266 61', crackC, 2);
+      s += line('M156 80 L146 74 L147 67 L136 62 L131 53 L121 47 L116 40', crackC, 2.8) + line('M146 74 L139 77 M136 62 L128 64', crackC, 2) +
+        line('M244 80 L254 74 L253 67 L264 62 L269 53 L279 47 L284 40', crackC, 2.8) + line('M254 74 L261 77 M264 62 L272 64', crackC, 2);
     }
     return s;
   } else if (style === 'chain') {
