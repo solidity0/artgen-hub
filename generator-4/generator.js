@@ -678,10 +678,25 @@ function renderSky(cx, y, style, rng) {
   return '';
 }
 
-function renderGround(w, y, style, rng, grassColor) {
+function renderGround(w, y, style, rng, grassColor, extra) {
   const counts = { light_scribble: 18, medium_scribble: 30, heavy_scribble: 46, scorched: 26 };
   const n = counts[style] || 18;
   let out = '';
+  // fuller floor: clumps of 2-4 fanned blades in light/mid/dark greens, drawn from their own
+  // rng stream (extra) so the original blades and everything after them stay seed-stable
+  if (extra && grassColor) {
+    const tufts = { light_scribble: 34, medium_scribble: 46, heavy_scribble: 60, scorched: 22 }[style] || 34;
+    const tones = [shadeColor(grassColor, 22), grassColor, shadeColor(grassColor, -22)];
+    for (let t = 0; t < tufts; t++) {
+      const tx = extra() * w, blades = 2 + Math.floor(extra() * 3), tall = 7 + extra() * 13;
+      const col = tones[Math.floor(extra() * 3)];
+      for (let k = 0; k < blades; k++) {
+        const lean = (k - (blades - 1) / 2) * (3 + extra() * 3) + (extra() - 0.5) * 3, h = tall * (0.65 + extra() * 0.45);
+        const bx = tx + (k - (blades - 1) / 2) * 2.2;
+        out += '<path d="M ' + bx.toFixed(1) + ' ' + y + ' Q ' + (bx + lean * 0.3).toFixed(1) + ' ' + (y - h * 0.6).toFixed(1) + ' ' + (bx + lean).toFixed(1) + ' ' + (y - h).toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="' + (1.6 + extra() * 0.9).toFixed(1) + '" stroke-linecap="round"/>';
+      }
+    }
+  }
   const colorCss = grassColor ? ('stroke:' + grassColor + ';') : '';
   for (let i = 0; i < n; i++) {
     const x = rng() * w;
@@ -1010,7 +1025,7 @@ function renderFromTraits(picks, index, seed, opts) {
   body += renderSky(cx, 24, picks.sky.id, rng);
 
   const grassColorHex = picks.grassColor.hex || '#34c25a';
-  body += '<g transform="translate(' + -OX + ' 0)">' + renderGround(SW, groundY, picks.ground.id, rng, grassColorHex) + '</g>';
+  body += '<g transform="translate(' + -OX + ' 0)">' + renderGround(SW, groundY, picks.ground.id, rng, grassColorHex, deco) + '</g>';
 
   // ---- shadows: soft ground shadow + offset drop shadow of the silhouette ----
   const shadowCol = dark ? '#000000' : '#1c1c1c';
