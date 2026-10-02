@@ -15,8 +15,9 @@ works on GitHub Pages and can be inscribed on-chain as-is.
 | 4 | **AfterBots** | Hand-inked industrial robots, often with a companion | 🤖 | [generator-4](https://solidity0.github.io/artgen-hub/generator-4/index.html) |
 | 5 | **Ink Pups** | Scrawled ink hellhounds with burning eyes | 🐶 | [generator-5](https://solidity0.github.io/artgen-hub/generator-5/index.html) |
 | 6 | **GRIMKIN** | Undead chibi guys haunting the block after dark | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
+| 7 | **TORQUE** | Car engine parts as art — metal, blueprint or neon | ⚙️ | [generator-7](https://solidity0.github.io/artgen-hub/generator-7/index.html) |
 
-Slots 7 and 8 are reserved on the hub for future collections.
+Slot 8 is reserved on the hub for a future collection.
 
 ---
 
@@ -31,7 +32,8 @@ Slots 7 and 8 are reserved on the hub for future collections.
 ├── generator-3/  Oddlings
 ├── generator-4/  AfterBots
 ├── generator-5/  Ink Pups
-└── generator-6/  GRIMKIN
+├── generator-6/  GRIMKIN
+└── generator-7/  TORQUE
 ```
 
 Every generator folder holds the same four files:
@@ -173,6 +175,29 @@ this folder is a synced copy — change it there and copy the four files here.
 
 ---
 
+### 7 — TORQUE
+`generator-7/` · engine **v1** · `window.TorqueGen` · page ≈ 90 KB
+
+Car engine parts as collectible art. Each piece is one hero part, fitted to the
+frame on a soft contact shadow, drawn once and rendered three ways: shaded
+metal (cylindrical / plate / disc gradients per finish), a blueprint line
+drawing, or glowing neon tubes in the finish's colour. Conditions (rust, oil,
+heat tint, scratches) are masked to the metal so they never spill onto the
+scene. Names are unique per collection, e.g. `Redline LS-427 #12`.
+
+| Trait | Values |
+|-------|--------|
+| part | 8 — piston, spark plug, timing gear, connecting rod, valve, camshaft, crankshaft, turbocharger |
+| finish | 9 — steel, cast iron, black oxide, chrome, anodized red, anodized blue, copper, titanium, gold |
+| condition | 5 — factory fresh, scuffed, oil stained, heat blued, rusted |
+| background | 7 — garage, shop paper, midnight, blueprint, redline, hazard, oil black |
+| render · pose | 3 (shaded, blueprint lines, neon) · 3 (upright, tilted left/right) |
+| fx · frame | 6 (none, spotlight, heat glow, sparks, smoke, oil drip) · 4 (none, spec sheet, QC stamp, race tag) |
+
+1/1s lean rare (rare parts, finishes and conditions come up far more often), get
+a gold border, and are varied so no two share a finish while finishes remain.
+Neon pieces always get a dark scene.
+
 ## Shared features (every generator page)
 
 - **Collection settings** — name, symbol, description, and chain
@@ -230,7 +255,7 @@ console.log(piece.traits, piece.svg.length);
 ## Adding a new generator
 
 1. Copy an existing generator folder's `generator.js`, `index.src.html` and
-   `build.js` into the next empty slot (`generator-7/`).
+   `build.js` into the next empty slot (`generator-8/`).
 2. Run `node build.js` inside it to produce `index.html`.
 3. In the root `index.html`, set that slot's entry in the `GENERATORS` array
    to `active: true` and give it a name and description.
