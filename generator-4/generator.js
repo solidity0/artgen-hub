@@ -184,9 +184,10 @@ const TRAITS = {
     { id: 'scorched',        weight: 5,  rarity: 'rare' }
   ],
   grassColor: [
-    { id: 'default', weight: 60, rarity: 'common' },
-    { id: 'green',   hex: '#22b043', weight: 26, rarity: 'uncommon' },
-    { id: 'white',   hex: '#ffffff', weight: 14, rarity: 'rare' }
+    // living grass only: every option is a green (the old ink-coloured / white grass read as dead)
+    { id: 'meadow',  hex: '#34c25a', weight: 60, rarity: 'common' },
+    { id: 'lush',    hex: '#5ee27c', weight: 26, rarity: 'uncommon' },
+    { id: 'moss',    hex: '#27a046', weight: 14, rarity: 'rare' }
   ],
   companion: [
     { id: 'none',      weight: 60, rarity: 'common' },
@@ -687,7 +688,7 @@ function renderGround(w, y, style, rng, grassColor) {
     const h = 6 + rng() * 16;
     out += '<path d="' + pathD(chalkLine([[x, y], [x + rj(rng, 6), y - h]], rng, 1)) + '" class="strokeThin" style="' + colorCss + '"/>';
   }
-  out += doubleStroke([[0, y], [w, y]], rng, 1.5, 'strokeThin', grassColor);
+  out += doubleStroke([[0, y], [w, y]], rng, 1.5, 'strokeThin'); // ground line stays ink; only the blades are green
   return out;
 }
 
@@ -749,11 +750,12 @@ function renderCompanion(x, y, style, rng, col, ink, dark) {
     const metal = '#6b737d';
     o += '<path d="M -28 -34 L -40 -48" stroke="' + ink + '" stroke-width="6" stroke-linecap="round"/><path d="M -28 -34 L -40 -48" stroke="' + metal + '" stroke-width="2.6" stroke-linecap="round"/>';
     o += '<circle cx="-41" cy="-50" r="3.4" fill="#ff3b3b" stroke="' + ink + '" stroke-width="1.4"/>';
+    // legs end above the ground line so the foot pads rest ON it (they used to sink below it)
     for (const lx of [-20, -8, 10, 22]) {
-      o += '<path d="M ' + lx + ' -22 L ' + (lx - 3) + ' -11 L ' + lx + ' 0" stroke="' + ink + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
-      o += '<path d="M ' + lx + ' -22 L ' + (lx - 3) + ' -11 L ' + lx + ' 0" stroke="' + metal + '" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
-      o += '<circle cx="' + (lx - 3) + '" cy="-11" r="2.6" fill="' + shade + '" stroke="' + ink + '" stroke-width="1.2"/>';
-      o += rect(lx - 4, -2, 9, 4, '#3a3f46');
+      o += '<path d="M ' + lx + ' -22 L ' + (lx - 3) + ' -13 L ' + lx + ' -6" stroke="' + ink + '" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+      o += '<path d="M ' + lx + ' -22 L ' + (lx - 3) + ' -13 L ' + lx + ' -6" stroke="' + metal + '" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+      o += '<circle cx="' + (lx - 3) + '" cy="-13" r="2.6" fill="' + shade + '" stroke="' + ink + '" stroke-width="1.2"/>';
+      o += rect(lx - 4, -7, 9, 4, '#3a3f46');
     }
     o += rect(-28, -38, 56, 18);
     o += '<path d="M -18 -29 L 14 -29" stroke="' + shade + '" stroke-width="2.4" stroke-linecap="round"/>';
@@ -1007,8 +1009,7 @@ function renderFromTraits(picks, index, seed, opts) {
   if (dark) body += '<g transform="translate(' + -OX + ' 0)">' + renderStarfield(SW, H, rng) + '</g>';
   body += renderSky(cx, 24, picks.sky.id, rng);
 
-  let grassColorHex = picks.grassColor.hex || null;
-  if (grassColorHex === '#ffffff' && !dark) grassColorHex = null;
+  const grassColorHex = picks.grassColor.hex || '#34c25a';
   body += '<g transform="translate(' + -OX + ' 0)">' + renderGround(SW, groundY, picks.ground.id, rng, grassColorHex) + '</g>';
 
   // ---- shadows: soft ground shadow + offset drop shadow of the silhouette ----
@@ -1381,7 +1382,7 @@ const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
     background: 'black', hair: 'cables', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fang_grille',
-    internals: 'reactor', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'white', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching', legColor: 'matching', handColor: 'matching'
+    internals: 'reactor', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'moss', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching', legColor: 'matching', handColor: 'matching'
   }
 ];
 const SIGNATURE_TRAIT_KEYS = ['background', 'hair', 'ears', 'eyes', 'eyeColor', 'mouth', 'internals', 'hands', 'feet', 'sky', 'ground', 'grassColor', 'companion', 'bodyColor', 'companionColor', 'headShape', 'bodyShape', 'arms', 'headColor', 'legColor', 'handColor'];
@@ -1435,7 +1436,7 @@ const ONE_OF_ONE_WEIGHTS = {
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }, { id: 'blood_moon', weight: 60 }],
   ground: [{ id: 'scorched', weight: 34 }, { id: 'heavy_scribble', weight: 30 }, { id: 'medium_scribble', weight: 20 }, { id: 'light_scribble', weight: 16 }],
-  grassColor: [{ id: 'default', weight: 50 }, { id: 'white', weight: 30 }, { id: 'green', weight: 20 }],
+  grassColor: [{ id: 'meadow', weight: 50 }, { id: 'moss', weight: 30 }, { id: 'lush', weight: 20 }],
   companion: [{ id: 'none', weight: 24 }, { id: 'bunny', weight: 16 }, { id: 'dog', weight: 16 }, { id: 'bird', weight: 16 }, { id: 'cat', weight: 16 }, { id: 'cat_ghost', weight: 12 }, { id: 'robo_dog', weight: 14 }]
 };
 function pickOneOfOne(category, rng, vibe) {
@@ -1457,7 +1458,7 @@ function pickOneOfOne(category, rng, vibe) {
 // the same tier fallback — unless the user explicitly locked it themselves,
 // which always wins.
 const ONE_OF_ONE_ONLY_CHESTMARK = []; // chest emoji removed
-const ONE_OF_ONE_ONLY_GRASSCOLOR = ['green'];
+const ONE_OF_ONE_ONLY_GRASSCOLOR = ['lush'];
 const ONE_OF_ONE_ONLY_BY_CATEGORY = { grassColor: ONE_OF_ONE_ONLY_GRASSCOLOR };
 
 function hexToLab(h) {
