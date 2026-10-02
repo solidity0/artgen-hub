@@ -14,7 +14,7 @@ works on GitHub Pages and can be inscribed on-chain as-is.
 | 3 | **Oddlings** | Hand-inked PFP characters with starburst eyes | 👽 | [generator-3](https://solidity0.github.io/artgen-hub/generator-3/index.html) |
 | 4 | **AfterBots** | Hand-inked industrial robots, often with a companion | 🤖 | [generator-4](https://solidity0.github.io/artgen-hub/generator-4/index.html) |
 | 5 | **Ink Pups** | Scrawled ink hellhounds with burning eyes | 🐶 | [generator-5](https://solidity0.github.io/artgen-hub/generator-5/index.html) |
-| 6 | **Hood Characters** | Undead chibi guys haunting the block after dark | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
+| 6 | **GRIMKIN** | Undead chibi guys haunting the block after dark | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
 
 Slots 7 and 8 are reserved on the hub for future collections.
 
@@ -31,7 +31,7 @@ Slots 7 and 8 are reserved on the hub for future collections.
 ├── generator-3/  Oddlings
 ├── generator-4/  AfterBots
 ├── generator-5/  Ink Pups
-└── generator-6/  Hood Characters
+└── generator-6/  GRIMKIN
 ```
 
 Every generator folder holds the same four files:
@@ -142,7 +142,7 @@ burning eyes, fangs, scars and blood on dark textured backgrounds.
 
 Curated 1/1 pickers, 1/1-exclusive values and batch-wide dedup.
 
-### 6 — Hood Characters
+### 6 — GRIMKIN
 `generator-6/` · engine **v2** · `window.ChibiGen` · page ≈ 108 KB
 
 Full-body undead chibi guys in shaded flat vector, set at night: a soft ink
@@ -177,7 +177,7 @@ this folder is a synced copy — change it there and copy the four files here.
 
 - **Collection settings** — name, symbol, description, and chain
   (Bitcoin / Ethereum / Robinhood), which also re-themes the page.
-- **Unique character names** — every piece is named `Collection #N — Character Name` (e.g. `Hood Characters #17 — Lil Stitches`), themed per generator. Names come from a seeded one-to-one shuffle of first × last name lists, so no two pieces in a collection ever share one; past the list size a roman numeral (II, III, …) is appended. Shown in the gallery, lightbox and every download format.
+- **Unique character names** — every piece is named `Collection #N — Character Name` (e.g. `GRIMKIN #17 — Lil Stitches`), themed per generator. Names come from a seeded one-to-one shuffle of first × last name lists, so no two pieces in a collection ever share one; past the list size a roman numeral (II, III, …) is appended. Shown in the gallery, lightbox and every download format.
 - **Rarity tier** — any / common / uncommon / rare biases every unlocked trait.
 - **Trait locks** — pick one or more values per category, or leave on random.
 - **Seed, supply and 1/1 count** — supply is uncapped. Same seed + settings =
