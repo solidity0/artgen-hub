@@ -1058,7 +1058,10 @@ function drawAccessory(style, jx, skinHex) {
     return rrect(lx - 22, EYE_Y - 17, 44, 34, 7, '#ffffff', lens) + rrect(rx - 22, EYE_Y - 17, 44, 34, 7, '#ffffff', lens) +
       line(`M${lx+22} ${EYE_Y-6} L${rx-22} ${EYE_Y-6}`, rim, 5);
   } else if (style === 'earring') {
-    return circle(HEAD.cx - HEAD.rx + 1, 180, 5, '#f5d020') + circle(HEAD.cx + HEAD.rx - 1, 180, 5, '#f5d020');
+    // gold hoop hanging from each earlobe (outer-lower edge of the ear, not the face outline)
+    const gold = '#f5d020', ring = { stroke: outlineOf(gold), sw: 1.5 };
+    const hoop = (x) => circle(x, 172, 2.6, gold, ring) + `<circle cx="${x}" cy="180" r="6" fill="none" stroke="${outlineOf(gold)}" stroke-width="4.2"/><circle cx="${x}" cy="180" r="6" fill="none" stroke="${gold}" stroke-width="2.4"/>`;
+    return hoop(HEAD.cx - HEAD.rx - 7) + hoop(HEAD.cx + HEAD.rx + 7);
   } else if (/horns$/.test(style)) {
     // horns: intact, broken (right horn snapped off) or cracked, in blood red or black
     const black = style.includes('black');
@@ -1088,9 +1091,10 @@ function drawAccessory(style, jx, skinHex) {
     }
     return s;
   } else if (style === 'chain') {
-    const gold = '#f5c518';
-    return line('M168 224 Q200 272 232 224', outlineOf(gold), 9) + line('M168 224 Q200 272 232 224', gold, 5) +
-      circle(200, 252, 10, gold) + circle(200, 252, 4, shadePixel(gold, -30), { stroke: false });
+    // drawn under the head: the chain comes out from beneath the chin and hangs on the chest
+    const gold = '#f5c518', d = 'M160 218 Q200 296 240 218';
+    return line(d, outlineOf(gold), 9) + line(d, gold, 5) +
+      circle(200, 264, 10, gold) + circle(200, 264, 4, shadePixel(gold, -30), { stroke: false });
   }
   return '';
 }
@@ -1323,6 +1327,10 @@ function renderFromTraits(picks, index, seed, opts) {
   // a cap sits over an afro's crown, so skip the big afro back layer then
   if (!(capped && hairStyle.id === 'afro')) body += drawHairBack(hairStyle.id, hairColor, gradId);
   body += drawBodyAndOutfit(skinTone.hex, outfitType.id, outfitColor.hex);
+  // accessories are layered where they physically sit: the chain under the head (around the
+  // neck), horns under the front hair (growing out of it), everything else on top of the face
+  const accId = accessory.id, horned = /horns$/.test(accId);
+  if (accId === 'chain') body += drawAccessory(accId, 0, skinTone.hex);
   body += drawHead(skinTone.hex);
   // small seeded jitter so eyes aren't pinned to the exact same spot on
   // every piece; shared with brows and glasses so they stay aligned.
@@ -1334,10 +1342,11 @@ function renderFromTraits(picks, index, seed, opts) {
   body += drawSunken(jx, skinTone.hex);
   body += drawEyes(eyeStyle.id, jx, skinTone.hex);
   body += drawMouth((mouth && mouth.id) || (_cute ? 'smile' : 'stitched'), skinTone.hex, jitterRng, !!facialHair && ['mustache', 'goatee', 'beard'].includes(facialHair.id) && facialHair.id);
+  if (horned) body += hairStyle.id === 'afro' ? '<g transform="translate(0 -16)">' + drawAccessory(accId, 0, skinTone.hex) + '</g>' : drawAccessory(accId, 0, skinTone.hex);
   body += drawHairFront(hairStyle.id, hairColor, gradId, capped);
   body += drawBrows(eyeStyle.id, jx, skinTone.hex);
   body += drawScars(scars && scars.id, skinTone.hex, jx);
-  body += drawAccessory(accessory.id, jx, skinTone.hex);
+  if (accId !== 'chain' && !horned) body += drawAccessory(accId, jx, skinTone.hex);
 
   let blinkAnim = '';
   if (animate) {
