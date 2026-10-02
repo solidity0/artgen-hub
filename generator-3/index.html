@@ -1161,6 +1161,16 @@ function renderFromTraits(picks, index, seed, opts) {
     headPath=roughEllipse(cx,cy,headRx,headRy,rng,24,jit);
   }
 
+  // The smooth head outline bulges past its corner points (square/angular heads reach well
+  // below cy+headRy), which left those heads sitting straight on the shoulders with no neck.
+  // Measure the real bottom of the drawn head and hang the neck/body/clothing from that.
+  let headBottom=-Infinity;
+  { const segs=headPath.match(/[MC][^MCZ]*/g)||[]; let px=0,py=0;
+    for(const sg of segs){ const n=sg.slice(1).split(/[ ,]+/).filter(Boolean).map(Number);
+      if(sg[0]==='M'){px=n[0];py=n[1];headBottom=Math.max(headBottom,py);continue;}
+      for(let t=0;t<=1;t+=0.05){const u=1-t;headBottom=Math.max(headBottom,u*u*u*py+3*u*u*t*n[1]+3*u*t*t*n[3]+t*t*t*n[5]);}
+      px=n[4];py=n[5]; } }
+  const bodyRy=headBottom-cy>headRy+3?headBottom-cy:headRy;
   const eyeY=cy-12;
   const eyeOffX=headRx*0.38;
   const eyeL=cx-eyeOffX, eyeR2_pos=cx+eyeOffX;
@@ -1217,7 +1227,7 @@ function renderFromTraits(picks, index, seed, opts) {
   // v3.1 body: solid neck + rounded shoulders matching the head (same base fill, wash shading,
   // accent rim and soft shadow), sized to the head; clothing linework is drawn on top of it
   { const skin = lightBg ? '#FBF7EF' : '#151515', shade = lightBg ? '#2b241d' : '#000';
-    const neckY = cy + headRy - 4, sy = neckY + 26, Wb = Math.max(88, headRx * 1.38), r = 44, bot = H + 40;
+    const neckY = cy + bodyRy - 4, sy = neckY + 26, Wb = Math.max(88, headRx * 1.38), r = 44, bot = H + 40;
     const nw = Math.max(12, headRx * 0.2);
     const bust = `M${(cx-Wb).toFixed(1)},${bot} L${(cx-Wb).toFixed(1)},${(sy+r).toFixed(1)} Q${(cx-Wb).toFixed(1)},${sy} ${(cx-Wb+r).toFixed(1)},${sy} L${(cx+Wb-r).toFixed(1)},${sy} Q${(cx+Wb).toFixed(1)},${sy} ${(cx+Wb).toFixed(1)},${(sy+r).toFixed(1)} L${(cx+Wb).toFixed(1)},${bot} Z`;
     const neck = `M${(cx-nw).toFixed(1)},${(neckY-8).toFixed(1)} L${(cx+nw).toFixed(1)},${(neckY-8).toFixed(1)} L${(cx+nw+3).toFixed(1)},${(sy+6).toFixed(1)} L${(cx-nw-3).toFixed(1)},${(sy+6).toFixed(1)} Z`;
@@ -1231,9 +1241,9 @@ function renderFromTraits(picks, index, seed, opts) {
        + `<rect x="${(cx-nw-4).toFixed(1)}" y="${(neckY-8).toFixed(1)}" width="${(nw*2+8).toFixed(1)}" height="${(sy-neckY+14).toFixed(1)}" fill="${shade}" opacity="${lightBg?0.12:0.3}"/></g>`;
     svg+=`<path d="${roughPath([[cx-Wb,bot],[cx-Wb,sy+r],[cx-Wb+r*0.3,sy+r*0.3],[cx-Wb+r,sy],[cx+Wb-r,sy],[cx+Wb-r*0.3,sy+r*0.3],[cx+Wb,sy+r],[cx+Wb,bot]],mulberry32((seed??0)*100003+index+55),jit*0.6)}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round" opacity="0.9"/>`;
   }
-  svg+=clothingMarkup(clothing.id, cx, cy, headRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5), background.bg);
+  svg+=clothingMarkup(clothing.id, cx, cy, bodyRy, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+5), background.bg);
   // soft cast shadow of the head on the neck/collar
-  svg+=`<ellipse cx="${cx+6}" cy="${(cy+headRy+14).toFixed(1)}" rx="${(headRx*0.72).toFixed(1)}" ry="13" fill="${lightBg?'#2a2119':'#000'}" opacity="${lightBg?0.2:0.45}"/>`;
+  svg+=`<ellipse cx="${cx+6}" cy="${(cy+bodyRy+14).toFixed(1)}" rx="${(headRx*0.72).toFixed(1)}" ry="13" fill="${lightBg?'#2a2119':'#000'}" opacity="${lightBg?0.2:0.45}"/>`;
   // accent rim light (only the outer edge shows: the head base fill covers the inner half)
   svg+=`<path d="${headPath}" fill="none" stroke="${accent}" stroke-width="${(sw*3.2).toFixed(1)}" stroke-linejoin="round" opacity="0.75" transform="translate(-3.5 -2.5)"/>`;
   svg+=`<path d="${headPath}" fill="${lightBg?'#FBF7EF':'#151515'}"/>`;
@@ -1282,7 +1292,7 @@ function renderFromTraits(picks, index, seed, opts) {
   svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
-  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id, headRx, headShape.id);
+  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), bodyRy, hair.id, isOneOfOne, background.bg, clothing.id, headRx, headShape.id);
   svg+='</g>';
   // brush-weight linework: thicken every stroke in the figure (the crop adds a further 1.33x)
   svg=svg.slice(0,figStart)+svg.slice(figStart).replace(/stroke-width="([\d.]+)"/g,(m,w)=>`stroke-width="${(parseFloat(w)*1.25).toFixed(2)}"`);
