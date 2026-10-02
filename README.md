@@ -177,7 +177,7 @@ this folder is a synced copy — change it there and copy the four files here.
 
 - **Collection settings** — name, symbol, description, and chain
   (Bitcoin / Ethereum / Robinhood), which also re-themes the page.
-- **Unique character names** — every piece is named `Collection #N — Character Name` (e.g. `GRIMKIN #17 — Lil Stitches`), themed per generator. Names come from a seeded one-to-one shuffle of first × last name lists, so no two pieces in a collection ever share one; past the list size a roman numeral (II, III, …) is appended. Shown in the gallery, lightbox and every download format.
+- **Unique character names** — every piece is named `Collection #N — Character Name` (e.g. `GRIMKIN #17 — Lil Stitches`), themed per generator; Gen 6 (GRIMKIN) uses the character name alone (e.g. `Lil Stitches`). Names come from a seeded one-to-one shuffle of first × last name lists, so no two pieces in a collection ever share one; past the list size a roman numeral (II, III, …) is appended. Shown in the gallery, lightbox and every download format.
 - **Rarity tier** — any / common / uncommon / rare biases every unlocked trait.
 - **Trait locks** — pick one or more values per category, or leave on random.
 - **Seed, supply and 1/1 count** — supply is uncapped. Same seed + settings =
