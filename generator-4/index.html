@@ -876,21 +876,24 @@ function renderGround(w, y, style, rng, grassColor, extra) {
   // fuller floor: clumps of 2-4 fanned blades in light/mid/dark greens, drawn from their own
   // rng stream (extra) so the original blades and everything after them stay seed-stable
   if (extra && grassColor) {
-    const tufts = { light_scribble: 34, medium_scribble: 46, heavy_scribble: 60, scorched: 22 }[style] || 34;
+    const tufts = { light_scribble: 56, medium_scribble: 74, heavy_scribble: 96, scorched: 34 }[style] || 56;
+    const M = 14; // keep every blade inside the frame
     const tones = [shadeColor(grassColor, 22), grassColor, shadeColor(grassColor, -22)];
     for (let t = 0; t < tufts; t++) {
-      const tx = extra() * w, blades = 2 + Math.floor(extra() * 3), tall = 7 + extra() * 13;
+      const tx = M + extra() * (w - 2 * M), blades = 2 + Math.floor(extra() * 3), tall = 7 + extra() * 13;
       const col = tones[Math.floor(extra() * 3)];
       for (let k = 0; k < blades; k++) {
-        const lean = (k - (blades - 1) / 2) * (3 + extra() * 3) + (extra() - 0.5) * 3, h = tall * (0.65 + extra() * 0.45);
+        let lean = (k - (blades - 1) / 2) * (3 + extra() * 3) + (extra() - 0.5) * 3;
+        const h = tall * (0.65 + extra() * 0.45);
         const bx = tx + (k - (blades - 1) / 2) * 2.2;
+        if (bx + lean < M) lean = M - bx; else if (bx + lean > w - M) lean = w - M - bx; // lean inward at the edges
         out += '<path d="M ' + bx.toFixed(1) + ' ' + y + ' Q ' + (bx + lean * 0.3).toFixed(1) + ' ' + (y - h * 0.6).toFixed(1) + ' ' + (bx + lean).toFixed(1) + ' ' + (y - h).toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="' + (1.6 + extra() * 0.9).toFixed(1) + '" stroke-linecap="round"/>';
       }
     }
   }
   const colorCss = grassColor ? ('stroke:' + grassColor + ';') : '';
   for (let i = 0; i < n; i++) {
-    const x = rng() * w;
+    const x = 14 + rng() * (w - 28); // inside the frame (same rng draws as before)
     const h = 6 + rng() * 16;
     out += '<path d="' + pathD(chalkLine([[x, y], [x + rj(rng, 6), y - h]], rng, 1)) + '" class="strokeThin" style="' + colorCss + '"/>';
   }
