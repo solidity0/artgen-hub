@@ -51,11 +51,7 @@ Every generator folder holds the same four files:
 `generator-1/` · engine **v7** · browser global `window.ArtGen` · page ≈ 140 KB
 
 The original, brand-agnostic character engine: robot-headed drifters in
-bodies from suits to exosuits, set against 25 scene backgrounds. The character
-is **pixel art** (a 50×50 grid of crisp 12px cells, rasterized from the
-character's own shapes in the engine, with tears drawn into it); backgrounds
-and scene-wide accessories (dots, ash, scanlines) stay smooth vector. "Animate
-eyes" adds a seeded pixel blink.
+bodies from suits to exosuits, set against 25 scene backgrounds.
 
 | Trait | Values |
 |-------|--------|

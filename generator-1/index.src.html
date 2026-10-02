@@ -405,24 +405,23 @@ function generateOne(index, seed, opts) {
   const accessoryPart = accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth });
   const eyesStatic = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, { noMouth });
 
-  // The character is pixel art (background stays vector). Tears sit on the face so
-  // they're pixelated with it; scene-wide accessories stay vector on top.
-  // Animation (a pixel blink) draws from a SEPARATE seeded stream so toggling it
+  // Animation timing draws from a SEPARATE seeded stream so toggling animation
   // never shifts trait selection — the art is identical, motion is layered on.
-  const tears = accessory.id === 'tears';
-  const charParts = { body: bodyPart, head: headPart, eyes: eyesStatic, mouth: mouthPart, tears: tears ? accessoryPart : '' };
-  const charStatic = pixelCharacter(charParts, null);
-  let charAnimated = charStatic;
+  let eyesAnimated = eyesStatic;
   if (currentAnimate) {
     const animRng = mulberry32((seed | 0) * 70001 + index * 9973 + 1);
-    charAnimated = pixelCharacter(charParts, { dur: 4.5 + animRng() * 3, begin: animRng() * 4 });
+    eyesAnimated = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR,
+      { animate: true, rng: animRng, headColor: headColor.hex, noMouth });
   }
 
-  const wrap = characterPart => `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+  const wrap = eyesPart => `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <rect width="600" height="600" fill="${background.fill}"/>
 ${bgOverlay}
-${characterPart}
-${tears ? '' : accessoryPart}
+${bodyPart}
+${headPart}
+${eyesPart}
+${mouthPart}
+${accessoryPart}
 </svg>`;
 
   // svgStatic: ALWAYS motion-free — used for grid thumbnails. Running hundreds
@@ -431,13 +430,13 @@ ${tears ? '' : accessoryPart}
   // of the animate toggle.
   // svg: honors the toggle — used for the lightbox (one piece on screen at a
   // time, safe to animate) and for SVG/ZIP export (what actually gets shipped
-  // or inscribed). When the toggle is off, charAnimated === charStatic, so
+  // or inscribed). When the toggle is off, eyesAnimated === eyesStatic, so
   // wrap() would build the exact same string twice — reuse svgStatic instead.
   // At large supplies (tens of thousands of pieces, each holding two full SVG
   // strings) this roughly halves both generation time and retained memory in
   // the by-far-most-common case of generating with animation off.
-  const svgStatic = wrap(charStatic);
-  const svg = currentAnimate ? wrap(charAnimated) : svgStatic;
+  const svgStatic = wrap(eyesStatic);
+  const svg = currentAnimate ? wrap(eyesAnimated) : svgStatic;
 
   return {
     index, svg, svgStatic, isOneOfOne,

@@ -837,7 +837,7 @@ function headMarkup(shapeId, colorHex, rng, bgFill) {
 // no JS/CSS). Timing is seeded off rng so no two pieces move in sync. When animate
 // is false the output is byte-identical to the original static markup.
 function eyesMarkup(shapeId, colorHex, eyeR, glowR, opts) {
-  const cxL = 246, cxR = 354; // on pixel-cell centres (12px grid) so both eyes pixelate as mirror images
+  const cxL = 249, cxR = 351;
   // The eye row normally sits a bit above the head's vertical center (200,
   // vs the head's own center at 215) to leave room for a mouth below it. With
   // no mouth, that empty space below makes the eye(s) look too high/off-
@@ -1014,11 +1014,9 @@ function eyesMarkup(shapeId, colorHex, eyeR, glowR, opts) {
         spin = `<animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="360 ${cx} ${cy}" dur="${dur}s" repeatCount="indefinite"/>`;
       }
       let path = `M ${cx} ${cy}`;
-      // fewer, wider coils so the swirl still reads once the character is drawn as pixel art
-      const turns = 1.3, steps = 32;
-      path = `M ${(cx + eyeR * 0.22).toFixed(1)} ${cy}`;
+      const turns = 2.5, steps = 24;
       for (let i = 1; i <= steps; i++) {
-        const t = i / steps, ang = t * turns * Math.PI * 2, r = eyeR * (0.22 + 0.78 * t);
+        const t = i / steps, ang = t * turns * Math.PI * 2, r = t * eyeR;
         path += ` L ${(cx + Math.cos(ang) * r).toFixed(1)} ${(cy + Math.sin(ang) * r).toFixed(1)}`;
       }
       return `<g>${spin}<path d="${path}" fill="none" stroke="${colorHex}" stroke-width="2.5" stroke-linecap="round"/></g>`;
@@ -1435,7 +1433,7 @@ function accessoryMarkup(rng, accId, eyeCtx) {
     // reusing the two-eye offset.
     const isCyclops = eyeCtx && eyeCtx.eyeShape === 'cyclops';
     const side = rng() < 0.5 ? -1 : 1;
-    const tx = isCyclops ? 300 : 300 + side * 54;
+    const tx = isCyclops ? 300 : 300 + side * 51;
 
     // Was ALSO a flat ty=230 for every non-cyclops case, which assumed one
     // specific eye shape's bottom edge and one specific cy — wrong on two
@@ -1490,195 +1488,6 @@ function accessoryMarkup(rng, accId, eyeCtx) {
 // opts (optional): { animate: boolean } — when true, eyes get inscription-safe
 // SMIL animation. Animation timing uses a SEPARATE seeded stream so toggling it
 // never changes which traits are picked (the art stays identical, only motion is added).
-// ---------- pixel-art character ----------
-// The character (body, head, eyes, mouth, tears) is drawn as crisp pixel art on a
-// PIXEL_GRID x PIXEL_GRID grid; the background stays smooth vector. A tiny
-// rasterizer reads the character's own SVG shapes (rect / circle / ellipse /
-// line / path with M L Q A Z, translate-only groups, opacity, strokes), samples
-// each cell 4x4, and picks one colour per cell. A thin feature (a mouth stroke,
-// a pupil) wins its cell if it covers at least ~1/5 of it and sits above the
-// rest, so small details survive the downscale instead of smearing out.
-const PIXEL_GRID = 50, PIXEL_CELL = 600 / PIXEL_GRID, PIXEL_SUB = 4;
-function _pxColor(c) {
-  if (!c || c === 'none' || c.startsWith('url(')) return null;
-  if (c[0] !== '#') return null;
-  let h = c.slice(1);
-  if (h.length === 3) h = h.split('').map((x) => x + x).join('');
-  const n = parseInt(h, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-function _pxAttrs(s) { const a = {}; for (const m of s.matchAll(/([\w-]+)="([^"]*)"/g)) a[m[1]] = m[2]; return a; }
-// path "d" -> list of subpaths, each a polyline [[x,y],...] + closed flag
-function _pxFlatten(d) {
-  const t = d.match(/[MLQAZTHVCmlqazthvc]|-?\d*\.?\d+(?:e-?\d+)?/g) || [];
-  const subs = []; let cur = null, i = 0, cmd = '', x = 0, y = 0, sx = 0, sy = 0;
-  const num = () => parseFloat(t[i++]);
-  const push = (px, py) => { cur.pts.push([px, py]); x = px; y = py; };
-  while (i < t.length) {
-    if (/[A-Za-z]/.test(t[i])) cmd = t[i++];
-    if (cmd === 'M') { cur = { pts: [], closed: false }; subs.push(cur); const px = num(), py = num(); sx = px; sy = py; push(px, py); cmd = 'L'; }
-    else if (cmd === 'L') push(num(), num());
-    else if (cmd === 'H') push(num(), y);
-    else if (cmd === 'V') push(x, num());
-    else if (cmd === 'Q') {
-      const cx = num(), cy = num(), ex = num(), ey = num(), x0 = x, y0 = y;
-      for (let k = 1; k <= 12; k++) { const u = k / 12, v = 1 - u; push(v * v * x0 + 2 * v * u * cx + u * u * ex, v * v * y0 + 2 * v * u * cy + u * u * ey); }
-    } else if (cmd === 'C') {
-      const c1x = num(), c1y = num(), c2x = num(), c2y = num(), ex = num(), ey = num(), x0 = x, y0 = y;
-      for (let k = 1; k <= 16; k++) { const u = k / 16, v = 1 - u; push(v*v*v*x0 + 3*v*v*u*c1x + 3*v*u*u*c2x + u*u*u*ex, v*v*v*y0 + 3*v*v*u*c1y + 3*v*u*u*c2y + u*u*u*ey); }
-    } else if (cmd === 'A') {
-      let rx = Math.abs(num()), ry = Math.abs(num()); const rot = num() * Math.PI / 180, large = num(), sweep = num(), ex = num(), ey = num();
-      const x0 = x, y0 = y;
-      if (!rx || !ry) { push(ex, ey); continue; }
-      const cs = Math.cos(rot), sn = Math.sin(rot);
-      const dx = (x0 - ex) / 2, dy = (y0 - ey) / 2, x1 = cs * dx + sn * dy, y1 = -sn * dx + cs * dy;
-      const lam = (x1 * x1) / (rx * rx) + (y1 * y1) / (ry * ry); if (lam > 1) { rx *= Math.sqrt(lam); ry *= Math.sqrt(lam); }
-      let f = Math.sqrt(Math.max(0, (rx*rx*ry*ry - rx*rx*y1*y1 - ry*ry*x1*x1) / (rx*rx*y1*y1 + ry*ry*x1*x1))); if (large === sweep) f = -f;
-      const cxp = f * rx * y1 / ry, cyp = -f * ry * x1 / rx, ccx = cs * cxp - sn * cyp + (x0 + ex) / 2, ccy = sn * cxp + cs * cyp + (y0 + ey) / 2;
-      const ang = (ux, uy, vx, vy) => { const a = Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy); return a; };
-      const th1 = ang(1, 0, (x1 - cxp) / rx, (y1 - cyp) / ry); let dth = ang((x1 - cxp) / rx, (y1 - cyp) / ry, (-x1 - cxp) / rx, (-y1 - cyp) / ry);
-      if (!sweep && dth > 0) dth -= 2 * Math.PI; else if (sweep && dth < 0) dth += 2 * Math.PI;
-      for (let k = 1; k <= 24; k++) { const a = th1 + dth * k / 24; push(ccx + rx * Math.cos(a) * cs - ry * Math.sin(a) * sn, ccy + rx * Math.cos(a) * sn + ry * Math.sin(a) * cs); }
-    } else if (cmd === 'Z' || cmd === 'z') { if (cur) { cur.closed = true; x = sx; y = sy; } cmd = ''; }
-    else { i++; } // unsupported / relative command: skip a token rather than hang
-  }
-  return subs;
-}
-function _pxSegDist2(px, py, ax, ay, bx, by) {
-  const vx = bx - ax, vy = by - ay, l = vx * vx + vy * vy;
-  let u = l ? ((px - ax) * vx + (py - ay) * vy) / l : 0; u = u < 0 ? 0 : u > 1 ? 1 : u;
-  const qx = ax + u * vx - px, qy = ay + u * vy - py; return qx * qx + qy * qy;
-}
-// Parse character markup into a flat list of drawable items in paint order.
-function _pxItems(markup) {
-  const items = [], stack = [{ tx: 0, ty: 0, op: 1 }];
-  let skip = 0;
-  for (const m of markup.matchAll(/<(\/?)(\w+)([^>]*?)(\/?)>/g)) {
-    const [, close, tag, rest, self] = m;
-    if (tag === 'defs' || tag === 'pattern' || tag === 'clipPath' || tag === 'mask') { if (!self) skip += close ? -1 : 1; continue; }
-    if (skip > 0) continue;
-    if (tag === 'g') {
-      if (close) { if (stack.length > 1) stack.pop(); continue; }
-      const a = _pxAttrs(rest), top = stack[stack.length - 1];
-      const tm = /translate\(\s*(-?[\d.]+)[ ,]+(-?[\d.]+)\s*\)/.exec(a.transform || '');
-      const fr = { tx: top.tx + (tm ? +tm[1] : 0), ty: top.ty + (tm ? +tm[2] : 0), op: top.op * (a.opacity != null ? +a.opacity : 1) };
-      if (!self) stack.push(fr);
-      continue;
-    }
-    if (close || !/^(rect|circle|ellipse|line|path|polygon)$/.test(tag)) continue;
-    const a = _pxAttrs(rest), fr = stack[stack.length - 1];
-    const tm = /translate\(\s*(-?[\d.]+)[ ,]*(-?[\d.]*)\s*\)/.exec(a.transform || '');
-    const ox = fr.tx + (tm ? +tm[1] : 0), oy = fr.ty + (tm && tm[2] ? +tm[2] : 0);
-    const op = fr.op * (a.opacity != null ? +a.opacity : 1) * (a['fill-opacity'] != null ? +a['fill-opacity'] : 1);
-    const fill = tag === 'line' ? null : _pxColor(a.fill == null ? '#000000' : a.fill);
-    const stroke = _pxColor(a.stroke), sw = a['stroke-width'] != null ? +a['stroke-width'] : 1;
-    let shape = null;
-    if (tag === 'rect') shape = { k: 'rect', x: +a.x || 0, y: +a.y || 0, w: +a.width, h: +a.height, r: Math.min(+(a.rx || a.ry || 0), +a.width / 2, +a.height / 2) };
-    // tiny dots (pupils, rivets) keep at least a single pixel
-    else if (tag === 'circle') { const r = Math.max(+a.r, PIXEL_CELL * 0.45); shape = { k: 'ell', cx: +a.cx || 0, cy: +a.cy || 0, rx: r, ry: r }; }
-    else if (tag === 'ellipse') shape = { k: 'ell', cx: +a.cx || 0, cy: +a.cy || 0, rx: Math.max(+a.rx, PIXEL_CELL * 0.45), ry: Math.max(+a.ry, PIXEL_CELL * 0.45) };
-    else if (tag === 'line') shape = { k: 'poly', subs: [{ pts: [[+a.x1, +a.y1], [+a.x2, +a.y2]], closed: false }] };
-    else if (tag === 'polygon') { const n = (a.points || '').match(/-?[\d.]+/g).map(Number), pts = []; for (let k = 0; k + 1 < n.length; k += 2) pts.push([n[k], n[k + 1]]); shape = { k: 'poly', subs: [{ pts, closed: true }] }; }
-    else shape = { k: 'poly', subs: _pxFlatten(a.d || '') };
-    // translate into absolute coords
-    if (shape.k === 'rect') { shape.x += ox; shape.y += oy; }
-    else if (shape.k === 'ell') { shape.cx += ox; shape.cy += oy; }
-    else shape.subs.forEach((s) => s.pts.forEach((p) => { p[0] += ox; p[1] += oy; }));
-    // bbox
-    let bb;
-    if (shape.k === 'rect') bb = [shape.x, shape.y, shape.x + shape.w, shape.y + shape.h];
-    else if (shape.k === 'ell') bb = [shape.cx - shape.rx, shape.cy - shape.ry, shape.cx + shape.rx, shape.cy + shape.ry];
-    else { bb = [1e9, 1e9, -1e9, -1e9]; shape.subs.forEach((s) => s.pts.forEach(([px, py]) => { bb[0] = Math.min(bb[0], px); bb[1] = Math.min(bb[1], py); bb[2] = Math.max(bb[2], px); bb[3] = Math.max(bb[3], py); })); }
-    if (fill && op > 0) items.push({ shape, mode: 'fill', col: fill, op, bb });
-    if (stroke && op * (a['stroke-opacity'] != null ? +a['stroke-opacity'] : 1) > 0) {
-      // thin lines become (at least) one-pixel pixel-art lines instead of vanishing between samples
-      const h = Math.max(sw / 2, PIXEL_CELL * 0.3);
-      items.push({ shape, mode: 'stroke', hw: h, col: stroke, op: op * (a['stroke-opacity'] != null ? +a['stroke-opacity'] : 1), bb: [bb[0] - h, bb[1] - h, bb[2] + h, bb[3] + h] });
-    }
-  }
-  return items;
-}
-function _pxHit(it, px, py) {
-  const s = it.shape;
-  if (px < it.bb[0] || px > it.bb[2] || py < it.bb[1] || py > it.bb[3]) return false;
-  if (it.mode === 'fill') {
-    if (s.k === 'rect') {
-      if (px < s.x || px > s.x + s.w || py < s.y || py > s.y + s.h) return false;
-      if (!s.r) return true;
-      const cx = Math.min(Math.max(px, s.x + s.r), s.x + s.w - s.r), cy = Math.min(Math.max(py, s.y + s.r), s.y + s.h - s.r);
-      return (px - cx) ** 2 + (py - cy) ** 2 <= s.r * s.r;
-    }
-    if (s.k === 'ell') return ((px - s.cx) / s.rx) ** 2 + ((py - s.cy) / s.ry) ** 2 <= 1;
-    let inside = false; // even-odd over all subpaths (open subpaths are implicitly closed for fill, as in SVG)
-    for (const sub of s.subs) { const p = sub.pts; for (let i = 0, j = p.length - 1; i < p.length; j = i++) { if ((p[i][1] > py) !== (p[j][1] > py) && px < (p[j][0] - p[i][0]) * (py - p[i][1]) / (p[j][1] - p[i][1]) + p[i][0]) inside = !inside; } }
-    return inside;
-  }
-  const h2 = it.hw * it.hw;
-  if (s.k === 'ell') { // distance to an ellipse outline (good enough for near-circles)
-    const nx = (px - s.cx) / s.rx, ny = (py - s.cy) / s.ry, r = Math.sqrt(nx * nx + ny * ny) || 1e-9;
-    const ex = s.cx + nx / r * s.rx, ey = s.cy + ny / r * s.ry; return (px - ex) ** 2 + (py - ey) ** 2 <= h2;
-  }
-  if (s.k === 'rect') { const pts = [[s.x, s.y], [s.x + s.w, s.y], [s.x + s.w, s.y + s.h], [s.x, s.y + s.h], [s.x, s.y]]; for (let i = 1; i < pts.length; i++) if (_pxSegDist2(px, py, pts[i-1][0], pts[i-1][1], pts[i][0], pts[i][1]) <= h2) return true; return false; }
-  for (const sub of s.subs) { const p = sub.pts; const n = sub.closed ? p.length + 1 : p.length; for (let i = 1; i < n; i++) { const A = p[i - 1], B = p[i % p.length]; if (_pxSegDist2(px, py, A[0], A[1], B[0], B[1]) <= h2) return true; } }
-  return false;
-}
-// Rasterize character markup -> { cells: Map(idx -> 'rrggbb' + alpha), svg }
-function pixelGrid(markup) {
-  const items = _pxItems(markup), out = new Array(PIXEL_GRID * PIXEL_GRID).fill(null);
-  const N = PIXEL_SUB * PIXEL_SUB, MIN = Math.ceil(N * 0.19);
-  for (let gy = 0; gy < PIXEL_GRID; gy++) for (let gx = 0; gx < PIXEL_GRID; gx++) {
-    const x0 = gx * PIXEL_CELL, y0 = gy * PIXEL_CELL;
-    const cand = items.filter((it) => !(x0 + PIXEL_CELL < it.bb[0] || x0 > it.bb[2] || y0 + PIXEL_CELL < it.bb[1] || y0 > it.bb[3]));
-    if (!cand.length) continue;
-    const groups = new Map();
-    for (let sy = 0; sy < PIXEL_SUB; sy++) for (let sx = 0; sx < PIXEL_SUB; sx++) {
-      const px = x0 + (sx + 0.5) * PIXEL_CELL / PIXEL_SUB, py = y0 + (sy + 0.5) * PIXEL_CELL / PIXEL_SUB;
-      let r = 0, g = 0, b = 0, al = 0, z = -1;
-      for (let k = 0; k < cand.length; k++) {
-        const it = cand[k]; if (!_pxHit(it, px, py)) continue;
-        const o = it.op; r = it.col[0] * o + r * (1 - o); g = it.col[1] * o + g * (1 - o); b = it.col[2] * o + b * (1 - o); al = o + al * (1 - o);
-        if (o >= 0.5) z = items.indexOf(it);
-      }
-      const key = al < 0.04 ? 'none' : [r, g, b].map((v) => Math.round(v / Math.max(al, 1e-6))).map((v) => Math.min(255, v).toString(16).padStart(2, '0')).join('') + ':' + Math.round(al * 20);
-      const gr = groups.get(key) || { n: 0, z: -1 }; gr.n++; gr.z = Math.max(gr.z, al < 0.04 ? -1 : z); groups.set(key, gr);
-    }
-    let best = null, bk = null;
-    for (const [k, gr] of groups) { if (gr.n < MIN) continue; if (!best || gr.z > best.z || (gr.z === best.z && gr.n > best.n)) { best = gr; bk = k; } }
-    if (!best) for (const [k, gr] of groups) if (!best || gr.n > best.n) { best = gr; bk = k; }
-    if (bk && bk !== 'none') out[gy * PIXEL_GRID + gx] = bk;
-  }
-  return out;
-}
-// cells -> crisp SVG rects (horizontal runs of one colour merged into one rect)
-function pixelCellsSvg(cells) {
-  let s = '';
-  for (let gy = 0; gy < PIXEL_GRID; gy++) {
-    let gx = 0;
-    while (gx < PIXEL_GRID) {
-      const c = cells[gy * PIXEL_GRID + gx]; if (!c) { gx++; continue; }
-      let e = gx + 1; while (e < PIXEL_GRID && cells[gy * PIXEL_GRID + e] === c) e++;
-      const [hex, a] = c.split(':'), op = +a / 20;
-      s += `<rect x="${gx * PIXEL_CELL}" y="${gy * PIXEL_CELL}" width="${(e - gx) * PIXEL_CELL}" height="${PIXEL_CELL}" fill="#${hex}"${op < 0.99 ? ` opacity="${op.toFixed(2)}"` : ''}/>`;
-      gx = e;
-    }
-  }
-  return s;
-}
-// Full pixel character. With anim, a blink is layered on: the cells that change
-// when the eyes close flick to their closed state for a moment every few seconds.
-function pixelCharacter(parts, anim) {
-  const open = pixelGrid(parts.body + parts.head + parts.eyes + parts.mouth + (parts.tears || ''));
-  let svg = `<g shape-rendering="crispEdges">` + pixelCellsSvg(open);
-  if (anim) {
-    const closed = pixelGrid(parts.body + parts.head + parts.mouth + (parts.tears || ''));
-    const diff = closed.map((c, i) => (c !== open[i] ? (c || null) : null));
-    const dur = anim.dur.toFixed(2), begin = anim.begin.toFixed(2);
-    const blink = `<animate attributeName="opacity" values="0;0;1;0" keyTimes="0;0.93;0.96;1" dur="${dur}s" begin="-${begin}s" repeatCount="indefinite"/>`;
-    if (diff.some(Boolean)) svg += `<g opacity="0">${blink}` + pixelCellsSvg(diff) + '</g>';
-  }
-  return svg + '</g>';
-}
-
 function generatePiece(index, seed, tier, opts) {
   const rng = mulberry32((seed ?? 0) * 100003 + index);
   const t = tier || 'any';
@@ -1721,24 +1530,14 @@ function generatePiece(index, seed, tier, opts) {
   const eyeOpts = { noMouth: mouth.id === 'none' };
   if (animate) { eyeOpts.animate = true; eyeOpts.rng = animRng; eyeOpts.headColor = headColor.hex; }
 
-  // same rng draw order as before (background overlay, head, accessory) so traits and scenes stay seed-stable
-  const bgOverlay = backgroundOverlay(rng, background.pattern);
-  const bodyPart = bodyMarkup(body.id, bodyColor.hex, background.fill);
-  const headPart = headMarkup(headShape.id, headColor.hex, rng, background.fill);
-  const eyesPart = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, { noMouth: eyeOpts.noMouth });
-  const mouthPart = mouthMarkup(mouth.id, headShape.id);
-  const accessoryPart = accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth: eyeOpts.noMouth });
-  // the character is pixel art; tears sit on the face so they're part of it. Scene-wide
-  // accessories (dots, ash, scanlines) stay vector over the top like the background.
-  const tears = accessory.id === 'tears';
-  const character = pixelCharacter({ body: bodyPart, head: headPart, eyes: eyesPart, mouth: mouthPart, tears: tears ? accessoryPart : '' },
-    animate ? { dur: 4.5 + animRng() * 3, begin: animRng() * 4 } : null);
-
   const svg = `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <rect width="600" height="600" fill="${background.fill}"/>
-${bgOverlay}
-${character}
-${tears ? '' : accessoryPart}
+${backgroundOverlay(rng, background.pattern)}
+${bodyMarkup(body.id, bodyColor.hex, background.fill)}
+${headMarkup(headShape.id, headColor.hex, rng, background.fill)}
+${eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, eyeOpts)}
+${mouthMarkup(mouth.id, headShape.id)}
+${accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth: eyeOpts.noMouth })}
 </svg>`;
 
   return {
@@ -1803,7 +1602,7 @@ function characterName(index, seed) {
 const api = { characterName,
   generatePiece, generateBatch, TRAITS, TIER_FALLBACK,
   mulberry32, weightedPick, pickByRarity, shade,
-  bodyMarkup, headMarkup, eyesMarkup, mouthMarkup, backgroundOverlay, accessoryMarkup, pixelCharacter, pixelGrid,
+  bodyMarkup, headMarkup, eyesMarkup, mouthMarkup, backgroundOverlay, accessoryMarkup,
   BLACK_HEAD_COLORS, BLACK_BODY_COLORS, DARK_BACKGROUNDS_FOR_BLACK_COMBO
 };
 if (typeof module !== 'undefined' && module.exports) {
@@ -1977,24 +1776,23 @@ function generateOne(index, seed, opts) {
   const accessoryPart = accessoryMarkup(rng, accessory.id, { eyeShape: eyeShape.id, eyeR: size.eyeR, noMouth });
   const eyesStatic = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR, { noMouth });
 
-  // The character is pixel art (background stays vector). Tears sit on the face so
-  // they're pixelated with it; scene-wide accessories stay vector on top.
-  // Animation (a pixel blink) draws from a SEPARATE seeded stream so toggling it
+  // Animation timing draws from a SEPARATE seeded stream so toggling animation
   // never shifts trait selection — the art is identical, motion is layered on.
-  const tears = accessory.id === 'tears';
-  const charParts = { body: bodyPart, head: headPart, eyes: eyesStatic, mouth: mouthPart, tears: tears ? accessoryPart : '' };
-  const charStatic = pixelCharacter(charParts, null);
-  let charAnimated = charStatic;
+  let eyesAnimated = eyesStatic;
   if (currentAnimate) {
     const animRng = mulberry32((seed | 0) * 70001 + index * 9973 + 1);
-    charAnimated = pixelCharacter(charParts, { dur: 4.5 + animRng() * 3, begin: animRng() * 4 });
+    eyesAnimated = eyesMarkup(eyeShape.id, eyeColor.hex, size.eyeR, size.glowR,
+      { animate: true, rng: animRng, headColor: headColor.hex, noMouth });
   }
 
-  const wrap = characterPart => `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+  const wrap = eyesPart => `<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
 <rect width="600" height="600" fill="${background.fill}"/>
 ${bgOverlay}
-${characterPart}
-${tears ? '' : accessoryPart}
+${bodyPart}
+${headPart}
+${eyesPart}
+${mouthPart}
+${accessoryPart}
 </svg>`;
 
   // svgStatic: ALWAYS motion-free — used for grid thumbnails. Running hundreds
@@ -2003,13 +1801,13 @@ ${tears ? '' : accessoryPart}
   // of the animate toggle.
   // svg: honors the toggle — used for the lightbox (one piece on screen at a
   // time, safe to animate) and for SVG/ZIP export (what actually gets shipped
-  // or inscribed). When the toggle is off, charAnimated === charStatic, so
+  // or inscribed). When the toggle is off, eyesAnimated === eyesStatic, so
   // wrap() would build the exact same string twice — reuse svgStatic instead.
   // At large supplies (tens of thousands of pieces, each holding two full SVG
   // strings) this roughly halves both generation time and retained memory in
   // the by-far-most-common case of generating with animation off.
-  const svgStatic = wrap(charStatic);
-  const svg = currentAnimate ? wrap(charAnimated) : svgStatic;
+  const svgStatic = wrap(eyesStatic);
+  const svg = currentAnimate ? wrap(eyesAnimated) : svgStatic;
 
   return {
     index, svg, svgStatic, isOneOfOne,
