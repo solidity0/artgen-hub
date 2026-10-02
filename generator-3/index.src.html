@@ -204,7 +204,8 @@ function getDisplayName() { return document.getElementById('collection-name-inpu
 // Every piece gets its own name, unique within the collection (seeded by the batch seed).
 let batchSeed = 0;
 function charName(i) { return G.characterName(i, batchSeed); }
-function pieceName(i) { return getDisplayName() + ' #' + i + ' — ' + charName(i); }
+// a piece is named by its character name plus its number (e.g. "Ireth of the Deep #1"), no collection prefix
+function pieceName(i) { return charName(i) + ' #' + i; }
 function getFileSafeName() { return (document.getElementById('collection-name-input').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')) || 'collection'; }
 function getSymbol() { return document.getElementById('collection-symbol-input').value.trim().toUpperCase(); }
 function getDescription() { return document.getElementById('collection-description-input').value.trim(); }
@@ -681,7 +682,7 @@ const VG = (function(){
     const el = document.createElement('div');
     el.className = 'tile'; el.dataset.idx = i; el.tabIndex = 0;
     el.setAttribute('role', 'button'); el.setAttribute('aria-label', 'Open #' + p.index);
-    el.innerHTML = `<div class="art"></div><div class="${p.isOneOfOne ? 'tile-label is-1of1' : 'tile-label'}">#${p.index} · ${charName(p.index)}${p.isOneOfOne ? ' · 1/1' : ''}</div>`;
+    el.innerHTML = `<div class="art"></div><div class="${p.isOneOfOne ? 'tile-label is-1of1' : 'tile-label'}">${pieceName(p.index)}${p.isOneOfOne ? ' · 1/1' : ''}</div>`;
     place(el, i);
     return el;
   }
