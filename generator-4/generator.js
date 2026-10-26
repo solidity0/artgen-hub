@@ -55,7 +55,7 @@ const TRAITS = {
     // warm, saturated palette (a few strong cool tones for contrast)
     { id: 'cobalt',    hex: '#2458FF', weight: 6, rarity: 'common' },
     { id: 'cherry',    hex: '#C8001E', weight: 4, rarity: 'uncommon' },
-    { id: 'burgundy',  hex: '#8C0F2E', weight: 4, rarity: 'uncommon' },
+    { id: 'burgundy',  hex: '#8C0F2E', weight: 4, rarity: 'uncommon', retired: true }, // retired
     { id: 'espresso',  hex: '#5A2E1E', weight: 4, rarity: 'uncommon' },
     { id: 'matte_black', hex: '#111113', weight: 4, rarity: 'uncommon', matte: true }, // replaced forest green (same roll slot)
     { id: 'teal',      hex: '#009683', weight: 4, rarity: 'uncommon', retired: true }, // retired like plum (roll slot kept for seed stability)
