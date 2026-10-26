@@ -793,9 +793,10 @@ function drawMouth(style, skinHex, rng, centred) {
       path(`M${x-14} 222 L${x-10} 212 L${x-6} 222 Z M${x+6} 222 L${x+10} 212 L${x+14} 222 Z`, TOOTH, { stroke: false }) + '</g>';
     s += path(cav, 'none', rim);
   } else if (style === 'gape') {
-    s += ellipse(x, 205, 10, 13, CAVITY, rim);
+    // sits a clear gap below the nose (its top used to touch the nose tip)
+    s += ellipse(x, 208, 9, 11, CAVITY, rim);
     // short drip that ends on the chin (it used to run down past the head onto the shirt)
-    s += path(`M${x+3} 216 Q${x+5} 221 ${x+4.5} 225 Q${x+3} 228.5 ${x+1.5} 225 Q${x+1} 221 ${x+1} 217 Z`, '#c8e8b0', { stroke: false, opacity: 0.85 });
+    s += path(`M${x+3} 217 Q${x+5} 222 ${x+4.5} 226 Q${x+3} 229.5 ${x+1.5} 226 Q${x+1} 222 ${x+1} 218 Z`, '#c8e8b0', { stroke: false, opacity: 0.85 });
   } else if (style === 'bloody') {
     s += line(`M${x-16} 202 Q${x} 198 ${x+16} 202`, lip, 4);
     s += path(`M${x+10} 202 Q${x+14} 212 ${x+13} 224 Q${x+13} 232 ${x+9} 232 Q${x+6} 230 ${x+7} 222 Q${x+8} 212 ${x+10} 202 Z`, BLOOD, { stroke: false });
@@ -1056,9 +1057,12 @@ function drawAccessory(style, jx, skinHex) {
     // the actual eyes; eyes stay visible through the translucent lens.
     const rim = faceInk(skinHex).ink;
     const lx = EYE_LX + jx*EYE_JITTER, rx = EYE_RX + jx*EYE_JITTER;
-    const lens = { stroke: rim, sw: 5, fillOpacity: 0.18 };
+    // near-clear lenses so the eyes keep their full colour (a 18% white fill washed them out)
+    const lens = { stroke: rim, sw: 5, fillOpacity: 0.04 };
     return rrect(lx - 22, EYE_Y - 17, 44, 34, 7, '#ffffff', lens) + rrect(rx - 22, EYE_Y - 17, 44, 34, 7, '#ffffff', lens) +
-      line(`M${lx+22} ${EYE_Y-6} L${rx-22} ${EYE_Y-6}`, rim, 5);
+      line(`M${lx+22} ${EYE_Y-6} L${rx-22} ${EYE_Y-6}`, rim, 5) +
+      // a small glare streak in each lens corner so they still read as glass
+      line(`M${lx+9} ${EYE_Y-11} L${lx+15} ${EYE_Y-5}`, '#ffffff', 2.5, 0.7) + line(`M${rx+9} ${EYE_Y-11} L${rx+15} ${EYE_Y-5}`, '#ffffff', 2.5, 0.7);
   } else if (style === 'earring') {
     // gold hoop hanging from each earlobe (outer-lower edge of the ear, not the face outline)
     const gold = '#f5d020', ring = { stroke: outlineOf(gold), sw: 1.5 };
