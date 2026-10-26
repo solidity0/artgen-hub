@@ -730,17 +730,21 @@ function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng,bgHex) {
 }
 
 // ---------- accessory markup ----------
-// Leftmost x of the drawn head outline at height y (samples the smooth bezier path).
+// Leftmost x of the drawn head outline at height y: the bezier outline is flattened
+// into a fine polyline and intersected exactly with the horizontal line at y.
 function headLeftX(d,y,cx){
   if(!d) return null;
-  const segs=d.match(/[MC][^MCZ]*/g)||[]; let px=0,py=0,best=null,bestDy=Infinity;
+  const segs=d.match(/[MC][^MCZ]*/g)||[]; const pts=[]; let px=0,py=0;
   for(const sg of segs){ const n=sg.slice(1).split(/[ ,]+/).filter(Boolean).map(Number);
-    if(sg[0]==='M'){px=n[0];py=n[1];continue;}
-    for(let t=0;t<=1;t+=0.02){const u=1-t;
-      const x=u*u*u*px+3*u*u*t*n[0]+3*u*t*t*n[2]+t*t*t*n[4], yy=u*u*u*py+3*u*u*t*n[1]+3*u*t*t*n[3]+t*t*t*n[5];
-      if(x>=cx) continue; const dd=Math.abs(yy-y);
-      if(dd<bestDy-0.5||(Math.abs(dd-bestDy)<=0.5&&x<best)){bestDy=dd;best=x;} }
+    if(sg[0]==='M'){px=n[0];py=n[1];pts.push([px,py]);continue;}
+    for(let k=1;k<=40;k++){const t=k/40,u=1-t;
+      pts.push([u*u*u*px+3*u*u*t*n[0]+3*u*t*t*n[2]+t*t*t*n[4], u*u*u*py+3*u*u*t*n[1]+3*u*t*t*n[3]+t*t*t*n[5]]);}
     px=n[4];py=n[5]; }
+  let best=null;
+  for(let k=1;k<pts.length;k++){const [x1,y1]=pts[k-1],[x2,y2]=pts[k];
+    if((y1-y)*(y2-y)>0||y1===y2) continue;
+    const x=x1+(x2-x1)*(y-y1)/(y2-y1);
+    if(x<cx&&(best===null||x<best)) best=x; }
   return best;
 }
 function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,hairId,isOneOfOne,bgHex,clothingId,headPath) {
