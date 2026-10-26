@@ -64,7 +64,7 @@ const TRAITS = {
     // plum is retired: kept only as a roll slot so other robots' colours stay seed-stable; a robot
     // that rolls it re-rolls to another colour (hidden from the trait panel)
     { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon', retired: true },
-    { id: 'steel',     hex: '#4A73A0', weight: 6, rarity: 'common' },
+    { id: 'bitcoin_orange', hex: '#F7931A', weight: 6, rarity: 'common' }, // replaced blue steel (same roll slot)
     { id: 'gunmetal',  hex: '#3B5068', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
     { id: 'gold',      hex: '#EBA000', weight: 1.5, rarity: 'rare' },
@@ -819,7 +819,8 @@ function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const gid = 'bf' + (suffix || '') + uid;
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
-  if (id === 'steel') return { fill: 'url(#' + gid + ')', shade: '#17304e', shoe: '#33598a', glow: '#6fa0dc', defs: grad(['#7aa8de', '#2c5a90', '#6598d2', '#1f4474', '#5587c4']) };
+  // rich bitcoin orange: deep amber shadows to bright orange highlights (no pale washed tones)
+  if (id === 'bitcoin_orange') return { fill: 'url(#' + gid + ')', shade: '#5c2800', shoe: '#a85200', glow: '#f7931a', defs: grad(['#ff9f2e', '#d96f00', '#f7931a', '#a14c00', '#ef8a0c']) };
   if (id === 'gunmetal') return { fill: 'url(#' + gid + ')', shade: '#141d28', shoe: '#2a3a4c', glow: '#7f9bb8', defs: grad(['#6584aa', '#24374d', '#4f6e94', '#182537', '#45638c']) };
   if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#5e3500', shoe: '#a86800', glow: '#ffae00', defs: grad(['#ffbf14', '#c98000', '#f5aa00', '#985a00', '#e89800']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
@@ -1446,7 +1447,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'blood_night', weight: 14 }, { id: 'concrete', weight: 8 }, { id: 'ash', weight: 8 }, { id: 'sand', weight: 8 }, { id: 'smog', weight: 8 }, { id: 'rust_haze', weight: 8 }],
-  bodyColor: [{ id: 'steel', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'matte_black', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
+  bodyColor: [{ id: 'bitcoin_orange', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'matte_black', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'ink', weight: 20 }, { id: 'rust', weight: 18 }, { id: 'teal', weight: 18 }, { id: 'crimson', weight: 18 }],
   hair: [{ id: 'cables', weight: 30 }, { id: 'fin', weight: 26 }, { id: 'none', weight: 24 }, { id: 'twin_antenna', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
@@ -1457,9 +1458,9 @@ const ONE_OF_ONE_WEIGHTS = {
   hands: [{ id: 'magnet', weight: 16 }, { id: 'hook', weight: 16 }, { id: 'plug', weight: 14 }, { id: 'pincer', weight: 14 }, { id: 'broken_stub', weight: 12 }, { id: 'claw', weight: 12 }, { id: 'three_finger', weight: 8 }],
   headShape: [{ id: 'hex', weight: 20 }, { id: 'octagon', weight: 20 }, { id: 'tv', weight: 18 }, { id: 'dome', weight: 14 }, { id: 'capsule', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
   bodyShape: [{ id: 'octagon', weight: 20 }, { id: 'capsule', weight: 20 }, { id: 'bell', weight: 16 }, { id: 'trapezoid', weight: 16 }, { id: 'barrel', weight: 12 }, { id: 'round', weight: 10 }, { id: 'box', weight: 6 }],
-  headColor: [{ id: 'matching', weight: 26 }, { id: 'steel', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'obsidian', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'navy', weight: 4 }],
-  legColor: [{ id: 'matching', weight: 34 }, { id: 'steel', weight: 5 }, { id: 'gunmetal', weight: 5 }, { id: 'black', weight: 5 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'navy', weight: 5 }],
-  handColor: [{ id: 'matching', weight: 34 }, { id: 'steel', weight: 5 }, { id: 'gunmetal', weight: 5 }, { id: 'black', weight: 5 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'cobalt', weight: 5 }],
+  headColor: [{ id: 'matching', weight: 26 }, { id: 'bitcoin_orange', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'obsidian', weight: 5 }, { id: 'purple', weight: 5 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'navy', weight: 4 }],
+  legColor: [{ id: 'matching', weight: 34 }, { id: 'bitcoin_orange', weight: 5 }, { id: 'gunmetal', weight: 5 }, { id: 'black', weight: 5 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'navy', weight: 5 }],
+  handColor: [{ id: 'matching', weight: 34 }, { id: 'bitcoin_orange', weight: 5 }, { id: 'gunmetal', weight: 5 }, { id: 'black', weight: 5 }, { id: 'gold', weight: 8 }, { id: 'espresso', weight: 6 }, { id: 'petrol', weight: 6 }, { id: 'cherry', weight: 5 }, { id: 'cobalt', weight: 5 }],
   arms: [{ id: 'broken', weight: 24 }, { id: 'telescopic', weight: 16 }, { id: 'floating', weight: 16 }, { id: 'on_floor', weight: 20 }, { id: 'spring', weight: 16 }, { id: 'jointed', weight: 14 }, { id: 'tube', weight: 4 }],
   feet: [{ id: 'claw_feet', weight: 32 }, { id: 'peg_legs', weight: 26 }, { id: 'robot_blocks', weight: 22 }, { id: 'pointed_shoes', weight: 12 }],
   sky: [{ id: 'comet', weight: 45 }, { id: 'star', weight: 35 }, { id: 'none', weight: 20 }, { id: 'blood_moon', weight: 60 }],
