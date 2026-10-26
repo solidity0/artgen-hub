@@ -57,7 +57,7 @@ const TRAITS = {
     { id: 'cherry',    hex: '#C8001E', weight: 4, rarity: 'uncommon' },
     { id: 'burgundy',  hex: '#8C0F2E', weight: 4, rarity: 'uncommon' },
     { id: 'espresso',  hex: '#5A2E1E', weight: 4, rarity: 'uncommon' },
-    { id: 'forest',    hex: '#05873C', weight: 4, rarity: 'uncommon' },
+    { id: 'matte_black', hex: '#111113', weight: 4, rarity: 'uncommon', matte: true }, // replaced forest green (same roll slot)
     { id: 'teal',      hex: '#009683', weight: 4, rarity: 'uncommon' },
     { id: 'petrol',    hex: '#00709E', weight: 4, rarity: 'uncommon' },
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
@@ -1445,7 +1445,7 @@ function breakSignatureMatch(picks, rng, groundLocked) {
 // collapse bug hit repeatedly on earlier generators).
 const ONE_OF_ONE_WEIGHTS = {
   background: [{ id: 'midnight', weight: 14 }, { id: 'black', weight: 12 }, { id: 'deep_black', weight: 10 }, { id: 'cream', weight: 9 }, { id: 'white', weight: 8 }, { id: 'blood_night', weight: 14 }, { id: 'concrete', weight: 8 }, { id: 'ash', weight: 8 }, { id: 'sand', weight: 8 }, { id: 'smog', weight: 8 }, { id: 'rust_haze', weight: 8 }],
-  bodyColor: [{ id: 'steel', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'forest', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
+  bodyColor: [{ id: 'steel', weight: 4 }, { id: 'gunmetal', weight: 4 }, { id: 'black', weight: 4 }, { id: 'gold', weight: 7 }, { id: 'purple', weight: 6 }, { id: 'obsidian', weight: 6 }, { id: 'cherry', weight: 4 }, { id: 'cobalt', weight: 4 }, { id: 'teal', weight: 4 }, { id: 'navy', weight: 4 }, { id: 'matte_black', weight: 4 }, { id: 'petrol', weight: 4 }, { id: 'espresso', weight: 4 }, { id: 'plum', weight: 4 }, { id: 'burgundy', weight: 3 }, { id: 'classic', weight: 3 }],
   companionColor: [{ id: 'golden', weight: 30 }, { id: 'ink', weight: 20 }, { id: 'rust', weight: 18 }, { id: 'teal', weight: 18 }, { id: 'crimson', weight: 18 }],
   hair: [{ id: 'cables', weight: 30 }, { id: 'fin', weight: 26 }, { id: 'none', weight: 24 }, { id: 'twin_antenna', weight: 20 }],
   ears: [{ id: 'jagged_broken', weight: 34 }, { id: 'large_round', weight: 30 }, { id: 'antenna_dish', weight: 18 }, { id: 'none', weight: 10 }, { id: 'pointed', weight: 8 }],
@@ -1557,8 +1557,11 @@ function generatePiece(index, seed, tier, opts) {
   // Face and chest marks are drawn in dark ink on light backgrounds, so a black body would hide
   // them: black bodies only on dark backgrounds (unless explicitly locked)
   const lightBg = !isDarkBg(picks.background.id);
-  if (lightBg && picks.bodyColor.id === 'black' && !(locks.bodyColor && locks.bodyColor.length)) {
-    picks.bodyColor = weightedPick(rng, vibePool(TRAITS.bodyColor, V).filter((c) => c.id !== 'black'));
+  if (lightBg && /black/.test(picks.bodyColor.id) && !(locks.bodyColor && locks.bodyColor.length)) {
+    // same pool as before (keeps earlier results seed-stable); a draw that lands on another
+    // black or a retired colour simply draws again
+    const pool = vibePool(TRAITS.bodyColor, V).filter((c) => c.id !== 'black');
+    do { picks.bodyColor = weightedPick(rng, pool); } while (/black/.test(picks.bodyColor.id) || picks.bodyColor.retired);
   }
   picks.companionColor = picks.companion.id === 'none'
     ? TRAITS.companionColor[0]
@@ -1585,7 +1588,7 @@ function generatePiece(index, seed, tier, opts) {
     if (picks.headColor.id !== 'matching' && tooClose(picks.headColor, picks.bodyColor)) picks.headColor = TRAITS.headColor[0];
   }
   // same for a black head on a light background: fall back to the body colour
-  if (lightBg && picks.headColor.id === 'black' && !(locks.headColor && locks.headColor.length)) picks.headColor = TRAITS.headColor[0];
+  if (lightBg && /black/.test(picks.headColor.id) && !(locks.headColor && locks.headColor.length)) picks.headColor = TRAITS.headColor[0];
   // leg and hand colours: same idea, each must read as different from the body it attaches to
   for (const cat of ['legColor', 'handColor']) {
     picks[cat] = sigOverride && sigOverride[cat] ? sigOverride[cat] : pick(cat);
@@ -1597,14 +1600,16 @@ function generatePiece(index, seed, tier, opts) {
   // ink: gold parts only appear on light backgrounds (unless explicitly locked)
   if (!lightBg) {
     const L = (c) => locks[c] && locks[c].length;
-    if (picks.bodyColor.id === 'gold' && !L('bodyColor')) picks.bodyColor = weightedPick(rng, vibePool(TRAITS.bodyColor, V).filter((c) => c.id !== 'gold'));
+    if (picks.bodyColor.id === 'gold' && !L('bodyColor')) { const pool = vibePool(TRAITS.bodyColor, V).filter((c) => c.id !== 'gold'); do { picks.bodyColor = weightedPick(rng, pool); } while (picks.bodyColor.retired); }
     for (const cat of ['headColor', 'legColor', 'handColor']) if (picks[cat].id === 'gold' && !L(cat)) picks[cat] = TRAITS[cat][0];
   }
   // retired colours (plum) never appear: re-roll from the live colours
   for (const cat of ['bodyColor', 'headColor', 'legColor', 'handColor']) {
     if (picks[cat] && picks[cat].retired) {
       const live = (cat === 'bodyColor' ? vibePool(TRAITS.bodyColor, V) : TRAITS[cat]).filter((c) => !c.retired && (lightBg || c.id !== 'gold'));
-      picks[cat] = cat === 'bodyColor' ? weightedPick(rng, live) : TRAITS[cat][0];
+      if (cat !== 'bodyColor') { picks[cat] = TRAITS[cat][0]; continue; }
+      // dark bodies don't go on light scenes: draw again if the re-roll lands on one
+      do { picks[cat] = weightedPick(rng, live); } while (lightBg && /black/.test(picks[cat].id));
     }
   }
   // internals picked last so every earlier roll is unchanged for a given seed
