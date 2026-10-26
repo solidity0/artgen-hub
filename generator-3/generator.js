@@ -754,6 +754,9 @@ function headLeftX(d,y,cx){
 }
 function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,hairId,isOneOfOne,bgHex,clothingId,headPath) {
   let out='';
+  // jewellery is metal, never the eye/accent colour that also rims the head and body:
+  // gold, or silver when the accent itself is gold-ish (orange eyes)
+  const metal = /^#f7|^#ff/i.test(eyeHex) && eyeHex.toLowerCase()!=='#ffffff' ? '#cfd5dc' : '#f2c12e';
   if(style==='glasses'){
     [[eyeL,eyeY],[eyeR,eyeY]].forEach(([gx,gy])=>{
       out+=`<path d="${roughEllipse(gx,gy,eyeR2+5,eyeR2+4,rng,14,1)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
@@ -774,8 +777,8 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     // and sat on/inside the line of wide ones). Same two rng draws as before.
     const ey=cy+22+(rng()-0.5)*6, dy2=(rng()-0.5)*4;
     const ex=(headLeftX(headPath,ey,cx)??(cx-70))-11; // just clear of the outline + its accent rim
-    out+=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="5" fill="none" stroke="${eyeHex}" stroke-width="2"/>`;
-    out+=`<circle cx="${ex.toFixed(1)}" cy="${(ey+14+dy2).toFixed(1)}" r="3" fill="${eyeHex}"/>`;
+    out+=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="5" fill="none" stroke="${metal}" stroke-width="2"/>`;
+    out+=`<circle cx="${ex.toFixed(1)}" cy="${(ey+14+dy2).toFixed(1)}" r="3" fill="${metal}"/>`;
   } else if(style==='stud'||style==='double_hoop'||style==='cross_earring'){
     // the other earring styles hang from the same exact outline point as the hoop
     const ey=cy+22+(rng()-0.5)*6, dy2=(rng()-0.5)*4;
@@ -783,20 +786,20 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     if(style==='stud'){
       // a single gem stud tucked right against the outline, with a glint
       const sx=edge-14; // clear of the outline + accent rim, like the hoops
-      out+=`<circle cx="${sx.toFixed(1)}" cy="${ey.toFixed(1)}" r="4.6" fill="${eyeHex}" stroke="${ink}" stroke-width="1.4"/>`;
+      out+=`<circle cx="${sx.toFixed(1)}" cy="${ey.toFixed(1)}" r="4.6" fill="${metal}" stroke="${ink}" stroke-width="1.4"/>`;
       out+=`<circle cx="${(sx-1.5).toFixed(1)}" cy="${(ey-1.6).toFixed(1)}" r="1.3" fill="#ffffff" opacity="0.85"/>`;
     } else if(style==='double_hoop'){
       // two hoops up the lobe: a bigger one at ear height and a smaller one just above it
-      out+=`<circle cx="${(edge-11).toFixed(1)}" cy="${(ey+2).toFixed(1)}" r="6" fill="none" stroke="${eyeHex}" stroke-width="2"/>`;
-      out+=`<circle cx="${(edge-9).toFixed(1)}" cy="${(ey-11+dy2*0.5).toFixed(1)}" r="4" fill="none" stroke="${eyeHex}" stroke-width="1.8"/>`;
+      out+=`<circle cx="${(edge-11).toFixed(1)}" cy="${(ey+2).toFixed(1)}" r="6" fill="none" stroke="${metal}" stroke-width="2"/>`;
+      out+=`<circle cx="${(edge-9).toFixed(1)}" cy="${(ey-11+dy2*0.5).toFixed(1)}" r="4" fill="none" stroke="${metal}" stroke-width="1.8"/>`;
     } else {
       // small ring with a dangling cross
       const rx=edge-10, top=ey+3;
-      out+=`<circle cx="${rx.toFixed(1)}" cy="${ey.toFixed(1)}" r="3.2" fill="none" stroke="${eyeHex}" stroke-width="1.8"/>`;
-      out+=`<path d="M${rx.toFixed(1)},${top.toFixed(1)} L${rx.toFixed(1)},${(top+20+dy2*0.5).toFixed(1)} M${(rx-5.5).toFixed(1)},${(top+7).toFixed(1)} L${(rx+5.5).toFixed(1)},${(top+7).toFixed(1)}" stroke="${eyeHex}" stroke-width="2.6" stroke-linecap="square" fill="none"/>`;
+      out+=`<circle cx="${rx.toFixed(1)}" cy="${ey.toFixed(1)}" r="3.2" fill="none" stroke="${metal}" stroke-width="1.8"/>`;
+      out+=`<path d="M${rx.toFixed(1)},${top.toFixed(1)} L${rx.toFixed(1)},${(top+20+dy2*0.5).toFixed(1)} M${(rx-5.5).toFixed(1)},${(top+7).toFixed(1)} L${(rx+5.5).toFixed(1)},${(top+7).toFixed(1)}" stroke="${metal}" stroke-width="2.6" stroke-linecap="square" fill="none"/>`;
     }
   } else if(style==='nose_ring'){
-    out+=`<path d="${roughEllipse(cx,cy+28,8,5,rng,10,0.8)}" fill="none" stroke="${eyeHex}" stroke-width="2"/>`;
+    out+=`<path d="${roughEllipse(cx,cy+28,8,5,rng,10,0.8)}" fill="none" stroke="${metal}" stroke-width="2"/>`;
   } else if(style==='tattoo_face'){
     // abstract tribal mark — a small cluster of angular ink strokes, no symbols
     const tx=cx+(rng()-0.5)*30, ty=cy+(rng()-0.5)*20;
@@ -851,6 +854,12 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
       rot=(rng()-0.5)*8;
     }
     // lettering itself is drawn scattered in the sky by renderFromTraits (see skyTags)
+  }
+  if(/earring|stud|double_hoop|nose_ring/.test(style)){
+    const key=out.replace(/(stroke|fill)="#(?!ffffff)[0-9a-f]{6}"/gi,(m,k)=>k+'="'+(bgHex&&hexLuma(bgHex)<90?'#000000':'#1a1a1a')+'"')
+      .replace(/stroke-width="([\d.]+)"/g,(m,w)=>'stroke-width="'+(+w+2.2).toFixed(1)+'"')
+      .replace(/fill="#ffffff"[^/]*\/>/g,'/>');
+    out='<g opacity="0.85">'+key+'</g>'+out;
   }
   return out;
 }
