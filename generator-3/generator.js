@@ -776,7 +776,7 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     // left edge at ear height on every head shape (a fixed cx-70 floated beside narrow heads
     // and sat on/inside the line of wide ones). Same two rng draws as before.
     const ey=cy+22+(rng()-0.5)*6, dy2=(rng()-0.5)*4;
-    const ex=(headLeftX(headPath,ey,cx)??(cx-70))-11; // just clear of the outline + its accent rim
+    const ex=(headLeftX(headPath,ey,cx)??(cx-70))-4; // the hoop passes through the outline (pierced lobe), so it reads as attached
     out+=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="5" fill="none" stroke="${metal}" stroke-width="2"/>`;
     out+=`<circle cx="${ex.toFixed(1)}" cy="${(ey+14+dy2).toFixed(1)}" r="3" fill="${metal}"/>`;
   } else if(style==='stud'||style==='double_hoop'||style==='cross_earring'){
@@ -785,16 +785,16 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     const edge=headLeftX(headPath,ey,cx)??(cx-70);
     if(style==='stud'){
       // a single gem stud tucked right against the outline, with a glint
-      const sx=edge-14; // clear of the outline + accent rim, like the hoops
+      const sx=edge-1.5; // set into the outline itself, like a stud in the lobe
       out+=`<circle cx="${sx.toFixed(1)}" cy="${ey.toFixed(1)}" r="4.6" fill="${metal}" stroke="${ink}" stroke-width="1.4"/>`;
       out+=`<circle cx="${(sx-1.5).toFixed(1)}" cy="${(ey-1.6).toFixed(1)}" r="1.3" fill="#ffffff" opacity="0.85"/>`;
     } else if(style==='double_hoop'){
       // two hoops up the lobe: a bigger one at ear height and a smaller one just above it
-      out+=`<circle cx="${(edge-11).toFixed(1)}" cy="${(ey+2).toFixed(1)}" r="6" fill="none" stroke="${metal}" stroke-width="2"/>`;
-      out+=`<circle cx="${(edge-9).toFixed(1)}" cy="${(ey-11+dy2*0.5).toFixed(1)}" r="4" fill="none" stroke="${metal}" stroke-width="1.8"/>`;
+      out+=`<circle cx="${(edge-5).toFixed(1)}" cy="${(ey+2).toFixed(1)}" r="6" fill="none" stroke="${metal}" stroke-width="2"/>`;
+      out+=`<circle cx="${(edge-3).toFixed(1)}" cy="${(ey-11+dy2*0.5).toFixed(1)}" r="4" fill="none" stroke="${metal}" stroke-width="1.8"/>`;
     } else {
       // small ring with a dangling cross
-      const rx=edge-10, top=ey+3;
+      const rx=edge-2.5, top=ey+3;
       out+=`<circle cx="${rx.toFixed(1)}" cy="${ey.toFixed(1)}" r="3.2" fill="none" stroke="${metal}" stroke-width="1.8"/>`;
       out+=`<path d="M${rx.toFixed(1)},${top.toFixed(1)} L${rx.toFixed(1)},${(top+20+dy2*0.5).toFixed(1)} M${(rx-5.5).toFixed(1)},${(top+7).toFixed(1)} L${(rx+5.5).toFixed(1)},${(top+7).toFixed(1)}" stroke="${metal}" stroke-width="2.6" stroke-linecap="square" fill="none"/>`;
     }
