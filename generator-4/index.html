@@ -528,7 +528,8 @@ function renderHair(cx, top, style, rng, topAt) {
   const led = ['#ff3b3b', '#ffb020', '#5fe1ff', '#7dff3a'][Math.floor(rng() * 4)];
   let out = '';
   if (style === 'antenna') {
-    const x = cx + rj(rng, 10), y0 = t(x), len = 34 + rng() * 10;
+    rj(rng, 10); // draw kept for seed stability; the single antenna always sits dead-centre on the head
+    const x = cx, y0 = t(x), len = 34 + rng() * 10;
     out += rod(x, y0, x, y0 - len, 4) + base(x, y0 + 1) + bulb(x, y0 - len - 4, 6, led);
   } else if (style === 'twin_antenna') {
     for (const sd of [-1, 1]) {
