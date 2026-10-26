@@ -117,7 +117,7 @@ with knee bolts and riveted plates — often joined by a small companion creatur
 |-------|--------|
 | vibe | 2 — friendly (65%), scary (35%): scary bots use the darker half of the pools below, get brow plates, cracks, rust streaks, oil drips, claw scratches and a red halo, and unlock the scary-only values in (brackets) |
 | headShape · bodyShape | 7 each — box, round, TV, dome, capsule, hex, octagon · barrel, trapezoid, bell, … |
-| bodyColor | 15 — incl. steel, gunmetal, black and matte black (black heads/bodies only on dark backgrounds; gold only on light ones) — plus separate head / leg / hand colour traits (15 each, or "matching") |
+| bodyColor | 14 — incl. steel, gunmetal, black and matte black (black heads/bodies only on dark backgrounds; gold only on light ones) — plus separate head / leg / hand colour traits (15 each, or "matching") |
 | arms · hands · feet | 7 · 7 · 4 — spring, telescopic, floating… · claw, pincer, hook, magnet, plug… · pointed, robot blocks, claw feet, peg legs |
 | topper · ears · eyes · eyeColor · mouth | 5 (antenna, twin antenna, cables, fin, none) · 6 · 5 camera-lens optics (+ glare, cracked) · 4 (+ toxic) · 5 (grille, vent, zipper, LED bar, fang grille; + jaws) |
 | internals | 5 — circuit board (brainbox, ICs, capacitors, power cell, braided harnesses), hydraulics (pump, pressure gauge, pistons, valve pipes), gearbox (meshing gears, belt, motor), coolant (glass tanks, radiator, coolant pipes), reactor (glowing core, copper coils, armoured cables); shown in an open bolted service hatch |

@@ -249,7 +249,7 @@ const TRAITS = {
     { id: 'burgundy',  hex: '#8C0F2E', weight: 4, rarity: 'uncommon' },
     { id: 'espresso',  hex: '#5A2E1E', weight: 4, rarity: 'uncommon' },
     { id: 'matte_black', hex: '#111113', weight: 4, rarity: 'uncommon', matte: true }, // replaced forest green (same roll slot)
-    { id: 'teal',      hex: '#009683', weight: 4, rarity: 'uncommon' },
+    { id: 'teal',      hex: '#009683', weight: 4, rarity: 'uncommon', retired: true }, // retired like plum (roll slot kept for seed stability)
     { id: 'petrol',    hex: '#00709E', weight: 4, rarity: 'uncommon' },
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
     // plum is retired: kept only as a roll slot so other robots' colours stay seed-stable; a robot
@@ -1324,7 +1324,8 @@ function renderFromTraits(picks, index, seed, opts) {
     body += doubleStroke(closeLoop(rrPts(headCx - 6, headCy, hh * 1.2 - 22, hh * 0.84 - 13, 14)), rng, 1, 'strokeMid');
     body += joint(headCx + hh * 1.2 - 10, headCy - 18, 5) + joint(headCx + hh * 1.2 - 10, headCy + 6, 5);
   } else if (headKind === 'dome') {
-    body += doubleStroke([[headCx - hh + 6, headCy + hh * 0.35], [headCx + hh - 6, headCy + hh * 0.35]], rng, 1, 'strokeMid');
+    // (the dome's horizontal seam line read as a stray line across the face: removed, rng draws kept)
+    doubleStroke([[headCx - hh + 6, headCy + hh * 0.35], [headCx + hh - 6, headCy + hh * 0.35]], rng, 1, 'strokeMid');
   }
   const earX = halfWidthAt(headPts, headCx, headCy) + 24;
   body += renderEars(headCx - earX, headCy, picks.ears.id, rng, true, headPaint.fill, headPaint.shade, ink);
@@ -1797,10 +1798,10 @@ function generatePiece(index, seed, tier, opts) {
   // retired colours (plum) never appear: re-roll from the live colours
   for (const cat of ['bodyColor', 'headColor', 'legColor', 'handColor']) {
     if (picks[cat] && picks[cat].retired) {
-      const live = (cat === 'bodyColor' ? vibePool(TRAITS.bodyColor, V) : TRAITS[cat]).filter((c) => !c.retired && (lightBg || c.id !== 'gold'));
+      const live = (cat === 'bodyColor' ? vibePool(TRAITS.bodyColor, V) : TRAITS[cat]).filter((c) => c.id !== 'plum' && (lightBg || c.id !== 'gold'));
       if (cat !== 'bodyColor') { picks[cat] = TRAITS[cat][0]; continue; }
-      // dark bodies don't go on light scenes: draw again if the re-roll lands on one
-      do { picks[cat] = weightedPick(rng, live); } while (lightBg && /black/.test(picks[cat].id));
+      // dark bodies don't go on light scenes, and later-retired colours are skipped: draw again
+      do { picks[cat] = weightedPick(rng, live); } while ((lightBg && /black/.test(picks[cat].id)) || picks[cat].retired);
     }
   }
   // internals picked last so every earlier roll is unchanged for a given seed
