@@ -64,7 +64,7 @@ const TRAITS = {
     // plum is retired: kept only as a roll slot so other robots' colours stay seed-stable; a robot
     // that rolls it re-rolls to another colour (hidden from the trait panel)
     { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon', retired: true },
-    { id: 'bitcoin_orange', hex: '#F7931A', weight: 6, rarity: 'common' }, // replaced blue steel (same roll slot)
+    { id: 'bitcoin_orange', hex: '#F07A0C', weight: 6, rarity: 'common' }, // replaced blue steel (same roll slot)
     { id: 'gunmetal',  hex: '#3B5068', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
     { id: 'gold',      hex: '#EBA000', weight: 1.5, rarity: 'rare' },
@@ -820,7 +820,7 @@ function bodyPaint(bodyColor, bg, uid, dark, suffix) {
   const grad = (stops) => '<linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
     stops.map((c, i) => '<stop offset="' + (i / (stops.length - 1)).toFixed(2) + '" stop-color="' + c + '"/>').join('') + '</linearGradient>';
   // rich bitcoin orange: deep amber shadows to bright orange highlights (no pale washed tones)
-  if (id === 'bitcoin_orange') return { fill: 'url(#' + gid + ')', shade: '#5c2800', shoe: '#a85200', glow: '#f7931a', defs: grad(['#ff9f2e', '#d96f00', '#f7931a', '#a14c00', '#ef8a0c']) };
+  if (id === 'bitcoin_orange') return { fill: 'url(#' + gid + ')', shade: '#5c2800', shoe: '#a85200', glow: '#f7931a', defs: grad(['#ff8a1c', '#cf5800', '#f47a0c', '#8f3600', '#e86c06']) };
   if (id === 'gunmetal') return { fill: 'url(#' + gid + ')', shade: '#141d28', shoe: '#2a3a4c', glow: '#7f9bb8', defs: grad(['#6584aa', '#24374d', '#4f6e94', '#182537', '#45638c']) };
   if (id === 'gold') return { fill: 'url(#' + gid + ')', shade: '#5e3500', shoe: '#a86800', glow: '#ffae00', defs: grad(['#ffbf14', '#c98000', '#f5aa00', '#985a00', '#e89800']) };
   if (id === 'obsidian') return { fill: 'url(#' + gid + ')', shade: '#07060c', shoe: '#1a1726', glow: '#8b6cff', defs: grad(['#3d3560', '#16131f', '#2b2640', '#0d0b14', '#4a3f78']) };
@@ -1501,6 +1501,9 @@ function tooClose(head, body) {
   if (!head || !head.hex) return false;
   if (!body || !body.hex) return false;
   if (head.id === body.id) return true;
+  // gold and bitcoin orange are one warm-metal family: never pair them on one robot
+  const WARM = ['gold', 'bitcoin_orange'];
+  if (WARM.includes(head.id) && WARM.includes(body.id)) return true;
   const a = hexToLab(head.hex), b = hexToLab(body.hex);
   return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) < 30;
 }
@@ -1616,6 +1619,12 @@ function generatePiece(index, seed, tier, opts) {
       do { picks[cat] = weightedPick(rng, live); } while ((lightBg && /black/.test(picks[cat].id)) || (!lightBg && picks[cat].id === 'bitcoin_orange') || picks[cat].retired);
     }
   }
+  // limbs/head are each checked against the body, so make sure gold and bitcoin orange never meet
+  // on the same robot via two limb colours either
+  { const WARM = ['gold', 'bitcoin_orange'], cats = ['headColor', 'legColor', 'handColor'];
+    const eff = (c) => (picks[c].id === 'matching' ? picks.bodyColor.id : picks[c].id);
+    const used = new Set([picks.bodyColor.id].concat(cats.map(eff)).filter((id) => WARM.includes(id)));
+    if (used.size > 1) for (const c of cats) if (WARM.includes(eff(c)) && eff(c) !== (WARM.includes(picks.bodyColor.id) ? picks.bodyColor.id : eff('headColor')) && !(locks[c] && locks[c].length)) picks[c] = TRAITS[c][0]; }
   // internals picked last so every earlier roll is unchanged for a given seed
   picks.internals = sigOverride && sigOverride.internals ? sigOverride.internals : pick('internals');
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
