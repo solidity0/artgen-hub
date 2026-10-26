@@ -236,7 +236,8 @@ function getDisplayName() {
 let batchSeed = 0;
 function charName(i) { return window.GlyphGen.characterName(i, batchSeed); }
 // a piece is named by its character name plus its number (e.g. "Ireth of the Deep #1"), no collection prefix
-function pieceName(i) { return charName(i) + ' #' + i; }
+// Glyphs are abstract, so pieces are simply numbered: "Glyph #12"
+function pieceName(i) { return 'Glyph #' + i; }
 function getFileSafeName() {
   const v = document.getElementById('collection-name-input').value.trim();
   const slug = v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
