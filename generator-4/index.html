@@ -849,7 +849,9 @@ function renderSky(cx, y, style, rng) {
     pts.push(pts[0]);
     return doubleStroke(pts, rng, 1.8, 'stroke');
   } else if (style === 'blood_moon') {
-    const mx = cx - 205, my = 50; // up in the far corner, well clear of the head and toppers
+    // tucked into the top-left corner with the same 24px gap to the left and top edges of the
+    // artwork (the canvas starts at x = -36), well clear of the head and toppers
+    const mx = cx - 230, my = 56;
     return '<circle cx="' + mx + '" cy="' + my + '" r="58" fill="#ff2a2a" opacity=".08"/><circle cx="' + mx + '" cy="' + my + '" r="44" fill="#ff2a2a" opacity=".14"/>' +
       '<circle cx="' + mx + '" cy="' + my + '" r="32" fill="#c8141e"/>' +
       '<circle cx="' + (mx - 9) + '" cy="' + (my - 7) + '" r="7" fill="#8e0a12"/><circle cx="' + (mx + 11) + '" cy="' + (my + 9) + '" r="5" fill="#8e0a12"/><circle cx="' + (mx + 6) + '" cy="' + (my - 14) + '" r="3" fill="#8e0a12"/>' +
