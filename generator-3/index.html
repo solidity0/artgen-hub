@@ -935,7 +935,14 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
   let out='';
   // jewellery is metal, never the eye/accent colour that also rims the head and body:
   // gold, or silver when the accent itself is gold-ish (orange eyes)
-  const metal = /^#f7|^#ff/i.test(eyeHex) && eyeHex.toLowerCase()!=='#ffffff' ? '#cfd5dc' : '#f2c12e';
+  const silver = /^#f7|^#ff/i.test(eyeHex) && eyeHex.toLowerCase()!=='#ffffff';
+  // polished metal: a bright-to-deep gradient with a hot highlight band, like real gold (or silver)
+  const gid = (silver ? 'jSv' : 'jGd') + Math.round(cx) + '_' + Math.round(cy);
+  const stops = silver
+    ? [['0','#ffffff'],['0.35','#e4e9ee'],['0.55','#a9b2bc'],['0.78','#f4f6f8'],['1','#6f7882']]
+    : [['0','#fff6c8'],['0.3','#ffd84a'],['0.55','#c8900f'],['0.78','#ffe27a'],['1','#7a4c00']];
+  const jewelDefs = `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">${stops.map(([o,c])=>`<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient></defs>`;
+  const metal = `url(#${gid})`;
   if(style==='glasses'){
     [[eyeL,eyeY],[eyeR,eyeY]].forEach(([gx,gy])=>{
       out+=`<path d="${roughEllipse(gx,gy,eyeR2+5,eyeR2+4,rng,14,1)}" fill="none" stroke="${ink}" stroke-width="2"/>`;
@@ -1035,10 +1042,12 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     // lettering itself is drawn scattered in the sky by renderFromTraits (see skyTags)
   }
   if(/earring|stud|double_hoop|nose_ring/.test(style)){
-    const key=out.replace(/(stroke|fill)="#(?!ffffff)[0-9a-f]{6}"/gi,(m,k)=>k+'="'+(bgHex&&hexLuma(bgHex)<90?'#000000':'#1a1a1a')+'"')
+    const key=out.replace(/(stroke|fill)="(?:#(?!ffffff)[0-9a-f]{6}|url\(#[^)]*\))"/gi,(m,k)=>k+'="'+(bgHex&&hexLuma(bgHex)<90?'#000000':'#1a1a1a')+'"')
       .replace(/stroke-width="([\d.]+)"/g,(m,w)=>'stroke-width="'+(+w+2.2).toFixed(1)+'"')
       .replace(/fill="#ffffff"[^/]*\/>/g,'/>');
-    out='<g opacity="0.85">'+key+'</g>'+out;
+    // small specular glints on the metal
+    const glints=[...out.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)" fill="none" stroke="url/g)].map(m=>`<circle cx="${(+m[1]-(+m[3])*0.55).toFixed(1)}" cy="${(+m[2]-(+m[3])*0.6).toFixed(1)}" r="1.1" fill="#ffffff" opacity="0.9"/>`).join('');
+    out=jewelDefs+'<g opacity="0.85">'+key+'</g>'+out+glints;
   }
   return out;
 }
