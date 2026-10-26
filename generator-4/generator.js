@@ -68,7 +68,7 @@ const TRAITS = {
     { id: 'gunmetal',  hex: '#3B5068', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
     { id: 'gold',      hex: '#EBA000', weight: 1.5, rarity: 'rare' },
-    { id: 'purple',    hex: '#6526E0', weight: 1.2, rarity: 'rare' },
+    { id: 'purple',    hex: '#6526E0', weight: 1.2, rarity: 'rare', retired: true }, // retired (roll slot kept for seed stability)
     { id: 'obsidian',  hex: '#2B2640', weight: 1,   rarity: 'rare' }
   ],
   companionColor: [
