@@ -730,7 +730,20 @@ function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng,bgHex) {
 }
 
 // ---------- accessory markup ----------
-function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,hairId,isOneOfOne,bgHex,clothingId) {
+// Leftmost x of the drawn head outline at height y (samples the smooth bezier path).
+function headLeftX(d,y,cx){
+  if(!d) return null;
+  const segs=d.match(/[MC][^MCZ]*/g)||[]; let px=0,py=0,best=null,bestDy=Infinity;
+  for(const sg of segs){ const n=sg.slice(1).split(/[ ,]+/).filter(Boolean).map(Number);
+    if(sg[0]==='M'){px=n[0];py=n[1];continue;}
+    for(let t=0;t<=1;t+=0.02){const u=1-t;
+      const x=u*u*u*px+3*u*u*t*n[0]+3*u*t*t*n[2]+t*t*t*n[4], yy=u*u*u*py+3*u*u*t*n[1]+3*u*t*t*n[3]+t*t*t*n[5];
+      if(x>=cx) continue; const dd=Math.abs(yy-y);
+      if(dd<bestDy-0.5||(Math.abs(dd-bestDy)<=0.5&&x<best)){bestDy=dd;best=x;} }
+    px=n[4];py=n[5]; }
+  return best;
+}
+function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,hairId,isOneOfOne,bgHex,clothingId,headPath) {
   let out='';
   if(style==='glasses'){
     [[eyeL,eyeY],[eyeR,eyeY]].forEach(([gx,gy])=>{
@@ -747,8 +760,13 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
       out+=`<path d="${roughLine(sx-4,stitchy,sx+4,stitchy,rng,0.5)}" stroke="${ink}" stroke-width="0.8" fill="none"/>`;
     }
   } else if(style==='earring'){
-    out+=`<circle cx="${(cx-70).toFixed(0)}" cy="${(cy+22+(rng()-0.5)*6).toFixed(0)}" r="5" fill="none" stroke="${eyeHex}" stroke-width="2"/>`;
-    out+=`<circle cx="${(cx-70).toFixed(0)}" cy="${(cy+36+(rng()-0.5)*4).toFixed(0)}" r="3" fill="${eyeHex}"/>`;
+    // hung from the head outline as actually drawn: the hoop's inner side just touches the
+    // left edge at ear height on every head shape (a fixed cx-70 floated beside narrow heads
+    // and sat on/inside the line of wide ones). Same two rng draws as before.
+    const ey=cy+22+(rng()-0.5)*6, dy2=(rng()-0.5)*4;
+    const ex=(headLeftX(headPath,ey,cx)??(cx-70))-11; // just clear of the outline + its accent rim
+    out+=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="5" fill="none" stroke="${eyeHex}" stroke-width="2"/>`;
+    out+=`<circle cx="${ex.toFixed(1)}" cy="${(ey+14+dy2).toFixed(1)}" r="3" fill="${eyeHex}"/>`;
   } else if(style==='nose_ring'){
     out+=`<path d="${roughEllipse(cx,cy+28,8,5,rng,10,0.8)}" fill="none" stroke="${eyeHex}" stroke-width="2"/>`;
   } else if(style==='tattoo_face'){
@@ -1111,7 +1129,7 @@ function renderFromTraits(picks, index, seed, opts) {
   svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
-  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id);
+  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id, headPath);
   svg+='</g>';
   // brush-weight linework: thicken every stroke in the figure (the crop adds a further 1.33x)
   svg=svg.slice(0,figStart)+svg.slice(figStart).replace(/stroke-width="([\d.]+)"/g,(m,w)=>`stroke-width="${(parseFloat(w)*1.25).toFixed(2)}"`);
