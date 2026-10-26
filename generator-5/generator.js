@@ -985,12 +985,10 @@
 // collection no two pieces can ever share a name. Past N pieces a roman numeral
 // is appended (II, III, ...), which keeps them unique at any supply.
 const NAME_PARTS = (function () {
-  const uniq = (a) => Array.from(new Set(a));
-  const BLOCK = ['Isis'];
-  const join = (pre, suf) => uniq([].concat(...pre.map((p) => suf.filter((s) => p.slice(-1).toLowerCase() !== s[0]).map((s) => p + s)))).filter((w) => !BLOCK.includes(w));
-  const FIRST = join(['Brim','Cin','Char','Scor','Grim','Ash','Sul','Mal','Bal','Fang','Gnash','Grow','Howl','Ruk','Skor','Tar','Vul','Wrath','Zar','Bane','Cerb','Gor','Kur','Mor','Rag','Snar','Thra','Ug','Yow','Soot'], ['ky','gar','bo','rus','ox','ie','ter','mo','oth','ix','ug','ra']);
-  const LAST = ['Bonechewer','Hellpup','Gravedigger','Soulsniffer','Emberpaw','Ashtail','Cindermaw','Brimstone','Nightfang','Doomhowl','Gutterhound','Skullgnaw','Coalnose','Smokefur','Pitborn','Ghostbiter','Ratcatcher','Tombsniffer','Fleabane','Ironjaw','Bloodfang','Scorchtail','Ashmuzzle','Gloomhowl','Rotbark','Hexhound','Sootpaw','Gravehound','Mudtooth','Boneyard','Wraithpup','Snarlback','Cursebark','Firewhelp','Grimgnasher','Duskhowl','Shadowpaw','Ironcollar','Moonbiter','Crowchaser'];
-  return { first: uniq(FIRST), last: uniq(LAST) };
+  // real-sounding names: everyday first names (or street nicknames / dog names) with real surnames
+  const FIRST = ["Bruno", "Rocco", "Diesel", "Buster", "Duke", "Bear", "Tank", "Ruby", "Luna", "Bella", "Daisy", "Max", "Rex", "Zeus", "Thor", "Brutus", "Ace", "Blue", "Bo", "Biscuit", "Cooper", "Gus", "Hank", "Jax", "Koda", "Lola", "Moose", "Nala", "Ollie", "Pepper", "Rocky", "Sadie", "Shadow", "Smokey", "Tucker", "Winston", "Ziggy", "Bandit", "Boomer", "Chief", "Dozer", "Fang", "Gunner", "Harley", "Jinx", "Kane", "Mojo", "Ozzy", "Rambo", "Ranger", "Sarge", "Scout", "Spike", "Titan", "Toby", "Trigger", "Vader", "Wolf", "Ash", "Ember", "Cinder", "Knox", "Raven", "Onyx", "Sable", "Bones"];
+  const LAST = ["Abbott", "Archer", "Bailey", "Barnes", "Bennett", "Blake", "Boyd", "Briggs", "Brooks", "Burke", "Carter", "Chandler", "Clarke", "Cole", "Collins", "Conway", "Cooper", "Crane", "Cross", "Daly", "Dawson", "Dixon", "Doyle", "Drake", "Dunn", "Ellis", "Evans", "Fisher", "Fleming", "Flynn", "Ford", "Foster", "Fox", "Garrett", "Gibbs", "Graves", "Gray", "Hale", "Hayes", "Holt", "Hughes", "Hunt", "Keller", "Kemp", "Knox", "Lane", "Logan", "Lowe", "Lynch", "Mack", "Marsh", "Mason", "Mercer", "Miles", "Moss", "Murphy", "Nash", "Novak", "Oakes", "Owens", "Parker", "Pike", "Porter", "Price", "Quinn", "Reed", "Reyes", "Rhodes", "Riley", "Rowe", "Russo", "Ryan", "Sawyer", "Shaw", "Sloan", "Stone", "Sutton", "Tate", "Thorne", "Tucker", "Vance", "Wade", "Walsh", "Ward", "Webb", "Wells", "West", "Wolfe", "Wren", "Young", "Kowalski", "Delgado", "Okafor", "Moreno", "Petrov", "Lindqvist", "Nakamura", "O'Brien", "Castillo", "Fontaine", "Varga", "Hollis"];
+  return { first: FIRST, last: LAST };
 })();
 function characterName(index, seed) {
   const F = NAME_PARTS.first, L = NAME_PARTS.last, N = F.length * L.length;
@@ -1005,8 +1003,12 @@ function characterName(index, seed) {
   const nF = F.length, nL = L.length;
   let c = (next() % (nF - 1)) + 1; while (gcd(c, nF) !== 1) c = (c % (nF - 1)) + 1;
   let d = (next() % (nL - 1)) + 1; while (gcd(d, nL) !== 1) d = (d % (nL - 1)) + 1;
-  const fi = (c * (m % nF) + 31 * Math.floor(m / nF) + b) % nF;
-  const li = (d * Math.floor(m / nF) + 17 * fi) % nL;
+  // first names cycle through the whole list before any repeats (k mod nF is a bijection), and each
+  // block of nF pieces gets a fresh surname shuffle: (k mod nF, k div nF) -> (first, last) stays one-to-one
+  void m;
+  const fi = (c * (k % nF) + b) % nF;
+  let e = (next() % (nL - 1)) + 1; while (gcd(e, nL) !== 1) e = (e % (nL - 1)) + 1; // coprime, so surnames spread evenly
+  const li = (d * Math.floor(k / nF) + e * fi + b) % nL;
   const roman = (n) => { let r = '', v = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']]; for (const [x, s] of v) while (n >= x) { r += s; n -= x; } return r; };
   return F[fi] + ' ' + L[li] + (cycle ? ' ' + roman(cycle + 1) : '');
 }

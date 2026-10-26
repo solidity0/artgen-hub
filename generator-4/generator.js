@@ -1663,12 +1663,10 @@ function generateBatch(count, seed, tier, opts) {
 // collection no two pieces can ever share a name. Past N pieces a roman numeral
 // is appended (II, III, ...), which keeps them unique at any supply.
 const NAME_PARTS = (function () {
-  const uniq = (a) => Array.from(new Set(a));
-  const BLOCK = ['Isis'];
-  const join = (pre, suf) => uniq([].concat(...pre.map((p) => suf.filter((s) => p.slice(-1).toLowerCase() !== s[0]).map((s) => p + s)))).filter((w) => !BLOCK.includes(w));
-  const FIRST = join(['Cog','Volt','Rivet','Bolt','Gear','Servo','Piston','Sprock','Dyna','Flux','Mag','Turbo','Ohm','Amp','Watt','Torq','Krank','Zap','Byte','Chrome','Diode','Relay','Coil','Gizmo','Tank','Widget','Clank','Ratch','Spark','Nano'], ['o','ix','er','on','us','a','y','ex','ot','ar']);
-  const LAST = []; { const A = 'BCDFGHJKLMNPRSTVWXZ'; let s = 7; for (let i = 0; LAST.length < 160; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; const c = A[s % A.length] + A[(s >> 8) % A.length] + '-' + String(10 + (s >> 16) % 90); if (!LAST.includes(c)) LAST.push(c); } }
-  return { first: uniq(FIRST), last: uniq(LAST) };
+  // real-sounding names: everyday first names (or street nicknames / dog names) with real surnames
+  const FIRST = ["Gus", "Hank", "Moe", "Sal", "Dot", "Lou", "Mitch", "Rudy", "Vern", "Bud", "Clyde", "Earl", "Floyd", "Fritz", "Gil", "Herb", "Ike", "Jimmy", "Jo", "Kit", "Lenny", "Mack", "Ned", "Ollie", "Pat", "Ray", "Roy", "Stan", "Ted", "Vic", "Wes", "Abe", "Bea", "Cal", "Del", "Eddie", "Frankie", "Hal", "Iggy", "Jack", "Kip", "Lefty", "Max", "Nick", "Ozzie", "Pete", "Rocco", "Sammy", "Tony", "Ziggy", "Buzz", "Chet", "Dewey", "Elmo", "Fred", "Gordo", "Huey", "Irv", "Jojo", "Lloyd", "Marv", "Norm", "Otto", "Percy", "Rusty", "Sparky", "Tex", "Walt"];
+  const LAST = ["Abbott", "Archer", "Bailey", "Barnes", "Bennett", "Blake", "Boyd", "Briggs", "Brooks", "Burke", "Carter", "Chandler", "Clarke", "Cole", "Collins", "Conway", "Cooper", "Crane", "Cross", "Daly", "Dawson", "Dixon", "Doyle", "Drake", "Dunn", "Ellis", "Evans", "Fisher", "Fleming", "Flynn", "Ford", "Foster", "Fox", "Garrett", "Gibbs", "Graves", "Gray", "Hale", "Hayes", "Holt", "Hughes", "Hunt", "Keller", "Kemp", "Knox", "Lane", "Logan", "Lowe", "Lynch", "Mack", "Marsh", "Mason", "Mercer", "Miles", "Moss", "Murphy", "Nash", "Novak", "Oakes", "Owens", "Parker", "Pike", "Porter", "Price", "Quinn", "Reed", "Reyes", "Rhodes", "Riley", "Rowe", "Russo", "Ryan", "Sawyer", "Shaw", "Sloan", "Stone", "Sutton", "Tate", "Thorne", "Tucker", "Vance", "Wade", "Walsh", "Ward", "Webb", "Wells", "West", "Wolfe", "Wren", "Young", "Kowalski", "Delgado", "Okafor", "Moreno", "Petrov", "Lindqvist", "Nakamura", "O'Brien", "Castillo", "Fontaine", "Varga", "Hollis"];
+  return { first: FIRST, last: LAST };
 })();
 function characterName(index, seed) {
   const F = NAME_PARTS.first, L = NAME_PARTS.last, N = F.length * L.length;
@@ -1683,8 +1681,12 @@ function characterName(index, seed) {
   const nF = F.length, nL = L.length;
   let c = (next() % (nF - 1)) + 1; while (gcd(c, nF) !== 1) c = (c % (nF - 1)) + 1;
   let d = (next() % (nL - 1)) + 1; while (gcd(d, nL) !== 1) d = (d % (nL - 1)) + 1;
-  const fi = (c * (m % nF) + 31 * Math.floor(m / nF) + b) % nF;
-  const li = (d * Math.floor(m / nF) + 17 * fi) % nL;
+  // first names cycle through the whole list before any repeats (k mod nF is a bijection), and each
+  // block of nF pieces gets a fresh surname shuffle: (k mod nF, k div nF) -> (first, last) stays one-to-one
+  void m;
+  const fi = (c * (k % nF) + b) % nF;
+  let e = (next() % (nL - 1)) + 1; while (gcd(e, nL) !== 1) e = (e % (nL - 1)) + 1; // coprime, so surnames spread evenly
+  const li = (d * Math.floor(k / nF) + e * fi + b) % nL;
   const roman = (n) => { let r = '', v = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']]; for (const [x, s] of v) while (n >= x) { r += s; n -= x; } return r; };
   return F[fi] + ' ' + L[li] + (cycle ? ' ' + roman(cycle + 1) : '');
 }
