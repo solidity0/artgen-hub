@@ -577,7 +577,7 @@ function drawMouth(style, skinHex, rng, centred) {
   const x = CX + ox;
   // under a mustache the mouth drops a little so the mustache doesn't sit on the lip / teeth
   // with a goatee/beard it stays up in the gap between mustache and chin hair, so it doesn't vanish into the beard
-  if (centred && style !== 'fangs') return `<g transform="translate(0 ${centred === 'beard' || centred === 'goatee' ? 1 : 5})">` + drawMouth(style, skinHex, () => 0.9, false) + '</g>';
+  if (centred && style !== 'fangs') return `<g transform="translate(0 ${centred === 'beard' || centred === 'goatee' ? 5 : 9})">` + drawMouth(style, skinHex, () => 0.9, false) + '</g>';
   const { ink } = faceInk(skinHex);
   const lip = luma(skinHex) < 60 ? shadePixel(skinHex, 40) : shadePixel(skinHex, -50);
   const rim = { stroke: luma(skinHex) < 60 ? '#6a6a6a' : outlineOf(skinHex), sw: 2.5 };
@@ -596,10 +596,11 @@ function drawMouth(style, skinHex, rng, centred) {
   } else if (style === 'fangs') {
     // mirrored pair: same size, same height, hanging straight from a level lip
     // (under a mustache the mustache itself is the lip, so the fangs hang just below it)
-    const fy = centred ? 197 : 200;
+    // under a mustache: a visible gap and a lip line between the mustache and the fangs
+    const fy = centred ? 208 : 200;
     s += path(`M${x-12} ${fy} L${x-8} ${fy+14} L${x-4} ${fy} Z`, TOOTH, { stroke: ink, sw: 1.8 });
     s += path(`M${x+4} ${fy} L${x+8} ${fy+14} L${x+12} ${fy} Z`, TOOTH, { stroke: ink, sw: 1.8 });
-    if (!centred) s += line(`M${x-18} ${fy-2} Q${x} ${fy+4} ${x+18} ${fy-2}`, lip, 4);
+    s += line(`M${x-18} ${fy-2} Q${x} ${fy+4} ${x+18} ${fy-2}`, lip, 4);
   } else if (style === 'grin') {
     // wide jack-o'-lantern grin with jagged teeth
     const cav = `M${x-32} 192 Q${x} 206 ${x+32} 192 Q${x+22} 222 ${x} 222 Q${x-22} 222 ${x-32} 192 Z`;
@@ -765,7 +766,8 @@ function drawFacialHair(style, hairColor, skinHex) {
   let c = NATURAL.includes(hairColor.id) ? hairColor.hex : '#3a2a1a';
   // keep it visible when hair and skin are near-identical (e.g. black on onyx)
   if (Math.abs(luma(c) - luma(skinHex)) < 30) c = luma(skinHex) < 60 ? '#4a4a4a' : shadePixel(c, -40);
-  const mustache = path('M182 194 Q191 186 200 191 Q209 186 218 194 Q210 199 200 196 Q190 199 182 194 Z', c, { stroke: false });
+  // sits a few px below the nose tip (it used to touch the nose)
+  const mustache = path('M182 198 Q191 191 200 195 Q209 191 218 198 Q210 203 200 200 Q190 203 182 198 Z', c, { stroke: false });
   if (style === 'stubble') {
     // fine stipple (a flat translucent patch read as a dirty smudge)
     const area = 'M152 202 Q158 223 200 225 Q242 223 248 202 Q236 215 200 215 Q164 215 152 202 Z M184 191 Q200 186 216 191 L216 195 Q200 191 184 195 Z';
