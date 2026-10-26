@@ -122,7 +122,7 @@ with knee bolts and riveted plates — often joined by a small companion creatur
 | topper · ears · eyes · eyeColor · mouth | 5 (antenna, twin antenna, cables, fin, none) · 6 · 5 camera-lens optics (+ glare, cracked) · 4 (+ toxic) · 5 (grille, vent, zipper, LED bar, fang grille; + jaws) |
 | internals | 5 — circuit board (brainbox, ICs, capacitors, power cell, braided harnesses), hydraulics (pump, pressure gauge, pistons, valve pipes), gearbox (meshing gears, belt, motor), coolant (glass tanks, radiator, coolant pipes), reactor (glowing core, copper coils, armoured cables); shown in an open bolted service hatch |
 | companion · companionColor | 7 (cat, dog, bird, ghost cat, bunny, robo-dog) · 11 (incl. rust, teal, crimson) |
-| background · sky · ground · grassColor | 8 — cream, white, concrete, ash, sand, smog, rust haze, deep black (+ blood night) · 3 (+ blood moon) · 4 · 3 |
+| background · sky · ground · grassColor | 8 — cream, white, concrete, ash, sand, smog, rust haze, deep black · 3 (+ blood moon) · 4 · 3 |
 
 1/1-only chest marks and grass colours, signature combos, and per-category
 1/1 weights.

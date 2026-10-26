@@ -43,7 +43,7 @@ const TRAITS = {
     { id: 'black', hex: '#141414', weight: 12, rarity: 'rare', retired: true }, // retired: grey-black read washed out
     { id: 'deep_black', hex: '#000000', weight: 8, rarity: 'rare' },
     { id: 'midnight', hex: '#1B1F3B', weight: 8,  rarity: 'rare', retired: true }, // retired: navy read washed out
-    { id: 'blood_night', hex: '#2e060b', weight: 10, rarity: 'rare', vibe: 'scary' },
+    { id: 'blood_night', hex: '#2e060b', weight: 10, rarity: 'rare', vibe: 'scary', retired: true }, // retired
     { id: 'concrete', hex: '#CFC3AD', weight: 34, rarity: 'common',   vibe: 'friendly' },
     { id: 'ash',      hex: '#A9B7C6', weight: 30, rarity: 'common',   vibe: 'friendly' },
     { id: 'sand',     hex: '#DEBC7E', weight: 28, rarity: 'common',   vibe: 'friendly' },
