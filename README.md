@@ -99,7 +99,7 @@ upper-left light.
 | headShape · headFill | 9 · 6 (outline → hatch shade → ink black → splatter) |
 | hair | 11 — messy, spiky, mohawk, dreads, bandana, horns, horns red (1/1-only), tentacles, … |
 | eyeColor · eyeStyle | 7 (white is 1/1-only) · 7 (starburst, hollow star, spiral, …) |
-| mouth · clothing · accessory | 6 · 16 (8 styles × modern/classic) · 7 |
+| mouth · clothing · accessory | 6 · 16 (8 styles × modern/classic) · 10 (incl. 4 earring styles: hoop, stud, double hoop, cross) |
 | expression · inkStyle · tag | 6 · 5 (clean line → chaotic) · 2 |
 
 1/1s get **signature combos** — exact named trait sets only 1/1s can have —
