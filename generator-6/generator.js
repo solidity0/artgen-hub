@@ -1251,9 +1251,13 @@ function fixFaceCombo(facialHair, mouth, keepMouth) {
   const FH = (id) => TRAITS.facialHair.find((f) => f.id === id);
   if (!facialHair || !mouth) return { facialHair, mouth };
   if (mouth.id === 'gape' && ['mustache', 'goatee', 'beard'].includes(facialHair.id)) return { facialHair: FH('none'), mouth };
+  // wide toothy mouths (grin, bared teeth) fill the space under the nose: no mustache with them
+  const WIDE = ['grin', 'teeth'];
   if (facialHair.id === 'goatee' || facialHair.id === 'beard') {
-    return keepMouth ? { facialHair: FH('mustache'), mouth } : { facialHair, mouth: MOUTH_COVERED };
+    if (!keepMouth) return { facialHair, mouth: MOUTH_COVERED };
+    return { facialHair: FH(WIDE.includes(mouth.id) ? 'none' : 'mustache'), mouth };
   }
+  if (facialHair.id === 'mustache' && WIDE.includes(mouth.id)) return { facialHair: FH('none'), mouth };
   return { facialHair, mouth };
 }
 
