@@ -40,9 +40,9 @@ const TRAITS = {
   background: [
     { id: 'cream', hex: '#F4D6A8', weight: 42, rarity: 'common', vibe: 'friendly' },
     { id: 'white', hex: '#FFFFFF', weight: 38, rarity: 'common', vibe: 'friendly' },
-    { id: 'black', hex: '#141414', weight: 12, rarity: 'rare' },
+    { id: 'black', hex: '#141414', weight: 12, rarity: 'rare', retired: true }, // retired: grey-black read washed out
     { id: 'deep_black', hex: '#000000', weight: 8, rarity: 'rare' },
-    { id: 'midnight', hex: '#1B1F3B', weight: 8,  rarity: 'rare' },
+    { id: 'midnight', hex: '#1B1F3B', weight: 8,  rarity: 'rare', retired: true }, // retired: navy read washed out
     { id: 'blood_night', hex: '#2e060b', weight: 10, rarity: 'rare', vibe: 'scary' },
     { id: 'concrete', hex: '#CFC3AD', weight: 34, rarity: 'common',   vibe: 'friendly' },
     { id: 'ash',      hex: '#A9B7C6', weight: 30, rarity: 'common',   vibe: 'friendly' },
@@ -1410,7 +1410,7 @@ function renderFromTraits(picks, index, seed, opts) {
 const ONE_OF_ONE_SIGNATURE_COMBOS = [
   {
     name: 'condemned',
-    background: 'black', hair: 'cables', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fang_grille',
+    background: 'deep_black', hair: 'cables', ears: 'jagged_broken', eyes: 'void', eyeColor: 'red', mouth: 'fang_grille',
     internals: 'reactor', hands: 'broken_stub', feet: 'claw_feet', sky: 'comet', ground: 'scorched', grassColor: 'moss', companion: 'cat_ghost', bodyColor: 'obsidian', companionColor: 'ink', headShape: 'octagon', bodyShape: 'box', arms: 'broken', headColor: 'matching', legColor: 'matching', handColor: 'matching'
   }
 ];
@@ -1544,7 +1544,8 @@ function generatePiece(index, seed, tier, opts) {
   }
 
   let picks = {
-    background: sigOverride ? sigOverride.background : pick('background'),
+    // retired backgrounds (black, midnight) re-roll; roll slots kept so other pieces stay seed-stable
+    background: sigOverride ? sigOverride.background : (function () { let b = pick('background'); while (b.retired) b = pick('background'); return b; })(),
     hair: sigOverride ? sigOverride.hair : pick('hair'),
     ears: sigOverride ? sigOverride.ears : pick('ears'),
     eyes: sigOverride ? sigOverride.eyes : pick('eyes'),
