@@ -59,7 +59,7 @@ const TRAITS = {
     { id: 'espresso',  hex: '#5A2E1E', weight: 4, rarity: 'uncommon' },
     { id: 'matte_black', hex: '#111113', weight: 4, rarity: 'uncommon', matte: true }, // replaced forest green (same roll slot)
     { id: 'teal',      hex: '#009683', weight: 4, rarity: 'uncommon', retired: true }, // retired like plum (roll slot kept for seed stability)
-    { id: 'petrol',    hex: '#00709E', weight: 4, rarity: 'uncommon' },
+    { id: 'petrol',    hex: '#00709E', weight: 4, rarity: 'uncommon', retired: true }, // retired
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
     // plum is retired: kept only as a roll slot so other robots' colours stay seed-stable; a robot
     // that rolls it re-rolls to another colour (hidden from the trait panel)
