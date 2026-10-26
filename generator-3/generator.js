@@ -730,8 +730,7 @@ function clothingMarkup(style,cx,cy,headRy,ink,eyeHex,rng,bgHex) {
 }
 
 // ---------- accessory markup ----------
-function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,hairId,isOneOfOne,bgHex,clothingId,headRx,headShapeId) {
-  headRx = headRx || 70;
+function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,hairId,isOneOfOne,bgHex,clothingId) {
   let out='';
   if(style==='glasses'){
     [[eyeL,eyeY],[eyeR,eyeY]].forEach(([gx,gy])=>{
@@ -754,8 +753,7 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     out+=`<path d="${roughEllipse(cx,cy+28,8,5,rng,10,0.8)}" fill="none" stroke="${eyeHex}" stroke-width="2"/>`;
   } else if(style==='tattoo_face'){
     // abstract tribal mark — a small cluster of angular ink strokes, no symbols
-    // on a cheek just under one eye (it used to land on the nose/centre of the face)
-    const side=rng()<0.5?-1:1, tx=cx+side*headRx*0.42, ty=eyeY+eyeR2+16+(rng()-0.5)*6;
+    const tx=cx+(rng()-0.5)*30, ty=cy+(rng()-0.5)*20;
     const armCount=3+Math.floor(rng()*3);
     for(let i=0;i<armCount;i++){
       const a=(Math.PI*2/armCount)*i+(rng()-0.5)*0.4;
@@ -765,7 +763,7 @@ function accessoryMarkup(style,cx,cy,eyeL,eyeR,eyeY,eyeR2,ink,eyeHex,rng,headRy,
     out+=`<circle cx="${tx.toFixed(0)}" cy="${ty.toFixed(0)}" r="1.5" fill="${ink}" opacity="0.5"/>`;
     // additional marks
     for(let i=0;i<3;i++){
-      out+=`<path d="${roughLine(tx+(rng()-0.5)*22,ty+(rng()-0.5)*16,tx+(rng()-0.5)*22,ty+(rng()-0.5)*16,rng,4)}" stroke="${ink}" stroke-width="0.7" fill="none" opacity="0.3"/>`;
+      out+=`<path d="${roughLine(cx+(rng()-0.5)*50,cy+(rng()-0.5)*40,cx+(rng()-0.5)*50,cy+(rng()-0.5)*40,rng,15)}" stroke="${ink}" stroke-width="0.7" fill="none" opacity="0.3"/>`;
     }
   } else if(style==='graffiti_tag'){
     // Text color: red is 1/1-exclusive (20% chance, only rollable when
@@ -1113,7 +1111,7 @@ function renderFromTraits(picks, index, seed, opts) {
   svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
   svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
-  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), bodyRy, hair.id, isOneOfOne, background.bg, clothing.id, headRx, headShape.id);
+  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id);
   svg+='</g>';
   // brush-weight linework: thicken every stroke in the figure (the crop adds a further 1.33x)
   svg=svg.slice(0,figStart)+svg.slice(figStart).replace(/stroke-width="([\d.]+)"/g,(m,w)=>`stroke-width="${(parseFloat(w)*1.25).toFixed(2)}"`);
