@@ -1016,9 +1016,10 @@ function renderFromTraits(picks, index, seed, opts) {
   let defs = paint.defs, bodyRivets = '';
   let back = '';
   // ---- backdrop: soft halo behind the head + paper grain ----
-  const haloFill = scary ? '#ff2a2a' : dark ? (paint.classic ? '#ffffff' : paint.glow) : (bg.id === 'white' ? '#e9e6df' : '#ffffff');
+  // (scary bots no longer get a blood-red halo disc: same soft halo as everyone else)
+  const haloFill = dark ? (paint.classic ? '#ffffff' : paint.glow) : (bg.id === 'white' ? '#e9e6df' : '#ffffff');
   // a light touch only: a strong pale disc behind the bot washed the whole centre out
-  const haloOp = scary ? 0.13 : dark ? 0.06 : (bg.id === 'white' ? 0.7 : 0.16);
+  const haloOp = dark ? 0.06 : (bg.id === 'white' ? 0.7 : 0.16);
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="196" fill="' + haloFill + '" opacity="' + haloOp + '"/>';
   back += '<circle cx="' + cx + '" cy="' + (headCy + 40) + '" r="228" fill="' + haloFill + '" opacity="' + (haloOp * 0.35).toFixed(2) + '"/>';
   let grain = '';
