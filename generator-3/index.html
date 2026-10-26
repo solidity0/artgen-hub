@@ -1703,7 +1703,9 @@ function getDisplayName() { return document.getElementById('collection-name-inpu
 let batchSeed = 0;
 function charName(i) { return G.characterName(i, batchSeed); }
 // a piece is named by its character name plus its number (e.g. "Ireth of the Deep #1"), no collection prefix
-function pieceName(i) { return charName(i) + ' #' + i; }
+// pieces are artworks, so they're simply numbered: the collection name (from the Name box) + #N,
+// falling back to "Oddling #N" when no name is set
+function pieceName(i) { const n = (document.getElementById('collection-name-input') || {}).value; return ((n && n.trim()) || 'Oddling') + ' #' + i; }
 function getFileSafeName() { return (document.getElementById('collection-name-input').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')) || 'collection'; }
 function getSymbol() { return document.getElementById('collection-symbol-input').value.trim().toUpperCase(); }
 function getDescription() { return document.getElementById('collection-description-input').value.trim(); }

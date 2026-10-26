@@ -176,7 +176,7 @@ this folder is a synced copy — change it there and copy the four files here.
 
 - **Collection settings** — name, symbol, description, and chain
   (Bitcoin / Ethereum / Robinhood), which also re-themes the page.
-- **Unique character names** — every piece is named `Character Name #N` (e.g. `Lil Shawn #17`, `Edith Crane #4`), real-sounding and themed per generator (everyday first names with real surnames, street nicknames for GRIMKIN, dog names for Ink Pups), with no collection prefix (Glyphs are abstract, so they are simply numbered: `Glyph #12`). Names come from a seeded one-to-one shuffle of first × last name lists, so no two pieces in a collection ever share one; past the list size a roman numeral (II, III, …) is appended. Shown in the gallery, lightbox and every download format.
+- **Piece names** — pieces are artworks, so each is simply numbered: the collection name from the Name box plus its number (e.g. `GRIMKIN #17`), falling back to Drifter / Glyph / Oddling / AfterBot / Ink Pup / GRIMKIN #N. The number matches the image and metadata file numbers. Shown in the gallery, lightbox and every download format.
 - **Rarity tier** — any / common / uncommon / rare biases every unlocked trait.
 - **Trait locks** — pick one or more values per category, or leave on random.
 - **Seed, supply and 1/1 count** — supply is uncapped. Same seed + settings =

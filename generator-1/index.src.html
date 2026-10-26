@@ -260,7 +260,9 @@ function getDisplayName() {
 let batchSeed = 0;
 function charName(i) { return window.ArtGen.characterName(i, batchSeed); }
 // a piece is named by its character name plus its number (e.g. "Ireth of the Deep #1"), no collection prefix
-function pieceName(i) { return charName(i) + ' #' + i; }
+// pieces are artworks, so they're simply numbered: the collection name (from the Name box) + #N,
+// falling back to "Drifter #N" when no name is set
+function pieceName(i) { const n = (document.getElementById('collection-name-input') || {}).value; return ((n && n.trim()) || 'Drifter') + ' #' + i; }
 function getFileSafeName() {
   const v = document.getElementById('collection-name-input').value.trim();
   const slug = v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
