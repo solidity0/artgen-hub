@@ -260,7 +260,7 @@ function buildControls() {
     const row = document.createElement('div'); row.className = 'chip-row';
     const any = document.createElement('button'); any.className = 'chip active'; any.dataset.key = key; any.dataset.id = ''; any.textContent = 'any';
     row.appendChild(any);
-    for (const opt of GTRAITS[key]) {
+    for (const opt of GTRAITS[key]) { if (opt.retired) continue;
       const chip = document.createElement('button');
       chip.className = 'chip'; chip.dataset.key = key; chip.dataset.id = opt.id;
       chip.innerHTML = '<span class="dot" style="background:' + rarityColor(opt.rarity).replace('var(--dim)', '#555').replace('var(--orange)', '#ff6b1a').replace('var(--acid)', 'var(--acid)') + '"></span>' + opt.id;

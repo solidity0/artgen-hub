@@ -61,7 +61,9 @@ const TRAITS = {
     { id: 'teal',      hex: '#009683', weight: 4, rarity: 'uncommon' },
     { id: 'petrol',    hex: '#00709E', weight: 4, rarity: 'uncommon' },
     { id: 'navy',      hex: '#172F9E', weight: 4, rarity: 'uncommon' },
-    { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon' },
+    // plum is retired: kept only as a roll slot so other robots' colours stay seed-stable; a robot
+    // that rolls it re-rolls to another colour (hidden from the trait panel)
+    { id: 'plum',      hex: '#851C7E', weight: 4, rarity: 'uncommon', retired: true },
     { id: 'steel',     hex: '#4A73A0', weight: 6, rarity: 'common' },
     { id: 'gunmetal',  hex: '#3B5068', weight: 6, rarity: 'common' },
     { id: 'black',     hex: '#1E1E24', weight: 5, rarity: 'common' },
@@ -203,7 +205,7 @@ const TRAITS = {
 // Two-tone bots: headColor is either 'matching' (head uses the body colour) or its own colour
 // from the body palette. Built from bodyColor so the two lists never drift apart.
 TRAITS.headColor = [{ id: 'matching', weight: 36, rarity: 'common' }].concat(
-  TRAITS.bodyColor.filter((c) => c.id !== 'classic').map((c) => ({ id: c.id, hex: c.hex, weight: c.rarity === 'rare' ? 0.5 : c.rarity === 'uncommon' ? 1.6 : 3, rarity: c.rarity }))
+  TRAITS.bodyColor.filter((c) => c.id !== 'classic').map((c) => ({ id: c.id, hex: c.hex, weight: c.rarity === 'rare' ? 0.5 : c.rarity === 'uncommon' ? 1.6 : 3, rarity: c.rarity, retired: c.retired }))
 );
 
 // Legs (with feet) and hands can also take their own colour. Solid hexes are used for these parts
@@ -1160,7 +1162,13 @@ function renderFromTraits(picks, index, seed, opts) {
   }
   body += '<g transform="translate(' + headCx + ' ' + (headCy - 12) + ') scale(1.06) translate(' + -headCx + ' ' + -(headCy - 12) + ')">' +
     renderEyes(headCx, headCy - 12, picks.eyes.id, rng, ink, eyeColorHex, uid, dark) + '</g>';
-  body += renderMouth(headCx, headCy + 44, picks.mouth.id, rng, eyeColorHex || '#5fe1ff');
+  // on a TV head the mouth must sit inside the screen bezel (it used to straddle the bezel line)
+  let mouthDy = 44;
+  if (headKind === 'tv') {
+    const bezelBottom = hh * 0.84 - 13, below = /fang|jaws/.test(picks.mouth.id) ? 22 : 14;
+    mouthDy = Math.min(mouthDy, bezelBottom - below - 4);
+  }
+  body += renderMouth(headCx, headCy + mouthDy, picks.mouth.id, rng, eyeColorHex || '#5fe1ff');
   if (scary) {
     // heavy brow plates slanting down to the nose: the angry glare
     const by = headCy - 12 - 26;
@@ -1591,6 +1599,13 @@ function generatePiece(index, seed, tier, opts) {
     const L = (c) => locks[c] && locks[c].length;
     if (picks.bodyColor.id === 'gold' && !L('bodyColor')) picks.bodyColor = weightedPick(rng, vibePool(TRAITS.bodyColor, V).filter((c) => c.id !== 'gold'));
     for (const cat of ['headColor', 'legColor', 'handColor']) if (picks[cat].id === 'gold' && !L(cat)) picks[cat] = TRAITS[cat][0];
+  }
+  // retired colours (plum) never appear: re-roll from the live colours
+  for (const cat of ['bodyColor', 'headColor', 'legColor', 'handColor']) {
+    if (picks[cat] && picks[cat].retired) {
+      const live = (cat === 'bodyColor' ? vibePool(TRAITS.bodyColor, V) : TRAITS[cat]).filter((c) => !c.retired && (lightBg || c.id !== 'gold'));
+      picks[cat] = cat === 'bodyColor' ? weightedPick(rng, live) : TRAITS[cat][0];
+    }
   }
   // internals picked last so every earlier roll is unchanged for a given seed
   picks.internals = sigOverride && sigOverride.internals ? sigOverride.internals : pick('internals');
