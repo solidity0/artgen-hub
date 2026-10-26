@@ -1602,8 +1602,10 @@ function generatePiece(index, seed, tier, opts) {
   // ink: gold parts only appear on light backgrounds (unless explicitly locked)
   if (!lightBg) {
     const L = (c) => locks[c] && locks[c].length;
-    if (picks.bodyColor.id === 'gold' && !L('bodyColor')) { const pool = vibePool(TRAITS.bodyColor, V).filter((c) => c.id !== 'gold'); do { picks.bodyColor = weightedPick(rng, pool); } while (picks.bodyColor.retired); }
-    for (const cat of ['headColor', 'legColor', 'handColor']) if (picks[cat].id === 'gold' && !L(cat)) picks[cat] = TRAITS[cat][0];
+    // bitcoin orange is the same story: rich on light scenes, harsh against dark ones
+    const LIGHT_ONLY = ['gold', 'bitcoin_orange'];
+    if (LIGHT_ONLY.includes(picks.bodyColor.id) && !L('bodyColor')) { const pool = vibePool(TRAITS.bodyColor, V).filter((c) => c.id !== 'gold'); do { picks.bodyColor = weightedPick(rng, pool); } while (picks.bodyColor.retired || LIGHT_ONLY.includes(picks.bodyColor.id)); }
+    for (const cat of ['headColor', 'legColor', 'handColor']) if (LIGHT_ONLY.includes(picks[cat].id) && !L(cat)) picks[cat] = TRAITS[cat][0];
   }
   // retired colours (plum) never appear: re-roll from the live colours
   for (const cat of ['bodyColor', 'headColor', 'legColor', 'handColor']) {
@@ -1611,7 +1613,7 @@ function generatePiece(index, seed, tier, opts) {
       const live = (cat === 'bodyColor' ? vibePool(TRAITS.bodyColor, V) : TRAITS[cat]).filter((c) => c.id !== 'plum' && (lightBg || c.id !== 'gold'));
       if (cat !== 'bodyColor') { picks[cat] = TRAITS[cat][0]; continue; }
       // dark bodies don't go on light scenes, and later-retired colours are skipped: draw again
-      do { picks[cat] = weightedPick(rng, live); } while ((lightBg && /black/.test(picks[cat].id)) || picks[cat].retired);
+      do { picks[cat] = weightedPick(rng, live); } while ((lightBg && /black/.test(picks[cat].id)) || (!lightBg && picks[cat].id === 'bitcoin_orange') || picks[cat].retired);
     }
   }
   // internals picked last so every earlier roll is unchanged for a given seed
