@@ -1585,6 +1585,13 @@ function generatePiece(index, seed, tier, opts) {
     for (let k = 0; k < 8 && picks[cat].id !== 'matching' && tooClose(picks[cat], picks.bodyColor); k++) picks[cat] = pick(cat);
     if (picks[cat].id !== 'matching' && tooClose(picks[cat], picks.bodyColor)) picks[cat] = TRAITS[cat][0];
   }
+  // gold reads rich on light scenes but turns brassy-orange against dark backgrounds and white
+  // ink: gold parts only appear on light backgrounds (unless explicitly locked)
+  if (!lightBg) {
+    const L = (c) => locks[c] && locks[c].length;
+    if (picks.bodyColor.id === 'gold' && !L('bodyColor')) picks.bodyColor = weightedPick(rng, vibePool(TRAITS.bodyColor, V).filter((c) => c.id !== 'gold'));
+    for (const cat of ['headColor', 'legColor', 'handColor']) if (picks[cat].id === 'gold' && !L(cat)) picks[cat] = TRAITS[cat][0];
+  }
   // internals picked last so every earlier roll is unchanged for a given seed
   picks.internals = sigOverride && sigOverride.internals ? sigOverride.internals : pick('internals');
   if (!isOneOfOne) picks = breakSignatureMatch(picks, rng, !!(locks.ground && locks.ground.length));
