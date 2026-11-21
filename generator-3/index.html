@@ -1313,10 +1313,12 @@ function renderFromTraits(picks, index, seed, opts) {
   // ink-wash form shading: shadow on the lower-right, soft highlight upper-left (clipped to the head)
   svg+=`<clipPath id="hw${sid}"><path d="${headPath}"/></clipPath><g clip-path="url(#hw${sid})">`
      + `<ellipse cx="${(cx+headRx*0.62).toFixed(1)}" cy="${(cy+headRy*0.5).toFixed(1)}" rx="${(headRx*1.05).toFixed(1)}" ry="${(headRy*1.0).toFixed(1)}" fill="${lightBg?'#2b241d':'#000'}" opacity="${lightBg?0.15:0.4}"/>`
-     + `<ellipse cx="${(cx-headRx*0.38).toFixed(1)}" cy="${(cy-headRy*0.42).toFixed(1)}" rx="${(headRx*0.5).toFixed(1)}" ry="${(headRy*0.36).toFixed(1)}" fill="#ffffff" opacity="${lightBg?0.45:0.07}"/></g>`;
+     + `<ellipse cx="${(cx-headRx*0.38).toFixed(1)}" cy="${(cy-headRy*0.42).toFixed(1)}" rx="${(headRx*0.5).toFixed(1)}" ry="${(headRy*0.36).toFixed(1)}" fill="#ffffff" opacity="${headFill.id==='ink_black'?0:(lightBg?0.45:0.07)}"/></g>`; // no highlight disc on ink-black heads (it read as a stray light patch)
   svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round"/>`;
   svg+=hairMarkup(hair.id, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+7));
-  svg+=expressionMod(expression.id, cx, cy, eyeY, ink, mulberry32((seed??0)*100003+index+8));
+  // brows sit clear above the eye's glow ring (they used to cut into the eye); 'dead' lids stay on the eyes
+const browLift = expression.id === 'dead' ? 0 : eyeR - 1;
+svg+=`<g transform="translate(0 ${-browLift})">` + expressionMod(expression.id, cx, cy, eyeY, ink, mulberry32((seed??0)*100003+index+8)) + '</g>';
   const rngN=mulberry32((seed??0)*100003+index+9);
   const noseType=Math.floor(rngN()*3);
   if(noseType===0){
