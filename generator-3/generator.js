@@ -1161,15 +1161,17 @@ function renderFromTraits(picks, index, seed, opts) {
   // and did nothing for this more fundamental case, since a same-color disc
   // can't create contrast against itself.
   const eyeLuma = hexLuma(eyeColor.hex);
-  const effectiveBackdropLuma = headFill.id === 'ink_black' ? hexLuma('#0a0a0a') : hexLuma(background.bg);
+  // every head now has an opaque base fill (near-white on light scenes, near-black on dark ones),
+  // so the eyes sit on the HEAD, not the page background: compare against that
+  const effectiveBackdropLuma = headFill.id === 'ink_black' ? hexLuma('#0a0a0a') : hexLuma(lightBg ? '#FBF7EF' : '#151515');
   const needsClearing = Math.abs(eyeLuma - effectiveBackdropLuma) < 70;
   let eyeClearing = '';
   if (needsClearing) {
-    const clearingColor = eyeLuma < 128 ? '#e8e8e8' : '#0a0a0a';
-    const clearR = eyeR * 1.55;
-    eyeClearing =
-      `<ellipse cx="${eyeL}" cy="${eyeY}" rx="${clearR.toFixed(1)}" ry="${(clearR*0.95).toFixed(1)}" fill="${clearingColor}" opacity="0.4"/>` +
-      `<ellipse cx="${eyeR2_pos}" cy="${eyeY}" rx="${clearR.toFixed(1)}" ry="${(clearR*0.95).toFixed(1)}" fill="${clearingColor}" opacity="0.4"/>`;
+    // a solid, inked socket so the eye reads as an eye (a 40% tint left white eyes looking empty)
+    const clearingColor = eyeLuma < 128 ? '#e8e8e8' : '#141414';
+    const clearR = eyeR * 1.45;
+    const sock = (x) => `<ellipse cx="${x}" cy="${eyeY}" rx="${clearR.toFixed(1)}" ry="${(clearR*0.95).toFixed(1)}" fill="${clearingColor}" stroke="${ink}" stroke-width="1.6" opacity="0.92"/>`;
+    eyeClearing = sock(eyeL) + sock(eyeR2_pos);
   }
   svg+=eyeClearing;
   svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id,ink,eyeAnimOpts);
