@@ -1136,20 +1136,24 @@ function renderFromTraits(picks, index, seed, opts) {
      + `<ellipse cx="${(cx+headRx*0.62).toFixed(1)}" cy="${(cy+headRy*0.5).toFixed(1)}" rx="${(headRx*1.05).toFixed(1)}" ry="${(headRy*1.0).toFixed(1)}" fill="${lightBg?'#2b241d':'#000'}" opacity="${lightBg?0.15:0.4}"/>`
      + `<ellipse cx="${(cx-headRx*0.38).toFixed(1)}" cy="${(cy-headRy*0.42).toFixed(1)}" rx="${(headRx*0.5).toFixed(1)}" ry="${(headRy*0.36).toFixed(1)}" fill="#ffffff" opacity="${headFill.id==='ink_black'?0:(lightBg?0.45:0.07)}"/></g>`; // no highlight disc on ink-black heads (it read as a stray light patch)
   svg+=`<path d="${headPath}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+  // an ink-black head on a light scene hides dark-ink features: draw them in a light "chalk" ink on
+  // the head (hair is redrawn in that ink, clipped to the head, so strands outside stay dark)
+  const faceInk = headFill.id==='ink_black' && !isDark ? '#e6e0d2' : ink;
   svg+=hairMarkup(hair.id, cx, cy, headRx, headRy, ink, mulberry32((seed??0)*100003+index+7));
+  if(faceInk!==ink) svg+=`<g clip-path="url(#hw${sid})">`+hairMarkup(hair.id, cx, cy, headRx, headRy, faceInk, mulberry32((seed??0)*100003+index+7))+'</g>';
   // brows sit clear above the eye's glow ring (they used to cut into the eye); 'dead' lids stay on the eyes
 const browLift = expression.id === 'dead' ? 0 : eyeR - 1;
-svg+=`<g transform="translate(0 ${-browLift})">` + expressionMod(expression.id, cx, cy, eyeY, ink, mulberry32((seed??0)*100003+index+8)) + '</g>';
+svg+=`<g transform="translate(0 ${-browLift})">` + expressionMod(expression.id, cx, cy, eyeY, faceInk, mulberry32((seed??0)*100003+index+8)) + '</g>';
   const rngN=mulberry32((seed??0)*100003+index+9);
   const noseType=Math.floor(rngN()*3);
   if(noseType===0){
-    svg+=`<path d="${roughLine(cx-6,cy+18,cx,cy+28,rngN,2)}" stroke="${ink}" stroke-width="${(sw*0.75).toFixed(1)}" fill="none"/>`;
-    svg+=`<path d="${roughLine(cx,cy+28,cx+6,cy+18,rngN,2)}" stroke="${ink}" stroke-width="${(sw*0.75).toFixed(1)}" fill="none"/>`;
+    svg+=`<path d="${roughLine(cx-6,cy+18,cx,cy+28,rngN,2)}" stroke="${faceInk}" stroke-width="${(sw*0.75).toFixed(1)}" fill="none"/>`;
+    svg+=`<path d="${roughLine(cx,cy+28,cx+6,cy+18,rngN,2)}" stroke="${faceInk}" stroke-width="${(sw*0.75).toFixed(1)}" fill="none"/>`;
   } else if(noseType===1){
-    svg+=`<path d="M${cx},${cy+14} Q${(cx+10).toFixed(0)},${cy+30} ${cx},${cy+30} Q${(cx-10).toFixed(0)},${cy+30} ${cx},${cy+14}" stroke="${ink}" stroke-width="${(sw*0.7).toFixed(1)}" fill="none"/>`;
+    svg+=`<path d="M${cx},${cy+14} Q${(cx+10).toFixed(0)},${cy+30} ${cx},${cy+30} Q${(cx-10).toFixed(0)},${cy+30} ${cx},${cy+14}" stroke="${faceInk}" stroke-width="${(sw*0.7).toFixed(1)}" fill="none"/>`;
   } else {
-    svg+=`<circle cx="${(cx-6).toFixed(0)}" cy="${cy+26}" r="3" fill="${ink}" opacity="0.6"/>`;
-    svg+=`<circle cx="${(cx+6).toFixed(0)}" cy="${cy+26}" r="3" fill="${ink}" opacity="0.6"/>`;
+    svg+=`<circle cx="${(cx-6).toFixed(0)}" cy="${cy+26}" r="3" fill="${faceInk}" opacity="0.6"/>`;
+    svg+=`<circle cx="${(cx+6).toFixed(0)}" cy="${cy+26}" r="3" fill="${faceInk}" opacity="0.6"/>`;
   }
   // outline/light_shade/hatch_shade/heavy_shade/splatter are ALL fundamentally
   // transparent heads — only ink_black has genuine opaque fill. So the actual
@@ -1176,10 +1180,10 @@ svg+=`<g transform="translate(0 ${-browLift})">` + expressionMod(expression.id, 
     eyeClearing = sock(eyeL) + sock(eyeR2_pos);
   }
   svg+=eyeClearing;
-  svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id,ink,eyeAnimOpts);
-  svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,ink,eyeAnimOpts);
-  svg+=mouthMarkup(mouth.id, cx, cy, ink, mulberry32((seed??0)*100003+index+12));
-  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id, headPath);
+  svg+=starburstEye(eyeL,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+10),hollow,eyeStyle.id,faceInk,eyeAnimOpts);
+  svg+=starburstEye(eyeR2_pos,eyeY,eyeR,eyeSpikes,eyeColor.hex,eyeColor.glow,mulberry32((seed??0)*100003+index+11),hollow,eyeStyle.id,faceInk,eyeAnimOpts);
+  svg+=mouthMarkup(mouth.id, cx, cy, faceInk, mulberry32((seed??0)*100003+index+12));
+  svg+=accessoryMarkup(accessory.id, cx, cy, eyeL, eyeR2_pos, eyeY, eyeR, /scar|tattoo/.test(accessory.id)?faceInk:ink, eyeColor.hex, mulberry32((seed??0)*100003+index+13), headRy, hair.id, isOneOfOne, background.bg, clothing.id, headPath);
   svg+='</g>';
   // brush-weight linework: thicken every stroke in the figure (the crop adds a further 1.33x)
   svg=svg.slice(0,figStart)+svg.slice(figStart).replace(/stroke-width="([\d.]+)"/g,(m,w)=>`stroke-width="${(parseFloat(w)*1.25).toFixed(2)}"`);
