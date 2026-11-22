@@ -25,7 +25,9 @@ const DAY = 86400000;
 // ---------------------------------------------------------------- config
 function loadConfig(env = process.env) {
   const port = Number(env.PORT) || 8787;
-  const baseUrl = (env.BASE_URL || `http://localhost:${port}`).replace(/\/+$/, '');
+  // RENDER_EXTERNAL_URL / RAILWAY_PUBLIC_DOMAIN are set automatically by those hosts.
+  const hostUrl = env.RENDER_EXTERNAL_URL || (env.RAILWAY_PUBLIC_DOMAIN ? 'https://' + env.RAILWAY_PUBLIC_DOMAIN : '');
+  const baseUrl = (env.BASE_URL || hostUrl || `http://localhost:${port}`).replace(/\/+$/, '');
   const prod = env.NODE_ENV === 'production';
   let sessionSecret = env.SESSION_SECRET;
   if (!sessionSecret) {
@@ -767,6 +769,7 @@ if (require.main === module) {
   process.on('SIGTERM', flush);
   server.listen(cfg.port, cfg.host, () => {
     console.log(`[raffle] ${cfg.siteName} on ${cfg.baseUrl}`);
+    console.log(`[raffle] Discord redirect URL: ${cfg.baseUrl}/auth/discord/callback`);
     if (!cfg.discordClientId) console.warn('[raffle] DISCORD_CLIENT_ID/SECRET not set — Discord login disabled.');
     if (!cfg.admins.size) console.warn('[raffle] ADMIN_DISCORD_IDS is empty — nobody can create raffles.');
     if (cfg.devLogin) console.warn('[raffle] DEV_LOGIN is on — /auth/dev lets anyone log in as anyone. Never use in production.');

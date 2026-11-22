@@ -61,7 +61,8 @@ npm test
 
 It's one Node process plus one data file. Any of these work:
 
-- **Railway / Render:** New service → point at this folder (root directory `raffle`) → start command `node server.js` → add the env vars → attach a **persistent volume/disk** at `/data` and set `DATA_FILE=/data/raffle.json`.
+- **Render (one click):** Dashboard → **New → Blueprint** → pick this repo. It reads `render.yaml` at the repo root, creates the service with a 1 GB disk, generates `SESSION_SECRET`, and asks you for the Discord values. `BASE_URL` is detected automatically. The start log prints the exact Discord redirect URL to paste into the developer portal.
+- **Railway / Render (manual):** New service → point at this folder (root directory `raffle`) → start command `node server.js` → add the env vars → attach a **persistent volume/disk** at `/data` and set `DATA_FILE=/data/raffle.json`.
 - **Fly.io:** `fly launch` (uses the `Dockerfile`), `fly volumes create data`, mount it at `/data`.
 - **Any VPS ($5/mo):**
   ```bash
