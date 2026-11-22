@@ -17,6 +17,8 @@ works on GitHub Pages and can be inscribed on-chain as-is.
 | 6 | **GRIMKIN** | Undead chibi guys haunting the block after dark | character PNG | [generator-6](https://solidity0.github.io/artgen-hub/generator-6/index.html) |
 Slots 7 and 8 are reserved on the hub for future collections.
 
+**Raffix** — the community raffle tool (Discord-gated, X link without the X API, ETH/BTC wallets, provably-fair draws) lives in [`raffle/`](raffle/README.md). Unlike the generators it needs a small Node server, so it is deployed separately (not on GitHub Pages).
+
 ---
 
 ## Repository layout

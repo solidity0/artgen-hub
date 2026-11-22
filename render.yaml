@@ -1,0 +1,45 @@
+# One-click deploy of Raffix (the raffle tool in raffle/) on Render.
+# Render dashboard → New → Blueprint → pick this repo. You'll be asked for the
+# values marked sync:false. SESSION_SECRET is generated for you.
+services:
+  - type: web
+    name: raffix
+    runtime: node
+    rootDir: raffle
+    plan: starter            # persistent disks need a paid instance (~$7/mo)
+    buildCommand: echo "no build step"
+    startCommand: node server.js
+    healthCheckPath: /api/config
+    disk:
+      name: raffix-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATA_FILE
+        value: /data/raffle.json
+      - key: TRUST_PROXY
+        value: "1"
+      - key: SITE_NAME
+        value: Raffix
+      - key: X_VERIFY_MODE
+        value: tweet
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: ADMIN_DISCORD_IDS
+        sync: false
+      - key: DISCORD_GUILD_ID
+        sync: false
+      - key: DISCORD_GUILD_NAME
+        sync: false
+      - key: DISCORD_GUILD_INVITE
+        sync: false
+      - key: DISCORD_WEBHOOK_URL
+        sync: false
